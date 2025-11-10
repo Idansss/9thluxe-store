@@ -1,0 +1,117 @@
+﻿import { formatPrice } from '@/lib/format'
+// app/checkout/success/page.tsx
+import Link from 'next/link'
+import { cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
+import { OrderStatus } from '@prisma/client'
+
+export const runtime = 'nodejs'
+
+type PageProps = {
+  searchParams: {
+    mock?: string
+    reference?: string
+  }
+}
+
+async function verifyPaystack(reference: string) {
+  const secret = process.env.PAYSTACK_SECRET_KEY?.trim()
+  if (!secret) {
+    return { ok: false, message: 'PAYSTACK_SECRET_KEY missing', data: null }
+  }
+  try {
+    const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+      headers: { Authorization: `Bearer ${secret}` },
+      cache: 'no-store',
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !data?.status) {
+      return { ok: false, message: data?.message || 'Verification failed', data: null }
+    }
+    return { ok: true, message: 'Verified', data: data.data }
+  } catch (e: any) {
+    return { ok: false, message: e?.message || 'Verification error', data: null }
+  }
+}
+
+export default async function SuccessPage({ searchParams }: PageProps) {
+  const isMock = !!searchParams.mock
+  const reference = searchParams.reference?.trim()
+
+  let statusLine = ''
+  let amountNGN: number | null = null
+
+  if (isMock) {
+    statusLine = 'Mock success (no real charge).'
+    // clear cart cookie in mock mode so UX mirrors real success
+    cookies().delete('cart')
+  } else if (reference) {
+    // try to verify with Paystack
+    const res = await verifyPaystack(reference)
+    if (res.ok && res.data?.status === 'success') {
+      // amount is in kobo from Paystack; convert to NGN
+      amountNGN = Math.round(Number(res.data.amount || 0) / 100)
+      statusLine = 'Payment verified.'
+
+      // clear cart (payment succeeded)
+      cookies().delete('cart')
+
+      // if you stored orders with a reference, mark it PAID
+      const order = await prisma.order.findFirst({ where: { reference } })
+      if (order && order.status !== OrderStatus.PAID) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { status: OrderStatus.PAID, totalNGN: order.totalNGN || amountNGN || order.totalNGN },
+        })
+      }
+    } else {
+      statusLine = `Payment not verified: ${res.message || 'unknown error'}`
+    }
+  } else {
+    statusLine = 'No payment reference provided.'
+  }
+
+  return (
+    <section className="mx-auto max-w-xl p-6">
+      <h1 className="mb-2 text-2xl font-semibold">Payment status</h1>
+
+      <div className="rounded border p-4">
+        <p className="text-gray-800 dark:text-neutral-200">
+          {isMock
+            ? 'This was a mock success (no real charge). Add Paystack keys in .env to enable live payments.'
+            : statusLine}
+        </p>
+
+        {reference && (
+          <p className="mt-2 text-sm text-gray-600 dark:text-neutral-400">
+            Reference: <span className="font-mono">{reference}</span>
+          </p>
+        )}
+
+        {typeof amountNGN === 'number' && amountNGN > 0 && (
+          <p className="mt-1 text-sm text-gray-600 dark:text-neutral-400">
+            Amount: {formatPrice(amountNGN)}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        <Link href="/" className="btn">
+          Continue shopping
+        </Link>
+        <Link href="/orders" className="btn-outline">
+          View my orders
+        </Link>
+      </div>
+
+      {!isMock && !reference && (
+        <p className="mt-4 text-sm text-amber-700 dark:text-amber-400">
+          Tip: configure your Paystack <code>callback_url</code> to point here with a{" "}
+          <code>?reference=...</code> so we can auto-verify and update your order.
+        </p>
+      )}
+    </section>
+  )
+}
+
+
