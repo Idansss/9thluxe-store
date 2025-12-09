@@ -1,125 +1,79 @@
-import Link from 'next/link'
-import { ProductCard } from '@/components/ProductCard'
-import { prisma } from '@/lib/prisma'
-import { NewsletterSignup } from '@/components/NewsletterSignup'
-import { TrustBadges } from '@/components/TrustBadges'
+import { MainLayout } from "@/components/layout/main-layout"
 
-async function getHomepageData() {
-  const [freshDrops, watches, perfumes, glasses] = await Promise.all([
-    prisma.product.findMany({ orderBy: { createdAt: 'desc' }, take: 6 }),
-    prisma.product.findMany({ where: { category: 'WATCHES' }, orderBy: { createdAt: 'desc' }, take: 3 }),
-    prisma.product.findMany({ where: { category: 'PERFUMES' }, orderBy: { createdAt: 'desc' }, take: 3 }),
-    prisma.product.findMany({ where: { category: 'GLASSES' }, orderBy: { createdAt: 'desc' }, take: 3 }),
-  ])
-  
-  return { freshDrops, watches, perfumes, glasses }
-}
+import { HeroSection } from "@/components/home/hero-section"
+
+import { CategoriesSection } from "@/components/home/categories-section"
+
+import { FeaturedProductsSection } from "@/components/home/featured-products-section"
+
+import { BrandStorySection } from "@/components/home/brand-story-section"
+
+import { NewsletterSection } from "@/components/home/newsletter-section"
+
+import { prisma } from "@/lib/prisma"
+
+export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
-  const { freshDrops, watches, perfumes, glasses } = await getHomepageData()
+  // Fetch featured products from database
+  const dbProducts = await prisma.product.findMany({
+    where: {
+      deletedAt: null, // Exclude soft-deleted products
+      OR: [
+        { isBestseller: true },
+        { isNew: true },
+        { isLimited: true },
+        { isFeatured: true },
+      ],
+    },
+    orderBy: [
+      { isFeatured: "desc" },
+      { isBestseller: "desc" },
+      { ratingAvg: "desc" },
+      { createdAt: "desc" },
+    ],
+    take: 8,
+  })
+
+  // Transform database products to match ProductCard format
+  const featuredProducts = dbProducts.map((product) => {
+    const images = Array.isArray(product.images) ? (product.images as string[]) : []
+    return {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      brand: product.brand || "",
+      price: product.priceNGN,
+      oldPrice: product.oldPriceNGN || undefined,
+      image: images[0] || "/placeholder.svg",
+      images: images,
+      category: product.category.toLowerCase() as "watches" | "perfumes" | "eyeglasses",
+      rating: product.ratingAvg,
+      reviewCount: product.ratingCount,
+      tags: [
+        product.isBestseller && "bestseller",
+        product.isNew && "new",
+        product.isLimited && "limited",
+      ].filter(Boolean) as ("new" | "bestseller" | "limited")[],
+    }
+  })
 
   return (
-    <>
-      {/* Hero Section */}
-      <section className="border-b border-border bg-background py-16">
-        <div className="container mx-auto max-w-[1200px] px-6 text-center">
-          <h1 className="mb-4 text-4xl font-semibold tracking-tight sm:text-5xl">Modern Luxury</h1>
-          <p className="mx-auto max-w-2xl text-base text-muted-foreground">
-            Discover premium watches, perfumes, and eyeglasses. Nigeria-wide delivery to all 36 states and the FCT.
-          </p>
-        </div>
-      </section>
 
-      {/* Trust Badges */}
-      <section className="border-b border-border bg-muted/30 py-12">
-        <div className="container mx-auto max-w-[1200px] px-6">
-          <TrustBadges />
-        </div>
-      </section>
+    <MainLayout cartItemCount={3}>
 
-      {/* Fresh Drops */}
-      <section className="py-16">
-        <div className="container mx-auto max-w-[1200px] px-6">
-          <h2 className="mb-8 text-2xl font-semibold">Fresh drops</h2>
-          {freshDrops.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
-              <h3 className="text-lg font-semibold">No products yet</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Check back soon - our team adds new pieces regularly.</p>
-            </div>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {freshDrops.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      <HeroSection />
 
-      {/* Watches Section */}
-      {watches.length > 0 && (
-        <section className="py-16">
-          <div className="container mx-auto max-w-[1200px] px-6">
-            <div className="mb-8 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Watches</h2>
-              <Link href="/category/watches" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                View all →
-              </Link>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {watches.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <CategoriesSection />
 
-      {/* Perfumes Section */}
-      {perfumes.length > 0 && (
-        <section className="border-t border-border bg-muted/30 py-16">
-          <div className="container mx-auto max-w-[1200px] px-6">
-            <div className="mb-8 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Perfumes</h2>
-              <Link href="/category/perfumes" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                View all →
-              </Link>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {perfumes.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <FeaturedProductsSection products={featuredProducts} />
 
-      {/* Glasses Section */}
-      {glasses.length > 0 && (
-        <section className="py-16">
-          <div className="container mx-auto max-w-[1200px] px-6">
-            <div className="mb-8 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Eye Glasses</h2>
-              <Link href="/category/glasses" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                View all →
-              </Link>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {glasses.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <BrandStorySection />
 
-      {/* Newsletter */}
-      <section className="border-t border-border bg-muted/30 py-16">
-        <div className="container mx-auto max-w-[1200px] px-6">
-          <NewsletterSignup />
-        </div>
-      </section>
-    </>
+      <NewsletterSection />
+
+    </MainLayout>
+
   )
-}
 
+}

@@ -137,7 +137,7 @@ export default function SearchBar() {
   return (
     <div ref={rootRef} className="relative">
       <input
-        className="input h-11 rounded-full"
+        className="input h-11 rounded-full px-6"
         placeholder={placeholder}
         value={query}
         onChange={(event) => setQuery(event.target.value)}

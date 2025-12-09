@@ -1,24 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/admin'
+import { NextRequest, NextResponse } from "next/server"
+
+import { requireAdmin } from "@/lib/admin"
+import { deleteProduct } from "@/lib/services/product-service"
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await requireAdmin()
-    
-    await prisma.product.delete({
-      where: { id: params.id },
-    })
+
+    const { id } = await params
+    await deleteProduct(id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete product error:', error)
+    console.error("Delete product error:", error)
+    
+    // Return user-friendly error message
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : "Failed to delete product"
+    
     return NextResponse.json(
-      { error: 'Failed to delete product' },
-      { status: 500 }
+      { error: errorMessage },
+      { status: error instanceof Error && error.message.includes("Cannot delete") ? 400 : 500 }
     )
   }
 }

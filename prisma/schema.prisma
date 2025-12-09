@@ -9,7 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Category {
+enum ProductCategory {
   WATCHES
   PERFUMES
   GLASSES
@@ -27,8 +27,11 @@ model User {
   name            String?
   email           String     @unique
   passwordHash    String
+  role            Role       @default(USER)
   marketingEmails Boolean    @default(true)
   smsNotifications Boolean   @default(false)
+  orderUpdates    Boolean    @default(true)
+  wishlistAlerts  Boolean    @default(false)
   resetToken      String?
   resetTokenExpiry DateTime?
   createdAt       DateTime   @default(now())
@@ -42,6 +45,16 @@ model User {
   addresses    Address[]
 }
 
+model Category {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  enumKey     ProductCategory?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
 model Product {
   id           String      @id @default(cuid())
   name         String
@@ -49,9 +62,26 @@ model Product {
   description  String
   images       Json        // store image array as JSON for SQLite
   priceNGN     Int
-  category     Category
+  oldPriceNGN  Int?
+  currency     String      @default("NGN")
+  category     ProductCategory
   brand        String?
+  productType  String?     // perfume, watch, sunglasses
+  notesTop     String?
+  notesHeart   String?
+  notesBase    String?
+  longevity    String?
+  occasion     String?
+  material     String?
+  lensType     String?
+  warranty     String?
+  waterResistance String?
   stock        Int         @default(10)
+  isFeatured   Boolean     @default(false)
+  isBestseller Boolean     @default(false)
+  isNew        Boolean     @default(false)
+  isLimited    Boolean     @default(false)
+  deletedAt    DateTime?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -60,6 +90,8 @@ model Product {
   ratingCount  Int         @default(0)
 
   // relations
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id])
   orderItems   OrderItem[]
   wishlists    Wishlist[]
   reviews      Review[]
@@ -76,6 +108,8 @@ model Review {
   rating    Int                 // 1–5 (enforce in app)
   comment   String?
   approved  Boolean  @default(true)
+  displayName String?
+  tag        String?
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
@@ -100,6 +134,45 @@ model Coupon {
   updatedAt    DateTime @updatedAt
 
   orders       Order[]
+}
+
+enum NewsletterStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+}
+
+model NewsletterCampaign {
+  id        String           @id @default(cuid())
+  subject   String
+  html      String
+  text      String?
+  status    NewsletterStatus @default(DRAFT)
+  createdAt DateTime         @default(now())
+  sentAt    DateTime?
+}
+
+model NewsletterSubscriber {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([email])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // "ORDER_PAID", "ORDER_SHIPPED", etc.
+  title     String
+  message   String
+  orderId   String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+
+  @@index([read, createdAt])
+  @@index([orderId])
 }
 
 model Address {
@@ -160,6 +233,17 @@ model OrderItem {
   @@index([productId])
 }
 
+model Collection {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+}
+
 model Wishlist {
   id        String   @id @default(cuid())
   userId    String
@@ -206,4 +290,9 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum Role {
+  USER
+  ADMIN
 }

@@ -1,249 +1,455 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@import "tw-animate-css";
+
+
+
+@custom-variant dark (&:is(.dark *));
+
+
+
+/* Fàdè Luxury E-commerce Theme */
 
 :root {
-  /* 9thLuxe Color System - Light Mode (Beige background, black text) */
-  --background: oklch(0.97 0.02 85); /* Beige background */
-  --foreground: oklch(0.145 0 0); /* Black text */
 
-  --card: oklch(0.99 0.015 85); /* Slightly off-white beige */
-  --card-foreground: oklch(0.145 0 0);
+  /* Light mode - warm beige / soft ivory */
 
-  --popover: oklch(0.99 0.015 85);
-  --popover-foreground: oklch(0.145 0 0);
+  --background: oklch(0.97 0.01 85); /* Warm ivory */
 
-  /* Primary = near-black ink */
-  --primary: oklch(0.205 0 0); /* #111827 */
-  --primary-foreground: oklch(0.99 0.015 85);
+  --foreground: oklch(0.2 0.02 45); /* Rich charcoal */
 
-  /* Secondary */
-  --secondary: oklch(0.94 0.02 85); /* Slightly darker beige */
-  --secondary-foreground: oklch(0.205 0 0);
+  --card: oklch(0.99 0.005 85); /* Soft white */
 
-  /* Muted text and borders */
-  --muted: oklch(0.94 0.02 85); /* Beige */
-  --muted-foreground: oklch(0.556 0 0); /* #6B7280 */
+  --card-foreground: oklch(0.2 0.02 45);
 
-  --accent: oklch(0.94 0.02 85);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover: oklch(0.99 0.005 85);
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --popover-foreground: oklch(0.2 0.02 45);
 
-  --border: oklch(0.89 0.02 85); /* Beige border */
-  --input: oklch(0.89 0.02 85);
-  --ring: oklch(0.708 0 0);
+  --primary: oklch(0.35 0.05 145); /* Deep green for primary buttons */
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --primary-foreground: oklch(0.97 0.01 85);
 
-  --radius: 0.625rem; /* 10px base radius */
+  --secondary: oklch(0.92 0.015 85); /* Soft beige */
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --secondary-foreground: oklch(0.25 0.02 45);
+
+  --muted: oklch(0.94 0.01 85);
+
+  --muted-foreground: oklch(0.45 0.02 45);
+
+  --accent: oklch(0.72 0.12 85); /* Muted gold */
+
+  --accent-foreground: oklch(0.2 0.02 45);
+
+  --destructive: oklch(0.55 0.22 25);
+
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.88 0.02 85);
+
+  --input: oklch(0.92 0.015 85);
+
+  --ring: oklch(0.72 0.12 85); /* Gold ring */
+
+  --radius: 0.5rem;
+
+
+
+  /* Brand colors */
+
+  --gold: oklch(0.72 0.12 85);
+
+  --deep-brown: oklch(0.35 0.05 55);
+
+  --deep-green: oklch(0.35 0.05 145);
+
+
+
+  /* Chart colors */
+
+  --chart-1: oklch(0.72 0.12 85);
+
+  --chart-2: oklch(0.35 0.05 145);
+
+  --chart-3: oklch(0.35 0.05 55);
+
+  --chart-4: oklch(0.55 0.08 85);
+
+  --chart-5: oklch(0.45 0.06 145);
+
+
+
+  /* Sidebar */
+
+  --sidebar: oklch(0.96 0.01 85);
+
+  --sidebar-foreground: oklch(0.2 0.02 45);
+
+  --sidebar-primary: oklch(0.35 0.05 145);
+
+  --sidebar-primary-foreground: oklch(0.97 0.01 85);
+
+  --sidebar-accent: oklch(0.72 0.12 85);
+
+  --sidebar-accent-foreground: oklch(0.2 0.02 45);
+
+  --sidebar-border: oklch(0.88 0.02 85);
+
+  --sidebar-ring: oklch(0.72 0.12 85);
+
 }
+
+
+
+/* Redesigned dark mode: neutral/cool dark backgrounds, removed all brown tones */
 
 .dark {
-  --background: oklch(0.40 0.02 25); /* Lighter warm dark brown/gray background */
-  --foreground: oklch(0.92 0.02 85); /* Warm beige text */
 
-  --card: oklch(0.45 0.02 28); /* Lighter warm dark */
-  --card-foreground: oklch(0.92 0.02 85);
+  /* Dark mode - deep neutral near-black */
 
-  --popover: oklch(0.45 0.02 28);
-  --popover-foreground: oklch(0.92 0.02 85);
+  --background: oklch(0.13 0.01 260); /* Deep neutral slate-black */
 
-  --primary: oklch(0.92 0.02 85); /* Warm beige */
-  --primary-foreground: oklch(0.40 0.02 25);
+  --foreground: oklch(0.96 0.005 90); /* Soft ivory/off-white */
 
-  --secondary: oklch(0.48 0.02 30);
-  --secondary-foreground: oklch(0.92 0.02 85);
+  --card: oklch(0.17 0.01 260); /* Slightly lighter surface */
 
-  --muted: oklch(0.48 0.02 30);
-  --muted-foreground: oklch(0.78 0.02 85); /* Warmer beige for muted text */
+  --card-foreground: oklch(0.96 0.005 90);
 
-  --accent: oklch(0.48 0.02 30);
-  --accent-foreground: oklch(0.92 0.02 85);
+  --popover: oklch(0.17 0.01 260);
 
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --popover-foreground: oklch(0.96 0.005 90);
 
-  --border: oklch(0.50 0.02 30); /* Lighter warm dark border */
-  --input: oklch(0.50 0.02 30);
-  --ring: oklch(0.75 0.02 85); /* Warm beige ring */
+  --primary: oklch(0.38 0.06 160); /* Deep neutral green for CTAs */
 
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --primary-foreground: oklch(0.96 0.005 90);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --secondary: oklch(0.22 0.01 260); /* Neutral dark slate */
+
+  --secondary-foreground: oklch(0.96 0.005 90);
+
+  --muted: oklch(0.22 0.01 260);
+
+  --muted-foreground: oklch(0.6 0.01 260); /* Neutral gray text */
+
+  --accent: oklch(0.78 0.12 85); /* Muted gold/champagne accent */
+
+  --accent-foreground: oklch(0.13 0.01 260);
+
+  --destructive: oklch(0.5 0.2 25);
+
+  --destructive-foreground: oklch(0.96 0.005 90);
+
+  --border: oklch(0.28 0.01 260); /* Dark slate border */
+
+  --input: oklch(0.22 0.01 260);
+
+  --ring: oklch(0.78 0.12 85); /* Gold ring */
+
+
+
+  /* Brand colors */
+
+  --gold: oklch(0.78 0.12 85); /* Champagne gold */
+
+  --deep-brown: oklch(0.45 0.01 260); /* Neutral slate replacement */
+
+  --deep-green: oklch(0.45 0.06 160); /* Muted green */
+
+
+
+  /* Chart colors */
+
+  --chart-1: oklch(0.78 0.12 85); /* Gold */
+
+  --chart-2: oklch(0.55 0.08 160); /* Teal-green */
+
+  --chart-3: oklch(0.5 0.01 260); /* Neutral gray */
+
+  --chart-4: oklch(0.68 0.1 85); /* Light gold */
+
+  --chart-5: oklch(0.6 0.08 160); /* Light green */
+
+
+
+  /* Sidebar */
+
+  --sidebar: oklch(0.11 0.01 260); /* Deeper neutral */
+
+  --sidebar-foreground: oklch(0.96 0.005 90);
+
+  --sidebar-primary: oklch(0.78 0.12 85); /* Gold */
+
+  --sidebar-primary-foreground: oklch(0.13 0.01 260);
+
+  --sidebar-accent: oklch(0.22 0.01 260);
+
+  --sidebar-accent-foreground: oklch(0.96 0.005 90);
+
+  --sidebar-border: oklch(0.28 0.01 260);
+
+  --sidebar-ring: oklch(0.78 0.12 85);
+
 }
+
+
+
+@theme inline {
+
+  --font-sans: "Poppins", "Poppins Fallback", sans-serif;
+
+  --font-serif: "Playfair Display", "Playfair Display Fallback", serif;
+
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+
+  --color-background: var(--background);
+
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+
+  --color-input: var(--input);
+
+  --color-ring: var(--ring);
+
+  --color-gold: var(--gold);
+
+  --color-deep-brown: var(--deep-brown);
+
+  --color-deep-green: var(--deep-green);
+
+  --color-chart-1: var(--chart-1);
+
+  --color-chart-2: var(--chart-2);
+
+  --color-chart-3: var(--chart-3);
+
+  --color-chart-4: var(--chart-4);
+
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --radius-md: calc(var(--radius) - 2px);
+
+  --radius-lg: var(--radius);
+
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-sidebar: var(--sidebar);
+
+  --color-sidebar-foreground: var(--sidebar-foreground);
+
+  --color-sidebar-primary: var(--sidebar-primary);
+
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+
+  --color-sidebar-accent: var(--sidebar-accent);
+
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+
+  --color-sidebar-border: var(--sidebar-border);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+
+}
+
+
 
 @layer base {
+
   * {
-    @apply border-border;
+
+    @apply border-border outline-ring/50;
+
   }
-  
-  *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-blue-500;
-  }
-  
-  button:focus-visible,
-  a:focus-visible {
-    @apply outline-none ring-2 ring-offset-2 ring-blue-500;
-  }
-  
-  html {
-    font-family: var(--font-poppins), sans-serif;
-  }
-  
+
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-poppins), sans-serif;
-    letter-spacing: -0.01em;
-    line-height: 1.6;
-    position: relative;
+
+    @apply bg-background text-foreground;
+
   }
 
-  /* Luxury textured background */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background: 
-      /* Marble-like texture gradient */
-      radial-gradient(ellipse at 20% 50%, rgba(100, 116, 139, 0.05) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
-      radial-gradient(ellipse at 40% 80%, rgba(34, 197, 94, 0.03) 0%, transparent 50%),
-      /* Base gradient */
-      linear-gradient(135deg, var(--background) 0%, oklch(0.94 0.02 90) 100%);
-    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-    
-    /* Subtle noise texture for luxury feel */
-    background-image: 
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E"),
-      radial-gradient(ellipse at 20% 50%, rgba(100, 116, 139, 0.05) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
-      radial-gradient(ellipse at 40% 80%, rgba(34, 197, 94, 0.03) 0%, transparent 50%),
-      linear-gradient(135deg, var(--background) 0%, oklch(0.94 0.02 90) 100%);
-    
-    /* Subtle pattern overlay */
-    background-blend-mode: overlay, normal, normal, normal, normal;
-    
-    /* Soft shine effect */
-    box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
-  }
 
-  /* Add subtle geometric pattern */
-  body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    opacity: 0.03;
-    background-image: 
-      /* Geometric shapes */
-      linear-gradient(30deg, transparent 0%, transparent 48%, currentColor 49%, currentColor 51%, transparent 52%, transparent 100%),
-      linear-gradient(150deg, transparent 0%, transparent 48%, currentColor 49%, currentColor 51%, transparent 52%, transparent 100%);
-    background-size: 60px 60px;
-    pointer-events: none;
-  }
 
-  /* Dark mode luxury background */
-  .dark body::before {
-    background: 
-      /* Rich dark gradients with emerald, midnight blue, and silver */
-      radial-gradient(ellipse at 20% 50%, oklch(0.25 0.08 200 / 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, oklch(0.30 0.12 160 / 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse at 40% 80%, oklch(0.35 0.10 140 / 0.10) 0%, transparent 50%),
-      /* Deep midnight blue to warm dark brown gradient */
-      linear-gradient(135deg, var(--background) 0%, oklch(0.35 0.03 25) 100%);
-    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-    
-    /* Enhanced noise texture for dark mode */
-    background-image: 
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"),
-      radial-gradient(ellipse at 20% 50%, oklch(0.25 0.08 200 / 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, oklch(0.30 0.12 160 / 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse at 40% 80%, oklch(0.35 0.10 140 / 0.10) 0%, transparent 50%),
-      linear-gradient(135deg, var(--background) 0%, oklch(0.35 0.03 25) 100%);
-    
-    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.3), inset 0 0 200px rgba(59, 130, 246, 0.05);
-  }
-
-  .dark body::after {
-    opacity: 0.05;
-  }
+  /* Typography hierarchy */
 
   h1,
+
+  .h1 {
+
+    @apply font-serif text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight;
+
+  }
+
   h2,
+
+  .h2 {
+
+    @apply font-serif text-3xl md:text-4xl font-semibold tracking-tight;
+
+  }
+
   h3,
+
+  .h3 {
+
+    @apply font-serif text-2xl md:text-3xl font-medium;
+
+  }
+
   h4,
+
+  .h4 {
+
+    @apply font-serif text-xl md:text-2xl font-medium;
+
+  }
+
   h5,
-  h6 {
-    font-family: var(--font-playfair), serif;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+
+  .h5 {
+
+    @apply font-sans text-lg font-medium;
+
   }
 
-  /* Fixed h1 to use standard Tailwind class instead of arbitrary value */
-  h1 {
-    font-size: 2rem;
-    line-height: 1.25;
+  h6,
+
+  .h6 {
+
+    @apply font-sans text-base font-medium;
+
   }
 
-  h2 {
-    @apply text-xl leading-snug;
-  }
-
-  p,
-  body {
-    @apply text-sm leading-relaxed;
-  }
-
-  small {
-    @apply text-xs;
-  }
 }
 
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+
+
+/* Smooth theme transitions */
+
+html {
+
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+}
+
+
+
+/* Custom scrollbar */
+
+::-webkit-scrollbar {
+
+  width: 8px;
+
+  height: 8px;
+
+}
+
+
+
+::-webkit-scrollbar-track {
+
+  background: var(--muted);
+
+}
+
+
+
+::-webkit-scrollbar-thumb {
+
+  background: var(--border);
+
+  border-radius: 4px;
+
+}
+
+
+
+::-webkit-scrollbar-thumb:hover {
+
+  background: var(--muted-foreground);
+
+}
+
+
+
+/* Accordion animations */
+
+@keyframes accordion-down {
+
+  from {
+
+    height: 0;
+
   }
 
-  .btn-outline {
-    @apply inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+  to {
+
+    height: var(--radix-accordion-content-height);
+
   }
 
-  .input {
-    @apply w-full rounded-full border border-input bg-background px-4 py-2 text-sm text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-primary;
+}
+
+
+
+@keyframes accordion-up {
+
+  from {
+
+    height: var(--radix-accordion-content-height);
+
   }
 
+  to {
+
+    height: 0;
+
+  }
+
+}
+
+
+
+.animate-accordion-down {
+
+  animation: accordion-down 0.2s ease-out;
+
+}
+
+
+
+.animate-accordion-up {
+
+  animation: accordion-up 0.2s ease-out;
 
 }

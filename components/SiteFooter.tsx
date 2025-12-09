@@ -69,23 +69,23 @@ export function SiteFooter() {
             </li>
             <li>
               <a
-                href="https://www.tiktok.com/@9th.luxe"
+                href="https://www.tiktok.com/@Fàdè"
                 target="_blank"
                 rel="noreferrer"
                 className="transition-colors hover:text-foreground"
               >
-                TikTok: @9th.luxe
+                TikTok: @Fàdè
               </a>
             </li>
             <li>
               <a
-                href="https://instagram.com/9thluxee"
+                href="https://instagram.com/Fàdè"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
               >
                 <Instagram className="h-4 w-4" />
-                <span>@9thluxee</span>
+                <span>@Fàdè</span>
               </a>
             </li>
           </ul>
@@ -93,7 +93,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        <p>&copy; {year} 9thLuxe. All rights reserved.</p>
+        <p>&copy; {year} Fàdè. All rights reserved.</p>
         <p className="mt-2">Nationwide delivery across Nigeria's 36 states and the FCT.</p>
       </div>
     </footer>

@@ -1,35 +1,40 @@
+import { ProductCategory, Prisma } from '@prisma/client'
+import { notFound, redirect } from 'next/navigation'
+
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin'
-import { notFound, redirect } from 'next/navigation'
-import { Category } from '@prisma/client'
-import { ImageUploader } from './image-uploader'
+import { ImageUploader } from '@/components/admin/image-uploader'
 
 export const dynamic = 'force-dynamic'
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin()
 
+  const { id } = await params
   const product = await prisma.product.findUnique({
-    where: { id: params.id },
+    where: { id },
   })
 
   if (!product) {
     notFound()
   }
 
+  const productRecord = product
+
   async function updateProduct(formData: FormData) {
     'use server'
 
+    const { id: productId } = await params
     const name = formData.get('name') as string
     const description = formData.get('description') as string
     const priceNGN = parseInt(formData.get('priceNGN') as string)
-    const category = formData.get('category') as Category
+    const category = formData.get('category') as ProductCategory
     const brand = formData.get('brand') as string
     const stock = parseInt(formData.get('stock') as string)
     const imagesInput = formData.get('images') as string
 
     // Parse images - handle both JSON string and comma-separated values
-    let images = product.images
+    let images: Prisma.InputJsonValue = productRecord.images as Prisma.InputJsonValue
     if (imagesInput) {
       try {
         images = JSON.parse(imagesInput)
@@ -40,7 +45,7 @@ export default async function EditProductPage({ params }: { params: { id: string
     }
 
     await prisma.product.update({
-      where: { id: params.id },
+      where: { id: productId },
       data: {
         name,
         description,
@@ -55,7 +60,7 @@ export default async function EditProductPage({ params }: { params: { id: string
     redirect('/admin/products')
   }
 
-  const images = Array.isArray(product.images) ? (product.images as string[]) : []
+  const images = Array.isArray(productRecord.images) ? (productRecord.images as string[]) : []
 
   return (
     <div className="space-y-6">
@@ -74,7 +79,7 @@ export default async function EditProductPage({ params }: { params: { id: string
               name="name"
               type="text"
               required
-              defaultValue={product.name}
+              defaultValue={productRecord.name}
               className="input w-full"
               placeholder="Enter product name"
             />
@@ -84,7 +89,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             <label htmlFor="category" className="text-sm font-medium text-foreground">
               Category *
             </label>
-            <select id="category" name="category" required className="input w-full" defaultValue={product.category}>
+            <select id="category" name="category" required className="input w-full" defaultValue={productRecord.category}>
               <option value="WATCHES">Watches</option>
               <option value="PERFUMES">Perfumes</option>
               <option value="GLASSES">Eye Glasses</option>
@@ -99,7 +104,7 @@ export default async function EditProductPage({ params }: { params: { id: string
               id="brand"
               name="brand"
               type="text"
-              defaultValue={product.brand || ''}
+              defaultValue={productRecord.brand || ''}
               className="input w-full"
               placeholder="Enter brand name"
             />
@@ -114,7 +119,7 @@ export default async function EditProductPage({ params }: { params: { id: string
               name="priceNGN"
               type="number"
               required
-              defaultValue={product.priceNGN}
+              defaultValue={productRecord.priceNGN}
               className="input w-full"
               placeholder="Enter price"
             />
@@ -129,7 +134,7 @@ export default async function EditProductPage({ params }: { params: { id: string
               name="stock"
               type="number"
               required
-              defaultValue={product.stock}
+              defaultValue={productRecord.stock}
               className="input w-full"
               placeholder="Enter stock quantity"
             />
@@ -144,7 +149,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             id="description"
             name="description"
             required
-            defaultValue={product.description}
+            defaultValue={productRecord.description}
             rows={4}
             className="input w-full"
             placeholder="Enter product description"

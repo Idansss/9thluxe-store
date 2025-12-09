@@ -1,0 +1,387 @@
+"use client"
+
+
+
+import * as React from "react"
+
+import Link from "next/link"
+import Image from "next/image"
+
+import { usePathname } from "next/navigation"
+
+import { Search, Heart, User, ShoppingBag, Menu, X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+import { Button } from "@/components/ui/button"
+
+import { ThemeToggle } from "@/components/ui/theme-toggle"
+
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
+
+import { SearchDialog } from "@/components/search/search-dialog"
+
+import { useCartStore } from "@/lib/stores/cart-store"
+
+
+
+const navigation = [
+
+  { name: "Watches", href: "/category/watches" },
+
+  { name: "Perfumes", href: "/category/perfumes" },
+
+  { name: "Eyeglasses", href: "/category/eyeglasses" },
+
+  { name: "Collections", href: "/collections" },
+
+  { name: "About", href: "/about" },
+
+  { name: "Help", href: "/help" },
+
+]
+
+
+
+interface HeaderProps {
+
+  cartItemCount?: number
+
+}
+
+
+
+export function Header({ cartItemCount: propCartItemCount }: HeaderProps) {
+
+  const pathname = usePathname()
+
+  const [isScrolled, setIsScrolled] = React.useState(false)
+
+  const storeCartItemCount = useCartStore((state) => state.getUniqueItemsCount())
+
+  // Use store count if available, otherwise fall back to prop
+
+  const cartItemCount = storeCartItemCount > 0 ? storeCartItemCount : (propCartItemCount || 0)
+
+
+
+  React.useEffect(() => {
+
+    const handleScroll = () => {
+
+      setIsScrolled(window.scrollY > 10)
+
+    }
+
+    window.addEventListener("scroll", handleScroll)
+
+    return () => window.removeEventListener("scroll", handleScroll)
+
+  }, [])
+
+
+
+  return (
+
+    <header
+
+      className={cn(
+
+        "sticky top-0 z-50 w-full transition-all duration-300",
+
+        isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border" : "bg-background",
+
+      )}
+
+    >
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div className="flex h-16 items-center justify-between gap-4">
+
+          {/* Brand */}
+
+          <Link
+
+            href="/"
+
+            className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight hover:text-accent transition-colors"
+
+          >
+
+            {/* Logo - Add your logo image here */}
+            <div className="relative h-8 w-8 shrink-0">
+              <Image
+                src="/logo.png"
+                alt="Fàdè Logo"
+                fill
+                className="object-contain"
+                sizes="32px"
+                priority
+              />
+            </div>
+
+            <span>Fàdè</span>
+
+          </Link>
+
+
+
+          {/* Desktop Navigation */}
+
+          <nav className="hidden lg:flex items-center gap-1">
+
+            {navigation.map((item) => (
+
+              <Link
+
+                key={item.name}
+
+                href={item.href}
+
+                className={cn(
+
+                  "px-4 py-2 text-sm font-medium transition-colors relative",
+
+                  pathname === item.href || pathname.startsWith(item.href + "/")
+
+                    ? "text-foreground"
+
+                    : "text-muted-foreground hover:text-foreground",
+
+                )}
+
+              >
+
+                {item.name}
+
+                {(pathname === item.href || pathname.startsWith(item.href + "/")) && (
+
+                  <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent rounded-full" />
+
+                )}
+
+              </Link>
+
+            ))}
+
+          </nav>
+
+
+
+          {/* Right Actions */}
+
+          <div className="flex items-center gap-1">
+
+            <ThemeToggle />
+
+
+
+            <div className="hidden sm:flex">
+
+              <SearchDialog />
+
+            </div>
+
+
+
+            <Button variant="ghost" size="icon" className="h-9 w-9 hidden sm:flex" asChild>
+
+              <Link href="/account/wishlist">
+
+                <Heart className="h-4 w-4" />
+
+                <span className="sr-only">Wishlist</span>
+
+              </Link>
+
+            </Button>
+
+
+
+            <Button variant="ghost" size="icon" className="h-9 w-9 hidden sm:flex" asChild>
+
+              <Link href="/account">
+
+                <User className="h-4 w-4" />
+
+                <span className="sr-only">Account</span>
+
+              </Link>
+
+            </Button>
+
+
+
+            <Button variant="ghost" size="icon" className="h-9 w-9 relative" asChild>
+
+              <Link href="/cart">
+
+                <ShoppingBag className="h-4 w-4" />
+
+                {cartItemCount > 0 && (
+
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
+
+                    {cartItemCount > 99 ? "99+" : cartItemCount}
+
+                  </span>
+
+                )}
+
+                <span className="sr-only">Cart</span>
+
+              </Link>
+
+            </Button>
+
+
+
+            {/* Mobile Menu */}
+
+            <Sheet>
+
+              <SheetTrigger asChild>
+
+                <Button variant="ghost" size="icon" className="h-9 w-9 lg:hidden">
+
+                  <Menu className="h-5 w-5" />
+
+                  <span className="sr-only">Open menu</span>
+
+                </Button>
+
+              </SheetTrigger>
+
+              <SheetContent side="right" className="w-80">
+
+                <div className="flex flex-col h-full">
+
+                  <div className="flex items-center justify-between mb-8">
+
+                    <Link href="/" className="flex items-center gap-2 font-serif text-xl font-semibold">
+                      <div className="relative h-7 w-7 shrink-0">
+                        <Image
+                          src="/logo.png"
+                          alt="Fàdè Logo"
+                          fill
+                          className="object-contain"
+                          sizes="28px"
+                        />
+                      </div>
+                      <span>Fàdè</span>
+                    </Link>
+
+                    <SheetClose asChild>
+
+                      <Button variant="ghost" size="icon" className="h-9 w-9">
+
+                        <X className="h-5 w-5" />
+
+                      </Button>
+
+                    </SheetClose>
+
+                  </div>
+
+
+
+                  <nav className="flex flex-col gap-1">
+
+                    {navigation.map((item) => (
+
+                      <SheetClose key={item.name} asChild>
+
+                        <Link
+
+                          href={item.href}
+
+                          className={cn(
+
+                            "px-4 py-3 text-base font-medium rounded-lg transition-colors",
+
+                            pathname === item.href || pathname.startsWith(item.href + "/")
+
+                              ? "bg-accent/10 text-foreground"
+
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+
+                          )}
+
+                        >
+
+                          {item.name}
+
+                        </Link>
+
+                      </SheetClose>
+
+                    ))}
+
+                  </nav>
+
+
+
+                  <div className="mt-auto pt-8 border-t border-border">
+
+                    <div className="flex items-center gap-2">
+
+                      <SheetClose asChild>
+
+                        <div className="h-10 w-10 flex items-center justify-center">
+
+                          <SearchDialog />
+
+                        </div>
+
+                      </SheetClose>
+
+                      <SheetClose asChild>
+
+                        <Button variant="ghost" size="icon" className="h-10 w-10" asChild>
+
+                          <Link href="/account/wishlist">
+
+                            <Heart className="h-5 w-5" />
+
+                          </Link>
+
+                        </Button>
+
+                      </SheetClose>
+
+                      <SheetClose asChild>
+
+                        <Button variant="ghost" size="icon" className="h-10 w-10" asChild>
+
+                          <Link href="/account">
+
+                            <User className="h-5 w-5" />
+
+                          </Link>
+
+                        </Button>
+
+                      </SheetClose>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </SheetContent>
+
+            </Sheet>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </header>
+
+  )
+
+}

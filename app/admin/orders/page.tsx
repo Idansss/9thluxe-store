@@ -1,195 +1,168 @@
-// app/admin/orders/page.tsx
-import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/admin'
-import { OrderStatus } from '@prisma/client'
-import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import Link from "next/link"
+import { Search } from "lucide-react"
 
-const PAGE_SIZE = 20
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getAdminOrders } from "@/lib/services/order-service"
+import type { OrderStatus } from "@prisma/client"
 
-type Props = {
-  searchParams: {
+export const dynamic = "force-dynamic"
+
+interface AdminOrdersPageProps {
+  searchParams?: Promise<{
     q?: string
-    status?: OrderStatus
-    page?: string
-  }
+    status?: string
+  }>
 }
 
-function Naira({ n }: { n: number }) {
-  return <>₦{Number(n || 0).toLocaleString()}</>
+const statusOptions: { label: string; value: "all" | OrderStatus }[] = [
+  { label: "All status", value: "all" },
+  { label: "Pending", value: "PENDING" },
+  { label: "Paid", value: "PAID" },
+  { label: "Shipped", value: "SHIPPED" },
+  { label: "Delivered", value: "DELIVERED" },
+]
+
+const statusClasses: Record<OrderStatus, string> = {
+  PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  PAID: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  SHIPPED: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  DELIVERED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
 }
 
-export default async function AdminOrdersPage({ searchParams }: Props) {
-  await requireAdmin()
+export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
+  const params = await searchParams
+  const q = params?.q?.toString() ?? ""
+  const statusParam = params?.status?.toString() ?? "all"
 
-  const q = (searchParams.q || '').trim()
-  const status = searchParams.status as OrderStatus | undefined
-  const page = Math.max(1, Number(searchParams.page || 1))
+  const selectedStatus =
+    statusOptions.find((option) => option.value === statusParam)?.value ?? "all"
 
-  const where = {
-    AND: [
-      status ? { status } : {},
-      q
-        ? {
-            OR: [
-              { reference: { contains: q } },
-              { user: { email: { contains: q } } },
-              { items: { some: { product: { name: { contains: q } } } } },
-            ],
-          }
-        : {},
-    ],
-  }
+  const orders = await getAdminOrders({
+    search: q || undefined,
+    status: selectedStatus,
+  })
 
-  const [total, rows] = await Promise.all([
-    prisma.order.count({ where }),
-    prisma.order.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: PAGE_SIZE,
-      skip: (page - 1) * PAGE_SIZE,
-      select: {
-        id: true,
-        reference: true,
-        status: true,
-        totalNGN: true,
-        createdAt: true,
-        user: { select: { email: true } },
-        items: {
-          select: {
-            quantity: true,
-            product: { select: { slug: true, name: true } },
-          },
-        },
-      },
-    }),
-  ])
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-
-  // --- server action: update status ---
-  async function updateStatus(formData: FormData) {
-    'use server'
-    const id = String(formData.get('id') || '')
-    const s = String(formData.get('status') || '') as OrderStatus
-    if (!id || !Object.values(OrderStatus).includes(s)) return
-    await prisma.order.update({ where: { id }, data: { status: s } })
-    redirect(`/admin/orders?${new URLSearchParams({ q, status: status || '', page: String(page) })}`)
-  }
+  const formatPrice = (amount: number) =>
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(amount)
 
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Orders</h1>
-
-      <form className="flex flex-wrap items-end gap-3">
-        <div>
-          <label className="mb-1 block text-sm">Search</label>
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="reference, email, product name"
-            className="input w-72"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm">Status</label>
-          <select name="status" defaultValue={status || ''} className="input">
-            <option value="">All</option>
-            {Object.values(OrderStatus).map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-        <button className="btn">Filter</button>
-        <Link
-          href={`/admin/orders/export?${new URLSearchParams({ q, status: status || '' })}`}
-          className="btn btn-secondary"
-        >
-          Export CSV
-        </Link>
-      </form>
-
-      <div className="rounded border">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-gray-50 dark:bg-neutral-900">
-            <tr>
-              <th className="p-2 text-left">Ref</th>
-              <th className="p-2 text-left">Customer</th>
-              <th className="p-2 text-left">Items</th>
-              <th className="p-2 text-left">Total</th>
-              <th className="p-2 text-left">Date</th>
-              <th className="p-2 text-left">Status</th>
-              <th className="p-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((o) => (
-              <tr key={o.id} className="border-b last:border-0">
-                <td className="p-2 font-medium">{o.reference || o.id.slice(0, 8)}</td>
-                <td className="p-2">{o.user?.email || '—'}</td>
-                <td className="p-2">
-                  {o.items.slice(0, 3).map((it, i) => (
-                    <span key={i}>
-                      {it.quantity}×{' '}
-                      <Link className="underline" href={`/product/${it.product.slug}`}>
-                        {it.product.name}
-                      </Link>
-                      {i < o.items.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
-                  {o.items.length > 3 ? ` +${o.items.length - 3} more` : ''}
-                </td>
-                <td className="p-2"><Naira n={o.totalNGN} /></td>
-                <td className="p-2">{new Date(o.createdAt).toLocaleString()}</td>
-                <td className="p-2">{o.status}</td>
-                <td className="p-2">
-                  <form action={updateStatus} className="flex items-center gap-2">
-                    <input type="hidden" name="id" value={o.id} />
-                    <select name="status" defaultValue={o.status} className="input">
-                      {Object.values(OrderStatus).map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    <button className="btn btn-sm">Save</button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr>
-                <td className="p-4 text-center text-gray-600" colSpan={7}>
-                  No orders found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight">Orders</h1>
+        <p className="text-muted-foreground">View and manage customer orders.</p>
       </div>
 
-      {pages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            Page {page} of {pages} · {total} orders
-          </div>
-          <div className="flex items-center gap-2">
-            {page > 1 && (
-              <Link
-                className="btn btn-secondary btn-sm"
-                href={`/admin/orders?${new URLSearchParams({ q, status: status || '', page: String(page - 1) })}`}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+            <CardTitle className="text-lg">All orders</CardTitle>
+            <form className="flex gap-3 w-full sm:w-auto" method="get">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  name="q"
+                  placeholder="Search by reference or email..."
+                  className="pl-9"
+                  defaultValue={q}
+                />
+              </div>
+              <select
+                name="status"
+                defaultValue={String(selectedStatus)}
+                className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                Prev
-              </Link>
-            )}
-            {page < pages && (
-              <Link
-                className="btn btn-secondary btn-sm"
-                href={`/admin/orders?${new URLSearchParams({ q, status: status || '', page: String(page + 1) })}`}
-              >
-                Next
-              </Link>
-            )}
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={String(option.value)}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <Button type="submit" variant="outline" size="sm">
+                Filter
+              </Button>
+            </form>
           </div>
-        </div>
-      )}
-    </section>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="w-24 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="py-8 text-center text-sm text-muted-foreground"
+                    >
+                      No orders found for this filter.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  orders.map((order) => {
+                    const itemsCount = order.items.reduce((total, item) => total + item.quantity, 0)
+                    const statusClass = statusClasses[order.status]
+
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">
+                          {order.reference || order.id.slice(0, 8)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span>{order.user?.name || order.user?.email || "Guest"}</span>
+                            {order.user?.email && (
+                              <span className="text-xs text-muted-foreground">
+                                {order.user.email}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{itemsCount}</TableCell>
+                        <TableCell>{formatPrice(order.totalNGN)}</TableCell>
+                        <TableCell>
+                          <Badge className={statusClass}>
+                            {order.status.toLowerCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {order.createdAt.toLocaleDateString("en-NG", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild variant="outline" size="sm" className="h-8 px-3 text-xs">
+                            <Link href={`/admin/orders/${order.id}`}>View</Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

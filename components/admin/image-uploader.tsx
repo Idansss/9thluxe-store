@@ -1,32 +1,81 @@
 'use client'
 
-import { useState } from 'react'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
-import Image from 'next/image'
+import { useState } from "react"
+import { Upload, X, Image as ImageIcon } from "lucide-react"
+import Image from "next/image"
 
 interface ImageUploaderProps {
   initialImages: string[]
   name: string
 }
 
+// Compress image to reduce file size
+const compressImage = (file: File, maxWidth: number = 1200, quality: number = 0.8): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = (event) => {
+      const img = new window.Image()
+      img.src = event.target?.result as string
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
+
+        // Resize if larger than maxWidth
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width
+          width = maxWidth
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'))
+          return
+        }
+
+        ctx.drawImage(img, 0, 0, width, height)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
+        resolve(compressedDataUrl)
+      }
+      img.onerror = reject
+    }
+    reader.onerror = reject
+  })
+}
+
 export function ImageUploader({ initialImages, name }: ImageUploaderProps) {
   const [images, setImages] = useState<string[]>(initialImages || [])
   const [isDragging, setIsDragging] = useState(false)
+  const [isCompressing, setIsCompressing] = useState(false)
 
-  const handleFileSelect = (files: FileList | null) => {
+  const handleFileSelect = async (files: FileList | null) => {
     if (!files) return
 
-    Array.from(files).slice(0, 4 - images.length).forEach((file) => {
-      if (images.length >= 4) return
-      
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setImages((prev) => [...prev, reader.result as string])
-        }
-        reader.readAsDataURL(file)
-      }
-    })
+    setIsCompressing(true)
+    const filesArray = Array.from(files).slice(0, 4 - images.length)
+    
+    try {
+      const compressedImages = await Promise.all(
+        filesArray.map(async (file) => {
+          if (images.length >= 4) return null
+          if (!file.type.startsWith("image/")) return null
+
+          // Compress image before adding
+          return await compressImage(file)
+        })
+      )
+
+      const validImages = compressedImages.filter((img): img is string => img !== null)
+      setImages((prev) => [...prev, ...validImages])
+    } catch (error) {
+      console.error('Error compressing images:', error)
+    } finally {
+      setIsCompressing(false)
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -42,31 +91,18 @@ export function ImageUploader({ initialImages, name }: ImageUploaderProps) {
   return (
     <div className="space-y-4">
       {/* Hidden input for storing the JSON array */}
-      <input 
-        type="hidden" 
-        name={name} 
-        value={JSON.stringify(images)} 
-      />
-      
+      <input type="hidden" name={name} value={JSON.stringify(images)} />
+
       {/* Current images grid */}
       {images.length > 0 && (
         <div className="grid grid-cols-2 gap-4">
           {images.map((image, index) => (
             <div key={index} className="relative group">
               <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-muted">
-                {image.startsWith('data:') ? (
-                  <img 
-                    src={image} 
-                    alt={`Upload ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+                {image.startsWith("data:") ? (
+                  <img src={image} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
                 ) : (
-                  <Image 
-                    src={image} 
-                    alt={`Preview ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
+                  <Image src={image} alt={`Preview ${index + 1}`} fill className="object-cover" />
                 )}
               </div>
               <button
@@ -94,9 +130,7 @@ export function ImageUploader({ initialImages, name }: ImageUploaderProps) {
           }}
           onDragLeave={() => setIsDragging(false)}
           className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            isDragging
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/50'
+            isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
           }`}
         >
           <input
@@ -117,10 +151,12 @@ export function ImageUploader({ initialImages, name }: ImageUploaderProps) {
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">
-                {isDragging ? 'Drop images here' : 'Click to upload or drag and drop'}
+                {isDragging ? "Drop images here" : "Click to upload or drag and drop"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Upload {4 - images.length} more image{4 - images.length !== 1 ? 's' : ''}
+                {isCompressing 
+                  ? "Compressing images..." 
+                  : `Upload ${4 - images.length} more image${4 - images.length !== 1 ? "s" : ""}`}
               </p>
             </div>
           </div>
@@ -129,5 +165,3 @@ export function ImageUploader({ initialImages, name }: ImageUploaderProps) {
     </div>
   )
 }
-
-

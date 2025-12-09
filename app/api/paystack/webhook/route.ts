@@ -28,6 +28,16 @@ export async function POST(req: NextRequest) {
       })
       // send receipt (best-effort)
       await sendReceipt(order).catch(() => {})
+      
+      // Create notification for admin
+      await prisma.notification.create({
+        data: {
+          type: 'ORDER_PAID',
+          title: 'New Order Payment',
+          message: `Order #${order.reference || order.id.slice(0, 8)} has been paid. Total: ₦${order.totalNGN.toLocaleString()}`,
+          orderId: order.id,
+        }
+      }).catch(() => {}) // Don't fail if notification creation fails
     }
   }
 

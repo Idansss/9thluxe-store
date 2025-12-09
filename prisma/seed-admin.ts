@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  const email = '9thluxe@gmail.com'
+  const email = 'Fàdè@gmail.com'
   const password = 'PASSWORD12'
   const hash = await bcrypt.hash(password, 10)
 
@@ -14,7 +14,7 @@ async function main() {
   if (existing) {
     await prisma.user.update({
       where: { email },
-      data: { passwordHash: hash, name: 'Admin User' },
+      data: { passwordHash: hash, name: 'Admin User', role: 'ADMIN' },
     })
     console.log('✅ Updated admin user password.')
   } else {
@@ -23,6 +23,7 @@ async function main() {
         email, 
         passwordHash: hash, 
         name: 'Admin User',
+        role: 'ADMIN',
         marketingEmails: false,
         smsNotifications: false,
       },

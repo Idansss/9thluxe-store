@@ -1,5 +1,5 @@
 // prisma/seed.ts
-import { PrismaClient, Category } from '@prisma/client'
+import { PrismaClient, ProductCategory } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -11,7 +11,7 @@ async function main() {
       description: 'Stainless steel chronograph, sapphire glass, 5ATM.',
       images: ['/placeholder.png'], // JSON array, safe for SQLite
       priceNGN: 175000,
-      category: Category.WATCHES,
+      category: ProductCategory.WATCHES,
       brand: 'Aurelius',
       stock: 20,
     },
@@ -21,8 +21,8 @@ async function main() {
       description: 'Amber, oud and vanilla. Long lasting.',
       images: ['/placeholder.png'],
       priceNGN: 95000,
-      category: Category.PERFUMES,
-      brand: '9thLuxe',
+      category: ProductCategory.PERFUMES,
+      brand: 'Fàdè',
       stock: 50,
     },
     {
@@ -31,7 +31,7 @@ async function main() {
       description: 'UV400 polarized lenses, unisex.',
       images: ['/placeholder.png'],
       priceNGN: 45000,
-      category: Category.GLASSES,
+      category: ProductCategory.GLASSES,
       brand: 'Vesper',
       stock: 35,
     },

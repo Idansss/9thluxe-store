@@ -1,7 +1,6 @@
 ﻿import { formatPrice } from '@/lib/format'
 // app/checkout/success/page.tsx
 import Link from 'next/link'
-import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { OrderStatus } from '@prisma/client'
 
@@ -43,8 +42,7 @@ export default async function SuccessPage({ searchParams }: PageProps) {
 
   if (isMock) {
     statusLine = 'Mock success (no real charge).'
-    // clear cart cookie in mock mode so UX mirrors real success
-    cookies().delete('cart')
+    // Cart is managed by Zustand store, no need to clear cookie
   } else if (reference) {
     // try to verify with Paystack
     const res = await verifyPaystack(reference)
@@ -53,16 +51,30 @@ export default async function SuccessPage({ searchParams }: PageProps) {
       amountNGN = Math.round(Number(res.data.amount || 0) / 100)
       statusLine = 'Payment verified.'
 
-      // clear cart (payment succeeded)
-      cookies().delete('cart')
+      // Cart is cleared by Zustand store after successful checkout
+      // No need to clear cookie here
 
       // if you stored orders with a reference, mark it PAID
       const order = await prisma.order.findFirst({ where: { reference } })
       if (order && order.status !== OrderStatus.PAID) {
-        await prisma.order.update({
+        const updatedOrder = await prisma.order.update({
           where: { id: order.id },
           data: { status: OrderStatus.PAID, totalNGN: order.totalNGN || amountNGN || order.totalNGN },
         })
+        
+        // Create notification for admin
+        try {
+          await prisma.notification.create({
+            data: {
+              type: 'ORDER_PAID',
+              title: 'New Order Payment',
+              message: `Order #${updatedOrder.reference || updatedOrder.id.slice(0, 8)} has been paid. Total: ₦${updatedOrder.totalNGN.toLocaleString()}`,
+              orderId: updatedOrder.id,
+            }
+          })
+        } catch {
+          // Don't fail if notification creation fails
+        }
       }
     } else {
       statusLine = `Payment not verified: ${res.message || 'unknown error'}`

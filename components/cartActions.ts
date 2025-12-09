@@ -7,13 +7,13 @@ const CART_COOKIE = 'cart'
 const isProd = process.env.NODE_ENV === 'production'
 
 // Cookie settings: HTTP-only (safer), Lax for normal navigations, Secure in prod
-const COOKIE_OPTS: Parameters<ReturnType<typeof cookies>['set']>[2] = {
+const getCookieOpts = () => ({
   path: '/',
   httpOnly: true,
-  sameSite: 'lax',
+  sameSite: 'lax' as const,
   secure: isProd,
   maxAge: 60 * 60 * 24 * 30, // 30 days
-}
+})
 
 /** Internal: parse cookie safely. */
 function parse(raw?: string | null): CartItem[] {
@@ -35,7 +35,8 @@ function parse(raw?: string | null): CartItem[] {
 
 /** Read current cart (server only). */
 export async function getCart(): Promise<CartItem[]> {
-  const raw = cookies().get(CART_COOKIE)?.value ?? null
+  const cookieStore = await cookies()
+  const raw = cookieStore.get(CART_COOKIE)?.value ?? null
   return parse(raw)
 }
 
@@ -49,7 +50,8 @@ async function writeCart(items: CartItem[]) {
     .filter((i) => i.productId)
 
   const value = encodeURIComponent(JSON.stringify(safe))
-  cookies().set(CART_COOKIE, value, COOKIE_OPTS)
+  const cookieStore = await cookies()
+  cookieStore.set(CART_COOKIE, value, getCookieOpts())
 }
 
 /** Replace entire cart. */
@@ -97,5 +99,6 @@ export async function removeFromCart(productId: string) {
 /** Clear everything. */
 export async function clearCart() {
   'use server'
-  cookies().delete(CART_COOKIE)
+  const cookieStore = await cookies()
+  cookieStore.delete(CART_COOKIE)
 }

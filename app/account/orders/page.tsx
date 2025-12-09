@@ -1,126 +1,267 @@
-import Link from "next/link"
-import { OrderStatus } from "@prisma/client"
+import Image from "next/image"
 
-import { auth } from "@/lib/auth"
+import Link from "next/link"
+
+import { Card, CardContent } from "@/components/ui/card"
+
+import { Badge } from "@/components/ui/badge"
+
+import { Button } from "@/components/ui/button"
+
+import { Package } from "lucide-react"
+
+import { requireUser } from "@/lib/session"
+
 import { prisma } from "@/lib/prisma"
+
 import { formatPrice } from "@/lib/format"
+
+
+
+const statusColors: Record<string, string> = {
+
+  PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+
+  PAID: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+
+  SHIPPED: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+
+  DELIVERED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+
+}
+
+
 
 export const dynamic = "force-dynamic"
 
-const STATUS_STYLES: Record<OrderStatus, string> = {
-  PENDING: "bg-amber-100 text-amber-700",
-  PAID: "bg-emerald-100 text-emerald-700",
-  SHIPPED: "bg-blue-100 text-blue-700",
-  DELIVERED: "bg-gray-200 text-gray-800",
-}
+
 
 export default async function OrdersPage() {
-  const session = await auth()
-  const email = session?.user?.email
 
-  if (!email) {
-    return (
-      <div className="rounded-2xl border border-border bg-muted/40 p-6 text-sm text-muted-foreground">
-        Please{" "}
-        <Link href="/auth/signin" className="font-medium text-foreground underline">
-          sign in
-        </Link>{" "}
-        to view your orders.
-      </div>
-    )
-  }
+  // Require authentication - will redirect if not signed in
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: {
-      id: true,
-      orders: {
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          reference: true,
-          status: true,
-          totalNGN: true,
-          createdAt: true,
-          items: {
-            select: {
-              quantity: true,
-              product: { select: { name: true, slug: true } },
-            },
-          },
+  const user = await requireUser()
+
+
+
+  // Fetch orders from database for the current user
+
+  const orders = await (prisma as any).order.findMany({
+
+    where: { userId: user.id },
+
+    include: {
+
+      items: {
+
+        include: {
+
+          product: true,
+
         },
-      },
-    },
-  })
 
-  if (!user) {
-    return (
-      <div className="rounded-2xl border border-border bg-muted/40 p-6 text-sm text-muted-foreground">
-        Account not found.{" "}
-        <Link href="/auth/signin" className="font-medium text-foreground underline">
-          Sign in
-        </Link>{" "}
-        again.
-      </div>
-    )
+      },
+
+    },
+
+    orderBy: { createdAt: "desc" },
+
+  }) as Array<{
+
+    id: string
+
+    status: string
+
+    totalNGN: number
+
+    createdAt: Date
+
+    items: Array<{
+
+      id: string
+
+      product: {
+
+        id: string
+
+        name: string
+
+        images: unknown
+
+      }
+
+    }>
+
+  }>
+
+  // Helper to get first product image
+  const getProductImage = (product: any): string => {
+    try {
+      const images = typeof product.images === 'string' 
+        ? JSON.parse(product.images) 
+        : product.images
+      return Array.isArray(images) && images.length > 0 
+        ? images[0] 
+        : "/placeholder.png"
+    } catch {
+      return "/placeholder.png"
+    }
   }
 
-  const orders = user.orders
+
 
   if (orders.length === 0) {
+
     return (
-      <div className="rounded-2xl border border-border bg-muted/40 p-6 text-sm text-muted-foreground">
-        You have no orders yet.{" "}
-        <Link href="/" className="font-medium text-foreground underline">
-          Start shopping
-        </Link>{" "}
-        to add your first order.
-      </div>
+
+      <Card>
+
+        <CardContent className="py-16 text-center">
+
+          <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+
+          <h2 className="text-lg font-semibold mb-2">No orders yet</h2>
+
+          <p className="text-muted-foreground mb-4">When you make a purchase, your orders will appear here.</p>
+
+          <Button asChild>
+
+            <Link href="/">Start Shopping</Link>
+
+          </Button>
+
+        </CardContent>
+
+      </Card>
+
     )
+
   }
 
+
+
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold text-foreground">Orders</h1>
 
-      <ul className="space-y-4">
-        {orders.map((order) => {
-          const orderDate = new Date(order.createdAt).toLocaleDateString()
-          const orderRef = order.reference || `#${order.id.slice(-6)}`
+    <div className="space-y-4">
 
-          return (
-            <li key={order.id} className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-lg font-semibold">Order History</h2>
+
+      {orders.map((order) => (
+
+        <Card key={order.id}>
+
+          <CardContent className="pt-6">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+
+              <div>
+
                 <div className="flex items-center gap-3">
-                  <span className="font-medium text-foreground">{orderRef}</span>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[order.status]}`}>
+
+                  <span className="font-semibold">{order.id}</span>
+
+                  <Badge className={statusColors[order.status] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"}>
+
                     {order.status}
-                  </span>
+
+                  </Badge>
+
                 </div>
-                <div className="text-sm text-muted-foreground">{orderDate}</div>
+
+                <p className="text-sm text-muted-foreground mt-1">
+
+                  Placed on{" "}
+
+                  {new Date(order.createdAt).toLocaleDateString("en-NG", {
+
+                    year: "numeric",
+
+                    month: "long",
+
+                    day: "numeric",
+
+                  })}
+
+                </p>
+
               </div>
 
-              <div className="mt-2 text-sm text-muted-foreground">
-                Total <span className="font-semibold text-foreground">{formatPrice(order.totalNGN)}</span>
+              <div className="text-right">
+
+                <p className="font-semibold">{formatPrice(order.totalNGN)}</p>
+
+                <p className="text-sm text-muted-foreground">{order.items.length} item(s)</p>
+
               </div>
 
-              {order.items.length > 0 && (
-                <ul className="mt-4 space-y-1 rounded-2xl bg-muted/40 p-4 text-sm text-foreground">
-                  {order.items.map((item, index) => (
-                    <li key={`${order.id}-${index}`}>
-                      {item.quantity} ×{" "}
-                      <Link className="underline transition-colors hover:text-foreground" href={`/product/${item.product.slug}`}>
-                        {item.product.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+            </div>
+
+
+
+            <div className="flex flex-wrap gap-3">
+
+              {order.items.map((item: { id: string; product: { id: string; name: string; images: unknown } }) => (
+
+                <div key={item.id} className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted">
+
+                  <Image
+
+                    src={getProductImage(item.product)}
+
+                    alt={item.product.name}
+
+                    fill
+
+                    className="object-cover"
+
+                    sizes="64px"
+
+                  />
+
+                </div>
+
+              ))}
+
+            </div>
+
+
+
+            <div className="flex gap-2 mt-4">
+
+              <Button variant="outline" size="sm" className="bg-transparent" asChild>
+
+                <Link href={`/account/orders/${order.id}`}>
+
+                  View Details
+
+                </Link>
+
+              </Button>
+
+              {order.status === "DELIVERED" && (
+
+                <Button variant="outline" size="sm" className="bg-transparent" asChild>
+
+                  <Link href={`/account/orders/${order.id}/review`}>
+
+                    Leave Review
+
+                  </Link>
+
+                </Button>
+
               )}
-            </li>
-          )
-        })}
-      </ul>
-    </section>
-  )
-}
 
+            </div>
+
+          </CardContent>
+
+        </Card>
+
+      ))}
+
+    </div>
+
+  )
+
+}

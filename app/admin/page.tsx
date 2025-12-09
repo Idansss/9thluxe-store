@@ -1,135 +1,133 @@
-import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/admin'
-import Link from 'next/link'
-import { Package, Users, TrendingUp, DollarSign } from 'lucide-react'
-import { formatPrice } from '@/lib/format'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DollarSign, Package, ShoppingCart, CheckCircle2 } from "lucide-react"
 
-export const dynamic = 'force-dynamic'
+import { getAdminStats } from "@/lib/queries/stats"
+import { getProductStats } from "@/lib/services/product-service"
+import { getAdminOrders } from "@/lib/services/order-service"
 
-export default async function AdminDashboard() {
-  await requireAdmin()
+export const dynamic = "force-dynamic"
 
-  // Fetch statistics
-  const [totalOrders, totalProducts, totalUsers, recentOrders] = await Promise.all([
-    prisma.order.count(),
-    prisma.product.count(),
-    prisma.user.count(),
-    prisma.order.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: {
-        user: { select: { email: true } },
-      },
-    }),
+export default async function AdminDashboardPage() {
+  const [productStats, adminStats, recentOrders] = await Promise.all([
+    getProductStats(),
+    getAdminStats(),
+    getAdminOrders().then((orders) => orders.slice(0, 5)),
   ])
-
-  const totalRevenue = await prisma.order.aggregate({
-    _sum: { totalNGN: true },
-  })
 
   const stats = [
     {
-      title: 'Total Orders',
-      value: totalOrders,
+      title: "Total Products",
+      value: productStats.totalProducts.toString(),
       icon: Package,
-      color: 'bg-blue-100 text-blue-600',
-      change: '+12%',
     },
     {
-      title: 'Total Products',
-      value: totalProducts,
-      icon: Package,
-      color: 'bg-emerald-100 text-emerald-600',
-      change: '+5%',
+      title: "Active Products",
+      value: productStats.totalActive.toString(),
+      icon: CheckCircle2,
     },
     {
-      title: 'Total Users',
-      value: totalUsers,
-      icon: Users,
-      color: 'bg-purple-100 text-purple-600',
-      change: '+8%',
+      title: "Total Orders",
+      value: adminStats.totalOrders.toString(),
+      icon: ShoppingCart,
     },
     {
-      title: 'Revenue',
-      value: formatPrice(totalRevenue._sum.totalNGN || 0),
+      title: "Revenue (paid)",
+      value: new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 0,
+      }).format(adminStats.totalRevenue),
       icon: DollarSign,
-      color: 'bg-orange-100 text-orange-600',
-      change: '+15%',
     },
   ]
 
   return (
-    <div className="space-y-6">
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-8">
+      <div>
+        <h1 className="font-serif text-2xl md:text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Overview of your Fàdè storefront performance.</p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.title} className="rounded-3xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.title}</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{stat.value}</p>
-                <p className="mt-1 text-xs text-emerald-600">{stat.change}</p>
+          <Card key={stat.title}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{stat.title}</p>
+                  <p className="text-2xl font-semibold mt-1">{stat.value}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <stat.icon className="h-5 w-5 text-primary" />
+                </div>
               </div>
-              <div className={`flex h-12 w-12 items-center justify-center rounded-full ${stat.color}`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Recent Orders */}
-      <div className="rounded-3xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Recent Orders</h2>
-          <Link href="/admin/orders" className="text-sm text-primary hover:underline">
-            View all
-          </Link>
-        </div>
-
-        {recentOrders.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-sm text-muted-foreground">No orders yet</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-border">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Order ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-muted/50">
-                    <td className="px-4 py-3 text-sm text-foreground">{order.reference}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{order.user.email}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-foreground">{formatPrice(order.totalNGN)}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        order.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-800' :
-                        order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                        order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Recent Orders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No orders yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-border text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="py-2 pr-4 text-left">Order</th>
+                      <th className="py-2 px-4 text-left">Customer</th>
+                      <th className="py-2 px-4 text-left">Total</th>
+                      <th className="py-2 px-4 text-left">Status</th>
+                      <th className="py-2 px-4 text-right">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentOrders.map((order) => (
+                      <tr key={order.id} className="border-b border-border/60 last:border-0">
+                        <td className="py-2 pr-4 font-medium">{order.reference || order.id.slice(0, 8)}</td>
+                        <td className="py-2 px-4">
+                          <div className="flex flex-col">
+                            <span>{order.user?.name || order.user?.email || "Guest"}</span>
+                            {order.user?.email && (
+                              <span className="text-xs text-muted-foreground">{order.user.email}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2 px-4">
+                          {new Intl.NumberFormat("en-NG", {
+                            style: "currency",
+                            currency: "NGN",
+                            maximumFractionDigits: 0,
+                          }).format(order.totalNGN)}
+                        </td>
+                        <td className="py-2 px-4">
+                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-muted capitalize">
+                            {order.status.toLowerCase()}
+                          </span>
+                        </td>
+                        <td className="py-2 px-4 text-right text-muted-foreground">
+                          {order.createdAt.toLocaleDateString("en-NG", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
 }
-
-
-

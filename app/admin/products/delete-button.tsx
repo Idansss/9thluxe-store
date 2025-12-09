@@ -3,6 +3,7 @@
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface DeleteButtonProps {
   productId: string
@@ -24,13 +25,23 @@ export function DeleteButton({ productId, productName }: DeleteButtonProps) {
         method: 'DELETE',
       })
 
+      const data = await response.json()
+
       if (response.ok) {
+        toast.success('Product deleted', {
+          description: `"${productName}" has been deleted successfully.`,
+        })
         router.refresh()
       } else {
-        alert('Failed to delete product')
+        // Show the specific error message from the server
+        toast.error('Failed to delete product', {
+          description: data.error || 'An error occurred while deleting the product.',
+        })
       }
     } catch (error) {
-      alert('Failed to delete product')
+      toast.error('Failed to delete product', {
+        description: 'Please try again.',
+      })
     } finally {
       setIsDeleting(false)
     }

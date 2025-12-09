@@ -1,137 +1,145 @@
-import { prisma } from '@/lib/prisma'
-import { ProductCard } from '@/components/ProductCard'
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { FilterControls } from '@/components/FilterControls'
-import { InfiniteScrollProducts } from '@/components/InfiniteScrollProducts'
+import { notFound } from "next/navigation"
 
-const map: Record<string, any> = {
-  watches: 'WATCHES',
-  perfumes: 'PERFUMES',
-  glasses: 'GLASSES',
+import { MainLayout } from "@/components/layout/main-layout"
+
+import { CategoryHeader } from "@/components/category/category-header"
+
+import { CategoryFilters } from "@/components/category/category-filters"
+
+import { ProductGrid } from "@/components/ui/product-grid"
+
+import { dummyProducts, categoryData, brands } from "@/lib/dummy-data"
+
+
+
+interface CategoryPageProps {
+
+  params: Promise<{ slug: string }>
+
 }
 
-const categoryInfo = {
-  watches: { name: 'Watches', emoji: '⌚', description: 'Premium timepieces for every occasion' },
-  perfumes: { name: 'Perfumes', emoji: '💐', description: 'Signature scents that define you' },
-  glasses: { name: 'Eye Glasses', emoji: '🕶️', description: 'Stylish eyewear for vision and style' },
+
+
+export async function generateMetadata({ params }: CategoryPageProps) {
+
+  const { slug } = await params
+
+  const category = categoryData[slug as keyof typeof categoryData]
+
+
+
+  if (!category) {
+
+    return { title: "Category Not Found | Fàdè" }
+
+  }
+
+
+
+  return {
+
+    title: `${category.title} | Fàdè`,
+
+    description: category.description,
+
+  }
+
 }
 
-export default async function CategoryPage({ 
-  params, 
-  searchParams 
-}: { 
-  params: { slug: string }
-  searchParams: { sort?: string; brand?: string }
-}) {
-  const cat = map[params.slug]
-  if (!cat) return notFound()
 
-  const info = categoryInfo[params.slug as keyof typeof categoryInfo]
-  
-  // Build query
-  const where: any = { category: cat }
-  if (searchParams.brand) {
-    where.brand = { contains: searchParams.brand, mode: 'insensitive' }
+
+export default async function CategoryPage({ params }: CategoryPageProps) {
+
+  const { slug } = await params
+
+  const category = categoryData[slug as keyof typeof categoryData]
+
+
+
+  if (!category) {
+
+    notFound()
+
   }
 
-  // Build orderBy
-  let orderBy: any = { createdAt: 'desc' }
-  switch (searchParams.sort) {
-    case 'price-low':
-      orderBy = { priceNGN: 'asc' }
-      break
-    case 'price-high':
-      orderBy = { priceNGN: 'desc' }
-      break
-    case 'rating':
-      orderBy = { ratingAvg: 'desc' }
-      break
-    case 'name':
-      orderBy = { name: 'asc' }
-      break
-  }
 
-  const [products, brands] = await Promise.all([
-    prisma.product.findMany({ 
-      where, 
-      orderBy,
-      take: 12, // Load first 12 for initial render
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        priceNGN: true,
-        images: true,
-        brand: true,
-        stock: true,
-        ratingAvg: true,
-        ratingCount: true,
-        category: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    }),
-    prisma.product.findMany({
-      where: { category: cat },
-      select: { brand: true },
-      distinct: ['brand'],
-    })
-  ])
 
-  const uniqueBrands = brands
-    .map(b => b.brand)
-    .filter((brand): brand is string => Boolean(brand))
-    .sort()
+  const filteredProducts = dummyProducts.filter((p) => p.category === slug)
+
+
 
   return (
-    <div className="container mx-auto max-w-[1200px] px-6 py-10">
-      {/* Breadcrumb */}
-      <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-        <span>/</span>
-        <span className="text-foreground">{info.name}</span>
-      </nav>
 
-      {/* Category Header */}
-      <div className="mb-8">
-        <div className="mb-4 flex items-center gap-4">
-          <div className="text-4xl">{info.emoji}</div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{info.name}</h1>
-            <p className="text-muted-foreground">{info.description}</p>
+    <MainLayout cartItemCount={3}>
+
+      <CategoryHeader title={category.title} subtitle={category.subtitle} description={category.description} />
+
+
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+
+        <div className="flex flex-col lg:flex-row gap-8">
+
+          {/* Sidebar Filters (Desktop) */}
+
+          <aside className="hidden lg:block w-64 shrink-0">
+
+            <CategoryFilters brands={brands} />
+
+          </aside>
+
+
+
+          {/* Main Content */}
+
+          <div className="flex-1">
+
+            {/* Mobile Filters & Sort */}
+
+            <div className="lg:hidden mb-6">
+
+              <CategoryFilters brands={brands} mobile />
+
+            </div>
+
+
+
+            {/* Results Count & Sort (Desktop) */}
+
+            <div className="hidden lg:flex items-center justify-between mb-6">
+
+              <p className="text-sm text-muted-foreground">{filteredProducts.length} products</p>
+
+              <CategoryFilters sortOnly />
+
+            </div>
+
+
+
+            {/* Product Grid */}
+
+            {filteredProducts.length > 0 ? (
+
+              <ProductGrid products={filteredProducts} columns={3} />
+
+            ) : (
+
+              <div className="text-center py-16">
+
+                <p className="text-muted-foreground">No products found in this category.</p>
+
+              </div>
+
+            )}
+
           </div>
+
         </div>
+
       </div>
 
-      {/* Filters and Sorting */}
-      <div className="mb-8">
-        <FilterControls 
-          uniqueBrands={uniqueBrands}
-          currentBrand={searchParams.brand}
-          currentSort={searchParams.sort}
-        />
-      </div>
+    </MainLayout>
 
-      {/* Products with Infinite Scroll */}
-      {products.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
-          <div className="mb-4 text-4xl">🔍</div>
-          <p className="mb-2 text-lg font-semibold text-foreground">No products found</p>
-          <p className="text-sm text-muted-foreground">
-            Try adjusting your filters or{' '}
-            <Link href="/" className="underline hover:text-foreground">browse all products</Link>
-          </p>
-        </div>
-      ) : (
-        <InfiniteScrollProducts
-          initialProducts={products}
-          category={cat}
-          sort={searchParams.sort}
-          brand={searchParams.brand}
-        />
-      )}
-    </div>
   )
+
 }

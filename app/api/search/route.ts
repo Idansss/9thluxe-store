@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 // SQLite note: `mode: 'insensitive'` isn't supported here.
 // We emulate case-insensitive matching by probing a few common variants.
@@ -33,7 +34,10 @@ export async function GET(req: NextRequest) {
     }
 
     const items = await prisma.product.findMany({
-      where: { OR: clauses },
+      where: {
+        OR: clauses,
+        deletedAt: null, // Exclude soft-deleted products
+      },
       select: {
         id: true,
         name: true,
