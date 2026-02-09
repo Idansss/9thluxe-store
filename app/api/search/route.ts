@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// SQLite note: `mode: 'insensitive'` isn't supported here.
+// Note: SQLite doesn't support `mode: 'insensitive'` for some filters; this route avoids relying on it.
 // We emulate case-insensitive matching by probing a few common variants.
 function buildSearchClauses(q: string) {
   const qTrim = q.trim()
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ items: [] })
     }
 
-    // Build a few OR branches to approximate case-insensitive search on SQLite
+    // Build a few OR branches to approximate case-insensitive search without relying on `mode: 'insensitive'`
     const clauses = buildSearchClauses(q)
     if (clauses.length === 0) {
       return NextResponse.json({ items: [] })

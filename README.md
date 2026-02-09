@@ -157,7 +157,7 @@ Fàdè Essence is a complete e-commerce solution featuring:
 - **Next.js API Routes**: Serverless API endpoints
 - **Next.js Server Actions**: Server-side form handling
 - **Prisma**: Type-safe database ORM
-- **SQLite**: Development database (easily switchable to PostgreSQL)
+- **PostgreSQL**: Relational database via Prisma
 - **NextAuth.js v5**: Authentication and session management
 - **bcryptjs**: Password hashing
 
@@ -243,7 +243,7 @@ Fàdè Essence is a complete e-commerce solution featuring:
 
 - **Node.js** 18+ and npm
 - **Git** for version control
-- **SQLite** (included) or **PostgreSQL** for production
+- **PostgreSQL** database (local or hosted)
 
 ### Installation
 
@@ -261,12 +261,12 @@ Fàdè Essence is a complete e-commerce solution featuring:
 3. **Set up environment variables**
    Create a `.env` file in the root directory:
    ```env
-   # Database
-   DATABASE_URL="file:./dev.db"
+    # Database
+    DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DB?pgbouncer=true&connection_limit=1"
 
-   # NextAuth
-   AUTH_SECRET="your-secret-key-here"
-   NEXTAUTH_URL="http://localhost:3000"
+    # NextAuth
+    NEXTAUTH_SECRET="your-secret-key-here"
+    NEXTAUTH_URL="http://localhost:3000"
 
    # Paystack (for payments)
    PAYSTACK_PUBLIC_KEY="your-paystack-public-key"
@@ -282,8 +282,8 @@ Fàdè Essence is a complete e-commerce solution featuring:
 
 4. **Set up the database**
    ```bash
-   npx prisma generate
-   npx prisma db push
+    npx prisma generate
+    npx prisma migrate dev
    ```
 
 5. **Create an admin user**
@@ -309,8 +309,8 @@ Fàdè Essence is a complete e-commerce solution featuring:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | Database connection string | `file:./dev.db` |
-| `AUTH_SECRET` | NextAuth secret key | Generate with `openssl rand -base64 32` |
+| `DATABASE_URL` | Postgres connection string | `postgresql://...` |
+| `NEXTAUTH_SECRET` | NextAuth secret key | Generate with `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Base URL of your application | `http://localhost:3000` |
 
 ### Optional Variables
@@ -428,13 +428,20 @@ The project uses a comprehensive set of reusable UI components built with Radix 
 2. **Import to Vercel**
    - Go to [vercel.com](https://vercel.com)
    - Import your GitHub repository
-   - Add environment variables
+   - Framework preset: **Next.js** (auto-detected)
    - Deploy
 
-3. **Database Setup**
-   - Use Vercel Postgres or external database
-   - Update `DATABASE_URL` in environment variables
-   - Run migrations: `npx prisma migrate deploy`
+3. **Configure environment variables (Project → Settings → Environment Variables)**
+   - `DATABASE_URL` (Postgres) â€” required
+   - `NEXTAUTH_SECRET` â€” required
+   - `NEXTAUTH_URL` â€” required (set to your Vercel domain, e.g. `https://your-app.vercel.app`)
+   - `APP_URL` or `NEXT_PUBLIC_SITE_URL` â€” recommended (used for sitemap links)
+   - `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY` â€” required for payments
+   - `RESEND_API_KEY` â€” required for email
+
+4. **Database Setup**
+   - Create a Postgres database (Vercel Postgres, Neon, Supabase, etc.)
+   - Apply migrations: `npx prisma migrate deploy`
 
 ### Other Platforms
 
@@ -459,6 +466,7 @@ The application can be deployed to any platform supporting Next.js:
 - `npx prisma db push` - Push schema changes
 - `npx prisma studio` - Open Prisma Studio
 - `npx prisma migrate dev` - Create migration
+- `npx prisma migrate deploy` - Apply migrations (prod)
 
 ### Code Style
 
@@ -475,17 +483,16 @@ The application can be deployed to any platform supporting Next.js:
    npx prisma generate
    ```
 
-2. **Database locked**
-   - Stop the dev server
-   - Run `npx prisma generate`
-   - Restart the server
+2. **Database connection errors**
+   - Verify `DATABASE_URL` is set (must be `postgresql://...`)
+   - Run `npx prisma migrate deploy` (prod) or `npx prisma migrate dev` (dev)
 
 3. **Build errors**
    - Clear `.next` folder
    - Run `npm run build` again
 
 4. **Authentication issues**
-   - Check `AUTH_SECRET` is set
+   - Check `NEXTAUTH_SECRET` is set
    - Verify `NEXTAUTH_URL` matches your domain
 
 ## 📄 License
@@ -511,4 +518,5 @@ For support, contact:
 ---
 
 **Built with ❤️ for Fàdè Essence**
+
 

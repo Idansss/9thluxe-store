@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -60,7 +60,7 @@ model Product {
   name         String
   slug         String      @unique
   description  String
-  images       Json        // store image array as JSON for SQLite
+  images       Json        // store image array as JSON
   priceNGN     Int
   oldPriceNGN  Int?
   currency     String      @default("NGN")

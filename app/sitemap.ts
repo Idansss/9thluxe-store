@@ -2,18 +2,26 @@ import { MetadataRoute } from "next"
 import { prisma } from "@/lib/prisma"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.APP_URL ||
+    "http://localhost:3000"
 
-  // Get all products
-  const products = await prisma.product.findMany({
-    where: {
-      deletedAt: null, // Exclude soft-deleted products
-    },
-    select: {
-      slug: true,
-      updatedAt: true,
-    },
-  })
+  // Get all products (best-effort; don't fail the build if DB isn't configured yet).
+  let products: Array<{ slug: string; updatedAt: Date }> = []
+  try {
+    products = await prisma.product.findMany({
+      where: {
+        deletedAt: null, // Exclude soft-deleted products
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+    })
+  } catch {
+    products = []
+  }
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

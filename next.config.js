@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Server Actions body size limit (Next.js 16)
-  // Note: In Next.js 16, serverActions is stable, but bodySizeLimit might need to be set differently
-  // If this doesn't work, remove it and use environment variables or other methods
+  turbopack: {
+    // Avoid accidentally picking up lockfiles outside this repo (monorepo/root inference).
+    root: __dirname,
+  },
 }
-export default nextConfig
+
+module.exports = nextConfig

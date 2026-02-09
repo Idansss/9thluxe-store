@@ -9,7 +9,7 @@ async function main() {
       name: 'Aurelius Black Chrono Watch',
       slug: 'aurelius-black-chrono-watch',
       description: 'Stainless steel chronograph, sapphire glass, 5ATM.',
-      images: ['/placeholder.png'], // JSON array, safe for SQLite
+      images: ['/placeholder.png'], // JSON array
       priceNGN: 175000,
       category: ProductCategory.WATCHES,
       brand: 'Aurelius',
