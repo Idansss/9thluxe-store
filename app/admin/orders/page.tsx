@@ -64,20 +64,20 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         <CardHeader>
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
             <CardTitle className="text-lg">All orders</CardTitle>
-            <form className="flex gap-3 w-full sm:w-auto" method="get">
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <form className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center" method="get">
+              <div className="relative w-full sm:min-w-[300px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   name="q"
                   placeholder="Search by reference or email..."
-                  className="pl-9"
+                  className="h-10 pl-10 pr-3"
                   defaultValue={q}
                 />
               </div>
               <select
                 name="status"
                 defaultValue={String(selectedStatus)}
-                className="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-44"
               >
                 {statusOptions.map((option) => (
                   <option key={option.value} value={String(option.value)}>
@@ -85,7 +85,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                   </option>
                 ))}
               </select>
-              <Button type="submit" variant="outline" size="sm">
+              <Button type="submit" variant="outline" size="sm" className="h-10 px-4">
                 Filter
               </Button>
             </form>
