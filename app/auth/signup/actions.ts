@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { signIn } from "@/lib/auth"
-import { redirect } from "next/navigation"
+import { toSafeAuthErrorMessage } from "@/lib/prisma-error"
 
 export async function signUpAction(formData: FormData) {
   const firstName = formData.get("firstName") as string
@@ -58,7 +58,7 @@ export async function signUpAction(formData: FormData) {
     }
   } catch (error: any) {
     console.error("Sign up error:", error)
-    return { error: error.message || "Failed to create account. Please try again." }
+    return { error: toSafeAuthErrorMessage(error) }
   }
 }
 
