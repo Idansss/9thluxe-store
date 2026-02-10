@@ -443,6 +443,12 @@ The project uses a comprehensive set of reusable UI components built with Radix 
    - Create a Postgres database (Vercel Postgres, Neon, Supabase, etc.)
    - Apply migrations: `npx prisma migrate deploy`
 
+5. **Post-deploy production checks**
+   - Open `https://<your-domain>/api/health`
+   - Confirm response has `"ok": true`
+   - If status is `503`, check `missingCritical` and update Vercel environment variables
+   - Add this URL to an uptime monitor (UptimeRobot, Better Stack, or similar)
+
 ### Other Platforms
 
 The application can be deployed to any platform supporting Next.js:
