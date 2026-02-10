@@ -435,6 +435,7 @@ The project uses a comprehensive set of reusable UI components built with Radix 
    - `DATABASE_URL` (Postgres) â€” required
    - `NEXTAUTH_SECRET` â€” required
    - `NEXTAUTH_URL` â€” required (set to your Vercel domain, e.g. `https://your-app.vercel.app`)
+   - `ADMIN_EMAILS` â€” recommended (comma-separated admin emails, e.g. `fadeessencee@gmail.com`)
    - `APP_URL` or `NEXT_PUBLIC_SITE_URL` â€” recommended (used for sitemap links)
    - `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY` â€” required for payments
    - `RESEND_API_KEY` â€” required for email

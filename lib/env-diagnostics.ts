@@ -7,6 +7,7 @@ const OPTIONAL_ENV_KEYS = [
   "PAYSTACK_PUBLIC_KEY",
   "PAYSTACK_SECRET_KEY",
   "RESEND_API_KEY",
+  "ADMIN_EMAILS",
 ] as const
 
 function hasValue(value: string | undefined): boolean {
