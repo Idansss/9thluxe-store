@@ -15,25 +15,31 @@ import { prisma } from "@/lib/prisma"
 export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
-  // Fetch featured products from database
-  const dbProducts = await prisma.product.findMany({
-    where: {
-      deletedAt: null, // Exclude soft-deleted products
-      OR: [
-        { isBestseller: true },
-        { isNew: true },
-        { isLimited: true },
-        { isFeatured: true },
+  // Fetch featured products from database (best-effort; allow the page to render even if DB isn't ready).
+  let dbProducts: Awaited<ReturnType<typeof prisma.product.findMany>> = []
+  try {
+    dbProducts = await prisma.product.findMany({
+      where: {
+        deletedAt: null, // Exclude soft-deleted products
+        OR: [
+          { isBestseller: true },
+          { isNew: true },
+          { isLimited: true },
+          { isFeatured: true },
+        ],
+      },
+      orderBy: [
+        { isFeatured: "desc" },
+        { isBestseller: "desc" },
+        { ratingAvg: "desc" },
+        { createdAt: "desc" },
       ],
-    },
-    orderBy: [
-      { isFeatured: "desc" },
-      { isBestseller: "desc" },
-      { ratingAvg: "desc" },
-      { createdAt: "desc" },
-    ],
-    take: 8,
-  })
+      take: 8,
+    })
+  } catch (err) {
+    console.error("HomePage: failed to load featured products", err)
+    dbProducts = []
+  }
 
   // Transform database products to match ProductCard format
   const featuredProducts = dbProducts.map((product) => {
