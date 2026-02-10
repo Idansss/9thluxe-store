@@ -11,25 +11,31 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 export default async function FeaturedCollectionsPage() {
-  // Fetch featured products from database (bestsellers, new arrivals, limited edition, or featured)
-  const dbProducts = await prisma.product.findMany({
-    where: {
-      deletedAt: null, // Exclude soft-deleted products
-      OR: [
-        { isBestseller: true },
-        { isNew: true },
-        { isLimited: true },
-        { isFeatured: true },
+  // Fetch featured products (best-effort: avoid crashing route if DB isn't ready).
+  let dbProducts: Awaited<ReturnType<typeof prisma.product.findMany>> = []
+  try {
+    dbProducts = await prisma.product.findMany({
+      where: {
+        deletedAt: null, // Exclude soft-deleted products
+        OR: [
+          { isBestseller: true },
+          { isNew: true },
+          { isLimited: true },
+          { isFeatured: true },
+        ],
+      },
+      orderBy: [
+        { isFeatured: "desc" },
+        { isBestseller: "desc" },
+        { ratingAvg: "desc" },
+        { createdAt: "desc" },
       ],
-    },
-    orderBy: [
-      { isFeatured: "desc" },
-      { isBestseller: "desc" },
-      { ratingAvg: "desc" },
-      { createdAt: "desc" },
-    ],
-    take: 50,
-  })
+      take: 50,
+    })
+  } catch (err) {
+    console.error("FeaturedCollectionsPage: failed to load products", err)
+    dbProducts = []
+  }
 
   // Transform database products to match ProductCard format
   const featuredProducts = dbProducts.map((product) => {
