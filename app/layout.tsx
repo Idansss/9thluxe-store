@@ -6,8 +6,27 @@ import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ["latin"] })
 
+function resolveSiteUrl() {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.APP_URL ||
+    "http://localhost:3000"
+
+  try {
+    return new URL(raw)
+  } catch {
+    try {
+      return new URL(`https://${raw}`)
+    } catch {
+      return new URL("http://localhost:3000")
+    }
+  }
+}
+
+const siteUrl = resolveSiteUrl()
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: siteUrl,
   title: {
     default: "Fàdè Essence | Luxury Watches, Perfumes & Eyeglasses",
     template: "%s | Fàdè Essence",
@@ -20,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_NG",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+    url: siteUrl.toString(),
     siteName: "Fàdè Essence",
     title: "Fàdè Essence | Luxury Watches, Perfumes & Eyeglasses",
     description: "Discover premium luxury watches, exquisite perfumes, and designer eyeglasses at Fàdè Essence.",
