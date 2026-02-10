@@ -7,6 +7,7 @@ export type SessionUser = {
   id: string
   name: string | null
   email: string
+  role: "USER" | "ADMIN"
 }
 
 /**
@@ -23,7 +24,7 @@ export async function requireUser(): Promise<SessionUser> {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, role: true },
   })
 
   if (!user) {

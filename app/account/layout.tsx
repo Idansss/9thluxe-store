@@ -7,6 +7,7 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { AccountSidebar } from "@/components/account/account-sidebar"
 
 import { requireUser } from "@/lib/session"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
 
@@ -22,7 +23,10 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
   // Require authentication - will redirect to sign in if not authenticated
 
-  await requireUser()
+  const user = await requireUser()
+  if (user.role === "ADMIN") {
+    redirect("/admin")
+  }
 
   return (
 
