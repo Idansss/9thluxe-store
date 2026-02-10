@@ -57,6 +57,9 @@ export async function signUpAction(formData: FormData) {
       throw error
     }
   } catch (error: any) {
+    if (error?.digest?.startsWith("NEXT_REDIRECT")) {
+      throw error
+    }
     console.error("Sign up error:", error)
     return { error: toSafeAuthErrorMessage(error) }
   }
