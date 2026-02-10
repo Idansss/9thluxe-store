@@ -71,27 +71,27 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         <CardHeader className="border-b border-border">
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-semibold">All products</CardTitle>
-            <form className="flex gap-3 w-full sm:w-auto" method="get">
-              <div className="relative flex-1">
-                <PackageSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <form className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center" method="get">
+              <div className="relative flex-1 sm:min-w-[300px]">
+                <PackageSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   name="q"
                   defaultValue={q}
                   placeholder="Search by name or brand..."
-                  className="pl-9"
+                  className="h-10 pl-10 pr-3"
                 />
               </div>
               <select
                 name="category"
                 defaultValue={categorySlug}
-                className="flex h-10 w-36 rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-44"
               >
                 <option value="all">All categories</option>
                 <option value="watches">Watches</option>
                 <option value="perfumes">Perfumes</option>
                 <option value="eyeglasses">Eyeglasses</option>
               </select>
-              <Button type="submit" variant="outline" size="sm">
+              <Button type="submit" variant="outline" size="sm" className="h-10 px-4">
                 Filter
               </Button>
             </form>
