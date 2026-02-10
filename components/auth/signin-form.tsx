@@ -186,7 +186,7 @@ export function SignInForm() {
 
             </div>
 
-            <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
+            <Link href="/auth/reset" className="text-sm text-primary hover:underline">
 
               Forgot password?
 
