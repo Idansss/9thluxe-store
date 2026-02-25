@@ -50,6 +50,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
   const [quantity, setQuantity] = React.useState(1)
 
+  const addItem = useCartStore((state) => state.addItem)
   const toggleWishlist = useWishlistStore((state) => state.toggleItem)
 
   const isInWishlist = useWishlistStore((state) => state.isInWishlist(product.id))
@@ -97,7 +98,24 @@ export function ProductInfo({ product }: ProductInfoProps) {
         body: JSON.stringify({ productId: product.id, quantity }),
       })
       if (!res.ok) throw new Error("Failed to add")
+
+      // Optimistically update client cart so /cart shows the item immediately
+      addItem(
+        {
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          brand: product.brand,
+          price: product.price,
+          image: product.image,
+        },
+        quantity,
+        product.stockCount,
+      )
+
+      // Then sync from server cookie to keep things in lockstep
       await useCartStore.getState().syncFromServer()
+
       toast.success("Added to cart", {
         description: `${quantity} × ${product.name} added to your cart.`,
       })

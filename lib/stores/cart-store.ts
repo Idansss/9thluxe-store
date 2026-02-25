@@ -123,7 +123,10 @@ export const useCartStore = create<CartStore>()((set, get) => ({
   },
   syncFromServer: async () => {
     try {
-      const res = await fetch("/api/cart/summary", { credentials: "include" })
+      const res = await fetch("/api/cart/summary", {
+        credentials: "include",
+        cache: "no-store",
+      })
       const data = await res.json()
       get().setItemsFromServer(data.items ?? [])
     } catch {
