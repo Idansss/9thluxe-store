@@ -180,17 +180,21 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       {/* Brand */}
 
-      <Link
+      {product.brand ? (
 
-        href={`/brand/${product.brand?.toLowerCase().replace(" ", "-") || "#"}`}
+        <Link
 
-        className="text-sm font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+          href={`/shop?brand=${encodeURIComponent(product.brand)}`}
 
-      >
+          className="text-sm font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
 
-        {product.brand}
+        >
 
-      </Link>
+          {product.brand}
+
+        </Link>
+
+      ) : null}
 
 
 

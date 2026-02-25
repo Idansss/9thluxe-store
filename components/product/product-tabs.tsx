@@ -2,11 +2,37 @@
 
 
 
+import * as React from "react"
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { Card } from "@/components/ui/card"
 
 import { RatingStars } from "@/components/ui/rating-stars"
+
+import { Button } from "@/components/ui/button"
+
+import { Loader2, MessageSquare } from "lucide-react"
+
+import Link from "next/link"
+
+
+
+interface Review {
+
+  id: string
+
+  rating: number
+
+  comment: string | null
+
+  displayName: string | null
+
+  createdAt: string
+
+  user: { name: string | null }
+
+}
 
 
 
@@ -16,63 +42,53 @@ interface ProductTabsProps {
 
   specifications: { label: string; value: string }[]
 
+  productId: string
+
+  productSlug: string
+
 }
 
 
 
-const dummyReviews = [
+export function ProductTabs({ description, specifications, productId, productSlug }: ProductTabsProps) {
 
-  {
+  const [reviews, setReviews] = React.useState<Review[]>([])
 
-    id: "1",
+  const [reviewsLoaded, setReviewsLoaded] = React.useState(false)
 
-    author: "Sarah M.",
-
-    rating: 5,
-
-    date: "2024-01-15",
-
-    content:
-
-      "Absolutely stunning quality. The craftsmanship is impeccable and it exceeded all my expectations. Worth every naira!",
-
-  },
-
-  {
-
-    id: "2",
-
-    author: "James O.",
-
-    rating: 4,
-
-    date: "2024-01-10",
-
-    content:
-
-      "Beautiful piece. Delivery was fast and packaging was premium. Only giving 4 stars because of minor sizing issue.",
-
-  },
-
-  {
-
-    id: "3",
-
-    author: "Adaeze K.",
-
-    rating: 5,
-
-    date: "2024-01-05",
-
-    content: "My husband loves this gift! The attention to detail is remarkable. Will definitely shop here again.",
-
-  },
-
-]
+  const [reviewsLoading, setReviewsLoading] = React.useState(false)
 
 
 
-export function ProductTabs({ description, specifications }: ProductTabsProps) {
+  const loadReviews = React.useCallback(async () => {
+
+    if (reviewsLoaded) return
+
+    setReviewsLoading(true)
+
+    try {
+
+      const res = await fetch(`/api/reviews?productId=${productId}`)
+
+      const data = await res.json()
+
+      setReviews(data.reviews ?? [])
+
+    } catch {
+
+      setReviews([])
+
+    } finally {
+
+      setReviewsLoading(false)
+
+      setReviewsLoaded(true)
+
+    }
+
+  }, [productId, reviewsLoaded])
+
+
 
   return (
 
@@ -110,6 +126,8 @@ export function ProductTabs({ description, specifications }: ProductTabsProps) {
 
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-3"
 
+          onClick={loadReviews}
+
         >
 
           Reviews
@@ -146,17 +164,25 @@ export function ProductTabs({ description, specifications }: ProductTabsProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
 
-          {specifications.map((spec) => (
+          {specifications.length === 0 ? (
 
-            <div key={spec.label} className="flex justify-between py-3 border-b border-border">
+            <p className="text-muted-foreground text-sm col-span-2">No specifications available for this product.</p>
 
-              <span className="text-muted-foreground">{spec.label}</span>
+          ) : (
 
-              <span className="font-medium">{spec.value}</span>
+            specifications.map((spec) => (
 
-            </div>
+              <div key={spec.label} className="flex justify-between py-3 border-b border-border">
 
-          ))}
+                <span className="text-muted-foreground">{spec.label}</span>
+
+                <span className="font-medium">{spec.value}</span>
+
+              </div>
+
+            ))
+
+          )}
 
         </div>
 
@@ -166,45 +192,81 @@ export function ProductTabs({ description, specifications }: ProductTabsProps) {
 
       <TabsContent value="reviews" className="pt-6">
 
-        <div className="space-y-6">
+        {reviewsLoading ? (
 
-          {dummyReviews.map((review) => (
+          <div className="flex items-center gap-2 text-muted-foreground py-8">
 
-            <Card key={review.id} className="p-6">
+            <Loader2 className="h-4 w-4 animate-spin" />
 
-              <div className="flex items-start justify-between mb-3">
+            <span>Loading reviews…</span>
 
-                <div>
+          </div>
 
-                  <p className="font-medium">{review.author}</p>
+        ) : reviews.length === 0 && reviewsLoaded ? (
 
-                  <p className="text-sm text-muted-foreground">
+          <div className="text-center py-12 space-y-4">
 
-                    {new Date(review.date).toLocaleDateString("en-NG", {
+            <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground opacity-40" />
 
-                      year: "numeric",
+            <div>
 
-                      month: "long",
+              <p className="font-medium">No reviews yet</p>
 
-                      day: "numeric",
+              <p className="text-sm text-muted-foreground mt-1">Be the first to share your experience with this product.</p>
 
-                    })}
+            </div>
 
-                  </p>
+            <Button asChild variant="outline" className="bg-transparent">
+
+              <Link href={`/product/${productSlug}#write-review`}>Write a Review</Link>
+
+            </Button>
+
+          </div>
+
+        ) : (
+
+          <div className="space-y-6">
+
+            {reviews.map((review) => (
+
+              <Card key={review.id} className="p-6">
+
+                <div className="flex items-start justify-between mb-3">
+
+                  <div>
+
+                    <p className="font-medium">{review.displayName || review.user.name || "Verified Buyer"}</p>
+
+                    <p className="text-sm text-muted-foreground">
+
+                      {new Date(review.createdAt).toLocaleDateString("en-NG", {
+
+                        year: "numeric",
+
+                        month: "long",
+
+                        day: "numeric",
+
+                      })}
+
+                    </p>
+
+                  </div>
+
+                  <RatingStars rating={review.rating} showCount={false} size="sm" />
 
                 </div>
 
-                <RatingStars rating={review.rating} showCount={false} size="sm" />
+                {review.comment && <p className="text-muted-foreground">{review.comment}</p>}
 
-              </div>
+              </Card>
 
-              <p className="text-muted-foreground">{review.content}</p>
+            ))}
 
-            </Card>
+          </div>
 
-          ))}
-
-        </div>
+        )}
 
       </TabsContent>
 

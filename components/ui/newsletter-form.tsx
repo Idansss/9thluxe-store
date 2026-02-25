@@ -30,21 +30,37 @@ export function NewsletterForm({ className, variant = "default" }: NewsletterFor
 
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
 
     e.preventDefault()
 
     setStatus("loading")
 
-    // Simulate API call
+    try {
 
-    setTimeout(() => {
+      const res = await fetch("/api/newsletter/subscribe", {
+
+        method: "POST",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify({ email }),
+
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error || "Failed to subscribe")
 
       setStatus("success")
 
       setEmail("")
 
-    }, 1000)
+    } catch {
+
+      setStatus("error")
+
+    }
 
   }
 
@@ -99,6 +115,22 @@ export function NewsletterForm({ className, variant = "default" }: NewsletterFor
           <p className="text-primary font-medium">Thank you for subscribing!</p>
 
           <p className="text-sm text-muted-foreground mt-1">You'll receive our latest updates and exclusive offers.</p>
+
+        </div>
+
+      ) : status === "error" ? (
+
+        <div className="py-4">
+
+          <p className="text-destructive font-medium">Something went wrong.</p>
+
+          <p className="text-sm text-muted-foreground mt-1">
+
+            Please try again or email us at{" "}
+
+            <a href="mailto:fadeessencee@gmail.com" className="underline">fadeessencee@gmail.com</a>.
+
+          </p>
 
         </div>
 

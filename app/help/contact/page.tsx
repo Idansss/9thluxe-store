@@ -131,18 +131,13 @@ export default function ContactPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Address
+                  Location
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-2">Visit our office</p>
-                <p className="font-medium">
-                  123 Luxury Avenue
-                  <br />
-                  Victoria Island, Lagos
-                  <br />
-                  Nigeria
-                </p>
+                <p className="text-sm text-muted-foreground mb-2">We operate online across Nigeria</p>
+                <p className="font-medium">Lagos, Nigeria</p>
+                <p className="text-sm text-muted-foreground mt-1">Nationwide delivery available</p>
               </CardContent>
             </Card>
 

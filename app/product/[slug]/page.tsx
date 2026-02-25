@@ -157,7 +157,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductInfo product={productDetails} />
         </div>
 
-        <ProductTabs description={productDetails.description} specifications={productDetails.specifications} />
+        <ProductTabs
+          description={productDetails.description}
+          specifications={productDetails.specifications}
+          productId={productDetails.id}
+          productSlug={productDetails.slug}
+        />
 
         {relatedProducts.length > 0 && <RelatedProducts products={relatedProducts} />}
       </div>
