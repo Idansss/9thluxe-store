@@ -4,17 +4,14 @@
  * stored in the product data.
  */
 export const brandSlugMap: Record<string, string> = {
-  "rolex": "Rolex",
-  "cartier": "Cartier",
-  "omega": "Omega",
   "tom-ford": "Tom Ford",
   "creed": "Creed",
   "dior": "Dior",
   "gucci": "Gucci",
-  "ray-ban": "Ray-Ban",
-  "patek-philippe": "Patek Philippe",
   "chanel": "Chanel",
   "prada": "Prada",
+  "byredo": "Byredo",
+  "jo-malone": "Jo Malone",
 }
 
 /**

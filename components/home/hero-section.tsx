@@ -1,42 +1,19 @@
 import Link from "next/link"
-
-import Image from "next/image"
-
 import { Button } from "@/components/ui/button"
-
 import { ArrowRight } from "lucide-react"
 
-
-
 export function HeroSection() {
-
   return (
-
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-
-      {/* Background Image */}
-
-      <div className="absolute inset-0">
-
-        <Image
-
-          src="/fade-hero-luxury-collage.jpg"
-
-          alt="Fàdè luxury collection"
-
-          fill
-
-          className="object-cover object-center"
-
-          priority
-
-          sizes="100vw"
-
-        />
-
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/30 dark:from-background/98 dark:via-background/80 dark:to-background/40" />
-
-      </div>
+      {/* Clear gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/30 dark:to-muted/20" />
+      {/* Subtle dot pattern for depth */}
+      <div
+        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] bg-[radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] bg-[length:40px_40px]"
+        aria-hidden
+      />
+      {/* Soft glow accent */}
+      <div className="absolute top-1/4 right-0 w-1/2 h-1/2 bg-gradient-to-l from-primary/5 to-transparent dark:from-primary/10 pointer-events-none" />
 
 
 

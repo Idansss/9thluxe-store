@@ -9,14 +9,14 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const brands = [
-  { name: "Rolex", slug: "rolex", description: "Swiss Excellence", featured: true },
-  { name: "Cartier", slug: "cartier", description: "French Luxury", featured: true },
-  { name: "Omega", slug: "omega", description: "Precision Time", featured: true },
-  { name: "Tom Ford", slug: "tom-ford", description: "Modern Elegance", featured: false },
-  { name: "Creed", slug: "creed", description: "Royal Fragrances", featured: false },
-  { name: "Dior", slug: "dior", description: "Parisian Chic", featured: false },
-  { name: "Gucci", slug: "gucci", description: "Italian Style", featured: false },
-  { name: "Ray-Ban", slug: "ray-ban", description: "Iconic Eyewear", featured: false },
+  { name: "Creed", slug: "creed", description: "Royal Fragrances", featured: true },
+  { name: "Tom Ford", slug: "tom-ford", description: "Modern Elegance", featured: true },
+  { name: "Dior", slug: "dior", description: "Parisian Fragrance", featured: true },
+  { name: "Chanel", slug: "chanel", description: "Timeless Icons", featured: false },
+  { name: "Gucci", slug: "gucci", description: "Italian Luxury", featured: false },
+  { name: "Prada", slug: "prada", description: "Refined Scents", featured: false },
+  { name: "Byredo", slug: "byredo", description: "Nordic Perfumery", featured: false },
+  { name: "Jo Malone", slug: "jo-malone", description: "British Elegance", featured: false },
 ]
 
 export function BrandShowcase() {
@@ -30,7 +30,7 @@ export function BrandShowcase() {
           <h2 className="font-serif text-3xl md:text-4xl font-semibold tracking-tight mb-2">
             Our Premium Brands
           </h2>
-          <p className="text-muted-foreground">Discover luxury from the world's most prestigious brands</p>
+          <p className="text-muted-foreground">Discover luxury fragrances from the world's most prestigious houses</p>
         </div>
         <Button variant="ghost" className="hidden lg:flex" asChild>
           <Link href="/brands">

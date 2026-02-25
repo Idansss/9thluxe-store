@@ -5,9 +5,8 @@
 import * as React from "react"
 
 import Link from "next/link"
-import Image from "next/image"
-
 import { usePathname } from "next/navigation"
+import { Logo } from "@/components/logo"
 
 import { Search, Heart, User, ShoppingBag, Menu, X } from "lucide-react"
 
@@ -78,30 +77,7 @@ export function Header(_props: HeaderProps) {
         <div className="flex h-16 items-center justify-between gap-4">
 
           {/* Brand */}
-
-          <Link
-
-            href="/"
-
-            className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight hover:text-accent transition-colors"
-
-          >
-
-            {/* Logo - Add your logo image here */}
-            <div className="relative h-8 w-8 shrink-0">
-              <Image
-                src="/logo.png"
-                alt="Fàdè Logo"
-                fill
-                className="object-contain"
-                sizes="32px"
-                priority
-              />
-            </div>
-
-            <span>Fàdè</span>
-
-          </Link>
+          <Logo href="/" />
 
 
 
@@ -237,18 +213,7 @@ export function Header(_props: HeaderProps) {
 
                   <div className="flex items-center justify-between mb-8">
 
-                    <Link href="/" className="flex items-center gap-2 font-serif text-xl font-semibold">
-                      <div className="relative h-7 w-7 shrink-0">
-                        <Image
-                          src="/logo.png"
-                          alt="Fàdè Logo"
-                          fill
-                          className="object-contain"
-                          sizes="28px"
-                        />
-                      </div>
-                      <span>Fàdè</span>
-                    </Link>
+                    <Logo href="/" compact />
 
                     <SheetClose asChild>
 
