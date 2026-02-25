@@ -96,13 +96,27 @@ export function NewsletterEditor({ subscriberCount, campaignId, initialData, onS
       const data = await response.json()
 
       if (response.ok && data.success) {
-        toast.success(`Newsletter sent! ${data.sent} sent, ${data.failed} failed`)
+        const failed = data.failed ?? 0
+        const sent = data.sent ?? 0
+        if (failed > 0 && data.failures?.length) {
+          toast.warning(
+            `Sent to ${sent}; ${failed} failed`,
+            { description: data.failures.slice(0, 3).join(" — ") }
+          )
+        } else {
+          toast.success(`Newsletter sent to ${sent} subscriber${sent !== 1 ? "s" : ""}`)
+        }
+        if (data.hint) {
+          toast.info("Delivery tip", { description: data.hint })
+        }
         setSubject("")
         setHtmlContent("")
         setTextContent("")
         if (onSave) onSave()
       } else {
-        toast.error(data.error || "Failed to send newsletter")
+        toast.error(data.error || "Failed to send newsletter", {
+          description: data.details ? String(data.details) : undefined,
+        })
       }
     } catch (error) {
       console.error("Send newsletter error:", error)

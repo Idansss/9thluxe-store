@@ -108,7 +108,9 @@ export function CheckoutContent({ items: propItems = [] }: CheckoutContentProps)
 
     const subtotalNGN = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0)
 
-    const baseShippingNGN = deliveryMethod === "express" ? 35000 : 15000
+    const FREE_SHIPPING_THRESHOLD = 500_000
+
+    const baseShippingNGN = subtotalNGN >= FREE_SHIPPING_THRESHOLD ? 0 : deliveryMethod === "express" ? 35000 : 15000
 
     const giftWrappingNGN = formData.giftWrapping ? 2500 : 0
 

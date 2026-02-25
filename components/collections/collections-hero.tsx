@@ -1,13 +1,23 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
 export function CollectionsHero() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = React.useState("")
+
+  const runSearch = () => {
+    const q = searchQuery.trim()
+    if (q) {
+      router.push(`/shop?q=${encodeURIComponent(q)}`)
+    } else {
+      router.push("/shop")
+    }
+  }
 
   return (
     <div className="relative bg-gradient-to-br from-background via-background to-muted/30 border-b border-border">
@@ -35,15 +45,14 @@ export function CollectionsHero() {
                 placeholder="Search collections, brands, or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), runSearch())}
                 className="h-14 pl-12 pr-32 text-base rounded-xl border-2 focus:border-primary"
               />
               <Button
+                type="button"
                 size="lg"
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-6"
-                onClick={() => {
-                  // Handle search
-                  console.log("Searching for:", searchQuery)
-                }}
+                onClick={runSearch}
               >
                 Search
               </Button>

@@ -33,7 +33,9 @@ export async function POST(request: Request) {
       )
     }
 
-    const fromAddress = process.env.NEWSLETTER_FROM_EMAIL?.trim() || 'Fàdè Essence <onboarding@resend.dev>'
+    const defaultFrom = 'Fàdè Essence <onboarding@resend.dev>'
+    const fromAddress = process.env.NEWSLETTER_FROM_EMAIL?.trim() || defaultFrom
+    const usingDefaultSender = fromAddress === defaultFrom || fromAddress.includes('onboarding@resend.dev')
     const plaintextFallback = text?.trim() || stripHtml(html)
     const resend = new Resend(resendKey)
 
@@ -87,6 +89,9 @@ export async function POST(request: Request) {
       sent: successCount,
       failed: failureCount,
       failures,
+      ...(usingDefaultSender && {
+        hint: 'Using Resend default sender. Verify a domain in Resend and set NEWSLETTER_FROM_EMAIL so all subscribers receive emails.',
+      }),
     })
   } catch (error) {
     console.error('Newsletter send error:', error)

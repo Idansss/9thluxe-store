@@ -11,8 +11,11 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 
+/** Radix Select does not allow value=""; use sentinel and map to "" for form submit */
+const EMPTY = "__all__"
+
 const NOTE_OPTIONS = [
-  { value: "", label: "Any scent" },
+  { value: EMPTY, label: "Any scent" },
   { value: "oud", label: "Oud" },
   { value: "rose", label: "Rose" },
   { value: "citrus", label: "Citrus" },
@@ -47,10 +50,14 @@ type ShopFiltersFormProps = {
 const formInputBase =
   "flex h-11 w-full items-center justify-between rounded-xl border border-border/80 bg-muted/40 px-4 text-sm text-foreground shadow-sm transition-colors hover:bg-muted/60 focus:border-primary focus:bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 [&>svg]:text-muted-foreground"
 
+function toFormValue(v: string): string {
+  return v === EMPTY ? "" : v
+}
+
 export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
-  const [category, setCategory] = React.useState(params.category || "")
-  const [brand, setBrand] = React.useState(params.brand || "")
-  const [note, setNote] = React.useState(params.note || "")
+  const [category, setCategory] = React.useState(params.category && params.category !== "" ? params.category : EMPTY)
+  const [brand, setBrand] = React.useState(params.brand && params.brand !== "" ? params.brand : EMPTY)
+  const [note, setNote] = React.useState(params.note && params.note !== "" ? params.note : EMPTY)
   const [sort, setSort] = React.useState(params.sort || "newest")
 
   return (
@@ -59,9 +66,9 @@ export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
       method="get"
     >
       {params.q && <input type="hidden" name="q" value={params.q} />}
-      <input type="hidden" name="category" value={category} />
-      <input type="hidden" name="brand" value={brand} />
-      <input type="hidden" name="note" value={note} />
+      <input type="hidden" name="category" value={toFormValue(category)} />
+      <input type="hidden" name="brand" value={toFormValue(brand)} />
+      <input type="hidden" name="note" value={toFormValue(note)} />
       <input type="hidden" name="sort" value={sort} />
 
       <div className="space-y-4">
@@ -73,7 +80,7 @@ export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
             <SelectValue placeholder="All" />
           </SelectTrigger>
           <SelectContent className="bg-popover text-popover-foreground border-border">
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value={EMPTY}>All</SelectItem>
             <SelectItem value="perfumes">Perfumes</SelectItem>
           </SelectContent>
         </Select>
@@ -86,7 +93,7 @@ export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
             <SelectValue placeholder="All brands" />
           </SelectTrigger>
           <SelectContent className="bg-popover text-popover-foreground border-border">
-            <SelectItem value="">All brands</SelectItem>
+            <SelectItem value={EMPTY}>All brands</SelectItem>
             {brands.map((b) => (
               <SelectItem key={b} value={b}>
                 {b}
@@ -104,7 +111,7 @@ export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
           </SelectTrigger>
           <SelectContent className="bg-popover text-popover-foreground border-border">
             {NOTE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value || "any"} value={opt.value}>
+              <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
             ))}
