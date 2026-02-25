@@ -8,7 +8,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Logo } from "@/components/logo"
 
-import { Search, Heart, User, ShoppingBag, Menu, X } from "lucide-react"
+import { Heart, User, ShoppingBag, Menu, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 

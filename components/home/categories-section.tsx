@@ -2,7 +2,7 @@ import { CategoryCard } from "@/components/ui/category-card"
 
 import { SectionHeader } from "@/components/ui/section-header"
 
-import { categoryData } from "@/lib/dummy-data"
+import { categoryData } from "@/lib/category-data"
 
 
 

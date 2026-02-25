@@ -1,70 +1,36 @@
 import { notFound } from "next/navigation"
-
 import { MainLayout } from "@/components/layout/main-layout"
-
 import { CategoryHeader } from "@/components/category/category-header"
-
 import { CategoryFilters } from "@/components/category/category-filters"
-
 import { ProductGrid } from "@/components/ui/product-grid"
-
-import { dummyProducts, categoryData, brands } from "@/lib/dummy-data"
-
-
+import { categoryData } from "@/lib/category-data"
+import { getProductsByCategory } from "@/lib/queries/products"
 
 interface CategoryPageProps {
-
   params: Promise<{ slug: string }>
-
 }
-
-
 
 export async function generateMetadata({ params }: CategoryPageProps) {
-
   const { slug } = await params
-
   const category = categoryData[slug as keyof typeof categoryData]
-
-
-
   if (!category) {
-
     return { title: "Category Not Found | Fàdè" }
-
   }
-
-
-
   return {
-
     title: `${category.title} | Fàdè`,
-
     description: category.description,
-
   }
-
 }
 
-
-
 export default async function CategoryPage({ params }: CategoryPageProps) {
-
   const { slug } = await params
-
   const category = categoryData[slug as keyof typeof categoryData]
-
-
-
   if (!category) {
-
     notFound()
-
   }
 
-
-
-  const filteredProducts = dummyProducts.filter((p) => p.category === slug)
+  const filteredProducts = await getProductsByCategory(slug)
+  const brands = ["All Brands", ...[...new Set(filteredProducts.map((p) => p.brand).filter(Boolean))].sort()]
 
 
 
