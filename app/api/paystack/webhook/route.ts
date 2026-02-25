@@ -21,14 +21,49 @@ export async function POST(req: NextRequest) {
     const ref = evt?.data?.reference as string | undefined
     const orderId = evt?.data?.metadata?.orderId as string | undefined
     if (orderId) {
-      const order = await prisma.order.update({
+      // Fetch order items first so we can decrement stock
+      const existingOrder = await prisma.order.findUnique({
         where: { id: orderId },
-        data: { status: 'PAID', reference: ref ?? null },
-        include: { user: true, items: { include: { product: true } }, coupon: true }
+        select: { status: true, couponId: true, items: { select: { productId: true, quantity: true } } },
       })
+
+      // Guard: skip if already paid (duplicate webhook)
+      if (!existingOrder || existingOrder.status === 'PAID') {
+        return NextResponse.json({ ok: true })
+      }
+
+      // Atomically: mark PAID, decrement stock, increment coupon usage
+      const order = await prisma.$transaction(async (tx) => {
+        const updated = await tx.order.update({
+          where: { id: orderId },
+          data: { status: 'PAID', reference: ref ?? null },
+          include: { user: true, items: { include: { product: true } }, coupon: true },
+        })
+
+        // Decrement stock for each ordered product
+        await Promise.all(
+          existingOrder.items.map((item) =>
+            tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } },
+            })
+          )
+        )
+
+        // Increment coupon usage if one was applied
+        if (existingOrder.couponId) {
+          await tx.coupon.update({
+            where: { id: existingOrder.couponId },
+            data: { usedCount: { increment: 1 } },
+          })
+        }
+
+        return updated
+      })
+
       // send receipt (best-effort)
       await sendReceipt(order).catch(() => {})
-      
+
       // Create notification for admin
       await prisma.notification.create({
         data: {

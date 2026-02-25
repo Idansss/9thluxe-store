@@ -1,10 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Lock, ArrowLeft } from "lucide-react"
+import { Lock, ArrowLeft, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useCheckoutStore } from "@/lib/stores/checkout-store"
 
@@ -139,7 +138,7 @@ export function PaymentForm({ onBack, onComplete, total, orderPayload }: Payment
         <Button type="submit" className="flex-1" disabled={isProcessing}>
           {isProcessing ? (
             <>
-              <Lock className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Redirecting to Paystack...
             </>
           ) : (

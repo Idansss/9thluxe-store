@@ -27,12 +27,13 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[]
   couponCode: string | null
+  couponId: string | null
   discount: number
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number, maxStock?: number) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number, maxStock?: number) => void
   clearCart: () => void
-  applyCoupon: (code: string, subtotal: number) => boolean
+  applyCoupon: (code: string, subtotal: number) => Promise<boolean>
   removeCoupon: () => void
   getTotalPrice: () => number
   getTotalItems: () => number
@@ -46,6 +47,7 @@ interface CartStore {
 export const useCartStore = create<CartStore>()((set, get) => ({
   items: [],
   couponCode: null,
+  couponId: null,
   discount: 0,
   addItem: (item, quantity = 1, maxStock) => {
     set((state) => {
@@ -85,19 +87,25 @@ export const useCartStore = create<CartStore>()((set, get) => ({
     }))
   },
   clearCart: () => {
-    set({ items: [], couponCode: null, discount: 0 })
+    set({ items: [], couponCode: null, couponId: null, discount: 0 })
   },
-  applyCoupon: (code, subtotal) => {
-    const upperCode = code.trim().toUpperCase()
-    if (upperCode === "FADE10") {
-      const newDiscount = subtotal * 0.1
-      set({ couponCode: upperCode, discount: newDiscount })
+  applyCoupon: async (code, subtotal) => {
+    try {
+      const res = await fetch("/api/coupons/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.trim().toUpperCase(), subtotalNGN: subtotal }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) return false
+      set({ couponCode: code.trim().toUpperCase(), couponId: data.couponId, discount: data.discountNGN })
       return true
+    } catch {
+      return false
     }
-    return false
   },
   removeCoupon: () => {
-    set({ couponCode: null, discount: 0 })
+    set({ couponCode: null, couponId: null, discount: 0 })
   },
   getTotalPrice: () => {
     return get().items.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -134,4 +142,3 @@ export const useCartStore = create<CartStore>()((set, get) => ({
     }
   },
 }))
-

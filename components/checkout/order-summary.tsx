@@ -48,7 +48,7 @@ interface OrderSummaryProps {
 
   couponCode?: string | null
 
-  applyCoupon?: (code: string, subtotal: number) => boolean
+  applyCoupon?: (code: string, subtotal: number) => Promise<boolean>
 
   removeCoupon?: () => void
 
@@ -84,6 +84,8 @@ export function OrderSummary({
 
   const [couponMessage, setCouponMessage] = React.useState<string | null>(null)
 
+  const [isApplyingCoupon, setIsApplyingCoupon] = React.useState(false)
+
   const appliedCoupon = propCouponCode
 
 
@@ -106,7 +108,7 @@ export function OrderSummary({
 
 
 
-  const handleApplyCoupon = (e?: React.FormEvent) => {
+  const handleApplyCoupon = async (e?: React.FormEvent) => {
 
     e?.preventDefault()
 
@@ -122,25 +124,23 @@ export function OrderSummary({
 
     if (propApplyCoupon) {
 
-      const success = propApplyCoupon(code, subtotal)
+      setIsApplyingCoupon(true)
+
+      const success = await propApplyCoupon(code, subtotal)
+
+      setIsApplyingCoupon(false)
 
       if (success) {
 
-        const newDiscount = subtotal * 0.1
-
-        setCouponMessage(`Coupon applied! You saved ${formatPrice(newDiscount)}`)
+        setCouponMessage("Coupon applied!")
 
         setInputCode("")
 
-        toast.success("Coupon applied", {
-
-          description: `You saved ${formatPrice(newDiscount)}`,
-
-        })
+        toast.success("Coupon applied")
 
       } else {
 
-        setCouponMessage("Invalid coupon code. Please try again.")
+        setCouponMessage("Invalid or expired coupon code.")
 
         toast.error("Invalid coupon code")
 
@@ -300,9 +300,9 @@ export function OrderSummary({
 
               </div>
 
-              <Button type="submit" variant="outline" className="bg-transparent">
+              <Button type="submit" variant="outline" className="bg-transparent" disabled={isApplyingCoupon}>
 
-                Apply
+                {isApplyingCoupon ? "..." : "Apply"}
 
               </Button>
 
@@ -330,7 +330,7 @@ export function OrderSummary({
 
             )}
 
-            {!couponMessage && <p className="text-xs text-muted-foreground">Try "FADE10" for 10% off</p>}
+            {!couponMessage && <p className="text-xs text-muted-foreground">Enter a valid discount code</p>}
 
           </form>
 

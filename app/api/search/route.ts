@@ -1,43 +1,124 @@
 // app/api/search/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
-// Note: SQLite doesn't support `mode: 'insensitive'` for some filters; this route avoids relying on it.
-// We emulate case-insensitive matching by probing a few common variants.
-function buildSearchClauses(q: string) {
-  const qTrim = q.trim()
-  if (!qTrim) return []
+/** PostgreSQL: case-insensitive contains. */
+function searchWhere(keywords: string[]) {
+  const terms = keywords.map((t) => t.trim()).filter((t) => t.length > 0)
+  if (terms.length === 0) return { deletedAt: null }
 
-  const lower = qTrim.toLowerCase()
-  const upperFirst = qTrim[0].toUpperCase() + qTrim.slice(1)
-  const variants = Array.from(new Set([qTrim, lower, upperFirst]))
+  return {
+    deletedAt: null,
+    OR: terms.flatMap((term) => [
+      { name: { contains: term, mode: "insensitive" as const } },
+      { brand: { contains: term, mode: "insensitive" as const } },
+      { notesTop: { contains: term, mode: "insensitive" as const } },
+      { notesHeart: { contains: term, mode: "insensitive" as const } },
+      { notesBase: { contains: term, mode: "insensitive" as const } },
+    ]),
+  }
+}
 
-  return variants.map((v) => ({
-    OR: [{ name: { contains: v } }, { brand: { contains: v } }],
-  }))
+const SEARCH_PROMPT = (q: string) =>
+  `This is a perfume store search. User typed: "${q}". Reply with ONLY a JSON array of 1-5 short search terms (product names, fragrance notes like oud/vanilla/citrus, or brands) we can use to search our catalog. Example: ["Aventus","citrus"]. Reply only the JSON array, no other text.`
+
+function parseKeywordsFromText(text: string, fallback: string): string[] {
+  const match = text.match(/\[[\s\S]*?\]/)
+  if (!match) return [fallback]
+  try {
+    const parsed = JSON.parse(match[0]) as unknown
+    if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string")) {
+      return [...new Set([fallback, ...(parsed as string[])])]
+    }
+  } catch {
+    //
+  }
+  return [fallback]
+}
+
+/** Optional: use Anthropic Claude to expand query into search keywords. */
+async function expandQueryWithAnthropic(query: string): Promise<string[] | null> {
+  const key = process.env.ANTHROPIC_API_KEY?.trim()
+  if (!key) return null
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-haiku-20241022",
+        max_tokens: 100,
+        messages: [{ role: "user", content: SEARCH_PROMPT(query) }],
+      }),
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { content?: { text?: string }[] }
+    const text = data?.content?.[0]?.text?.trim() || ""
+    return parseKeywordsFromText(text, query)
+  } catch {
+    return null
+  }
+}
+
+/** Optional: use xAI (Grok) to expand query into search keywords. */
+async function expandQueryWithXAI(query: string): Promise<string[] | null> {
+  const key = process.env.XAI_API_KEY?.trim()
+  if (!key) return null
+
+  try {
+    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: process.env.XAI_SEARCH_MODEL || "grok-2",
+        max_tokens: 100,
+        messages: [
+          { role: "system", content: "Reply only with a JSON array. No other text." },
+          { role: "user", content: SEARCH_PROMPT(query) },
+        ],
+      }),
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] }
+    const text = data?.choices?.[0]?.message?.content?.trim() || ""
+    return parseKeywordsFromText(text, query)
+  } catch {
+    return null
+  }
+}
+
+/** Use Anthropic first, then xAI if set; otherwise return raw query. */
+async function expandQuery(query: string): Promise<string[]> {
+  const withAnthropic = await expandQueryWithAnthropic(query)
+  if (withAnthropic && withAnthropic.length > 0) return withAnthropic
+  const withXAI = await expandQueryWithXAI(query)
+  if (withXAI && withXAI.length > 0) return withXAI
+  return [query]
 }
 
 export async function GET(req: NextRequest) {
   try {
-    const q = (req.nextUrl.searchParams.get('q') || '').trim()
+    const q = (req.nextUrl.searchParams.get("q") || "").trim()
     if (q.length < 2) {
       return NextResponse.json({ items: [] })
     }
 
-    // Build a few OR branches to approximate case-insensitive search without relying on `mode: 'insensitive'`
-    const clauses = buildSearchClauses(q)
-    if (clauses.length === 0) {
-      return NextResponse.json({ items: [] })
-    }
+    // Use AI to expand query: Anthropic first, then xAI when keys are set
+    const keywords = await expandQuery(q)
+    const where = searchWhere(keywords)
 
     const items = await prisma.product.findMany({
-      where: {
-        OR: clauses,
-        deletedAt: null, // Exclude soft-deleted products
-      },
+      where,
       select: {
         id: true,
         name: true,
@@ -47,14 +128,21 @@ export async function GET(req: NextRequest) {
         images: true,
         ratingAvg: true,
       },
-      orderBy: [{ ratingAvg: 'desc' }, { createdAt: 'desc' }, { name: 'asc' }],
-      take: 6,
+      orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }, { name: "asc" }],
+      take: 12,
     })
 
-    return NextResponse.json({ items })
+    // Dedupe by id (same product can match multiple keywords)
+    const seen = new Set<string>()
+    const deduped = items.filter((p) => {
+      if (seen.has(p.id)) return false
+      seen.add(p.id)
+      return true
+    })
+
+    return NextResponse.json({ items: deduped.slice(0, 6) })
   } catch (err) {
-    console.error('Search error', err)
-    // Always return valid JSON so the client never chokes on res.json()
-    return NextResponse.json({ items: [], error: 'search_failed' }, { status: 500 })
+    console.error("Search error", err)
+    return NextResponse.json({ items: [], error: "search_failed" }, { status: 500 })
   }
 }

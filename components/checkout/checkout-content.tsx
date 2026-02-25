@@ -52,6 +52,8 @@ export function CheckoutContent({ items: propItems = [] }: CheckoutContentProps)
 
   const couponCode = useCartStore((state) => state.couponCode)
 
+  const couponId = useCartStore((state) => state.couponId)
+
   const discount = useCartStore((state) => state.discount)
 
   const applyCoupon = useCartStore((state) => state.applyCoupon)
@@ -124,11 +126,11 @@ export function CheckoutContent({ items: propItems = [] }: CheckoutContentProps)
 
       totalNGN,
 
-      couponId: null,
+      couponId: couponId || null,
 
     }
 
-  }, [items, discount, deliveryMethod])
+  }, [items, discount, deliveryMethod, couponId])
 
 
 

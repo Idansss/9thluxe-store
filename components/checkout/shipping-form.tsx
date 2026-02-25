@@ -18,6 +18,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 import { Truck, Zap } from "lucide-react"
 
+import { toast } from "sonner"
+
 import { useCheckoutStore } from "@/lib/stores/checkout-store"
 
 
@@ -131,6 +133,62 @@ export function ShippingForm({ onNext, deliveryMethod: propDeliveryMethod, onDel
   const handleInputChange = (field: keyof typeof formData, value: string) => {
 
     updateFormData({ [field]: value })
+
+  }
+
+  const handleContinue = () => {
+
+    const { firstName, lastName, email, phone, address, city, state } = formData
+
+    if (!firstName.trim() || !lastName.trim()) {
+
+      toast.error("Name required", { description: "Please enter your first and last name." })
+
+      return
+
+    }
+
+    if (!email.trim() || !email.includes("@")) {
+
+      toast.error("Valid email required", { description: "Please enter a valid email address." })
+
+      return
+
+    }
+
+    if (!phone.trim() || phone.replace(/\D/g, "").length < 10) {
+
+      toast.error("Phone required", { description: "Please enter a valid phone number." })
+
+      return
+
+    }
+
+    if (!address.trim()) {
+
+      toast.error("Address required", { description: "Please enter your street address." })
+
+      return
+
+    }
+
+    if (!city.trim()) {
+
+      toast.error("City required", { description: "Please enter your city." })
+
+      return
+
+    }
+
+    if (!state) {
+
+      toast.error("State required", { description: "Please select your state." })
+
+      return
+
+    }
+
+    onNext()
 
   }
 
@@ -446,7 +504,7 @@ export function ShippingForm({ onNext, deliveryMethod: propDeliveryMethod, onDel
 
       {/* Continue Button */}
 
-      <Button onClick={onNext} className="w-full h-12 text-base">
+      <Button onClick={handleContinue} className="w-full h-12 text-base">
 
         Continue to Payment
 

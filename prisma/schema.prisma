@@ -217,6 +217,7 @@ model Order {
 
   createdAt    DateTime     @default(now())
 
+  @@index([userId, createdAt])
   @@index([status, createdAt])
 }
 

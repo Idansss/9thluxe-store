@@ -68,53 +68,13 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
   const shipping = subtotal > 500000 ? 0 : 15000
 
-  // Use discount from store, but recalculate if subtotal changed
-
-  const currentDiscount = React.useMemo(() => {
-
-    if (couponCode === "FADE10") {
-
-      return subtotal * 0.1
-
-    }
-
-    return 0
-
-  }, [subtotal, couponCode])
-
-  // Update store discount if it changed
-
-  React.useEffect(() => {
-
-    if (couponCode && currentDiscount !== discount) {
-
-      useCartStore.setState({ discount: currentDiscount })
-
-    }
-
-  }, [currentDiscount, couponCode, discount])
+  const currentDiscount = discount
 
   const total = subtotal - currentDiscount + shipping
 
+  const [isApplyingCoupon, setIsApplyingCoupon] = React.useState(false)
 
-
-  // Update discount when subtotal changes (if coupon is applied)
-
-  React.useEffect(() => {
-
-    if (couponCode === "FADE10") {
-
-      const newDiscount = subtotal * 0.1
-
-      useCartStore.setState({ discount: newDiscount })
-
-    }
-
-  }, [subtotal, couponCode])
-
-
-
-  const handleApplyCoupon = (e?: React.FormEvent) => {
+  const handleApplyCoupon = async (e?: React.FormEvent) => {
 
     e?.preventDefault()
 
@@ -128,25 +88,23 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
     }
 
-    const success = applyCoupon(code, subtotal)
+    setIsApplyingCoupon(true)
+
+    const success = await applyCoupon(code, subtotal)
+
+    setIsApplyingCoupon(false)
 
     if (success) {
 
-      const newDiscount = subtotal * 0.1
-
-      setCouponMessage(`Coupon applied! You saved ${formatPrice(newDiscount)}`)
+      setCouponMessage("Coupon applied!")
 
       setInputCode("")
 
-      toast.success("Coupon applied", {
-
-        description: `You saved ${formatPrice(newDiscount)}`,
-
-      })
+      toast.success("Coupon applied")
 
     } else {
 
-      setCouponMessage("Invalid coupon code. Please try again.")
+      setCouponMessage("Invalid or expired coupon code.")
 
       toast.error("Invalid coupon code")
 
@@ -274,9 +232,9 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
                 </div>
 
-                <Button type="submit" variant="outline" className="bg-transparent">
+                <Button type="submit" variant="outline" className="bg-transparent" disabled={isApplyingCoupon}>
 
-                  Apply
+                  {isApplyingCoupon ? "..." : "Apply"}
 
                 </Button>
 
@@ -304,7 +262,7 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
               )}
 
-              {!couponMessage && <p className="text-xs text-muted-foreground mt-2">Try "FADE10" for 10% off</p>}
+              {!couponMessage && <p className="text-xs text-muted-foreground mt-2">Enter a valid discount code</p>}
 
             </form>
 
