@@ -32,6 +32,8 @@ export function SignInForm() {
 
   const [isLoading, setIsLoading] = React.useState(false)
 
+  const [rememberMe, setRememberMe] = React.useState(false)
+
 
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -47,6 +49,8 @@ export function SignInForm() {
     const callbackUrl = searchParams.get("callbackUrl") || "/account"
 
     formData.append("callbackUrl", callbackUrl)
+
+    formData.set("remember", rememberMe ? "true" : "false")
 
 
 
@@ -176,7 +180,16 @@ export function SignInForm() {
 
             <div className="flex items-center space-x-2">
 
-              <Checkbox id="remember" />
+              <Checkbox
+
+                id="remember"
+
+                checked={rememberMe}
+
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+
+                aria-label="Remember me"
+              />
 
               <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
 

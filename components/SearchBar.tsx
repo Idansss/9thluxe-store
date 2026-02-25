@@ -35,7 +35,12 @@ function normalizeImages(images: unknown): string[] {
   }
 }
 
-export default function SearchBar() {
+type SearchBarProps = {
+  /** Called when navigating (so parent e.g. SearchDialog can close) */
+  onNavigate?: () => void
+}
+
+export default function SearchBar({ onNavigate }: SearchBarProps = {}) {
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebouncedValue(query, 200)
   const [items, setItems] = useState<SearchItem[]>([])
@@ -107,20 +112,30 @@ export default function SearchBar() {
   }, [debouncedQuery])
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!open || items.length === 0) return
-
     if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      setActive((index) => (index + 1) % items.length)
+      if (open && items.length > 0) {
+        event.preventDefault()
+        setActive((index) => (index + 1) % items.length)
+      }
     } else if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      setActive((index) => (index - 1 + items.length) % items.length)
+      if (open && items.length > 0) {
+        event.preventDefault()
+        setActive((index) => (index - 1 + items.length) % items.length)
+      }
     } else if (event.key === 'Enter') {
       event.preventDefault()
-      const picked = items[active]
-      if (picked) {
+      if (open && items.length > 0) {
+        const picked = items[active]
+        if (picked) {
+          setOpen(false)
+          onNavigate?.()
+          router.push(`/product/${picked.slug}`)
+        }
+      } else if (query.trim().length >= 2) {
+        // No results yet or no results: go to shop with search query
         setOpen(false)
-        router.push(`/product/${picked.slug}`)
+        onNavigate?.()
+        router.push(`/shop?q=${encodeURIComponent(query.trim())}`)
       }
     } else if (event.key === 'Escape') {
       setOpen(false)
@@ -129,6 +144,7 @@ export default function SearchBar() {
 
   const navigateToProduct = (slug: string) => {
     setOpen(false)
+    onNavigate?.()
     router.push(`/product/${slug}`)
   }
 

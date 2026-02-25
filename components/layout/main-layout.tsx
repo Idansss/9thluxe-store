@@ -1,5 +1,7 @@
 import type React from "react"
 
+import { AnnouncementBar } from "./announcement-bar"
+
 import { Header } from "./header"
 
 import { Footer } from "./footer"
@@ -13,14 +15,10 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
+      <AnnouncementBar />
       <Header />
-
       <main className="flex-1">{children}</main>
-
       <Footer />
-
     </div>
-
   )
-
 }

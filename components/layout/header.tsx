@@ -66,7 +66,7 @@ export function Header(_props: HeaderProps) {
 
         "sticky top-0 z-50 w-full transition-all duration-300",
 
-        isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border" : "bg-background",
+        isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border" : "bg-background border-b border-border/60",
 
       )}
 
@@ -74,7 +74,7 @@ export function Header(_props: HeaderProps) {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="flex h-16 items-center justify-between gap-4">
+        <div className="flex h-14 sm:h-16 items-center justify-between gap-6">
 
           {/* Brand */}
           <Logo href="/" />
@@ -82,124 +82,69 @@ export function Header(_props: HeaderProps) {
 
 
           {/* Desktop Navigation */}
-
-          <nav className="hidden lg:flex items-center gap-1">
-
-            {navigation.map((item) => (
-
-              <Link
-
-                key={item.name}
-
-                href={item.href}
-
-                className={cn(
-
-                  "px-4 py-2 text-sm font-medium transition-colors relative",
-
-                  pathname === item.href || pathname.startsWith(item.href + "/")
-
-                    ? "text-foreground"
-
-                    : "text-muted-foreground hover:text-foreground",
-
-                )}
-
-              >
-
-                {item.name}
-
-                {(pathname === item.href || pathname.startsWith(item.href + "/")) && (
-
-                  <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent rounded-full" />
-
-                )}
-
-              </Link>
-
-            ))}
-
+          <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "px-4 py-2.5 text-[15px] font-semibold tracking-tight transition-colors rounded-md",
+                    isActive
+                      ? "text-foreground bg-muted/80"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  )}
+                >
+                  {item.name}
+                </Link>
+              )
+            })}
           </nav>
 
 
 
           {/* Right Actions */}
-
-          <div className="flex items-center gap-1">
-
+          <div className="flex items-center gap-0.5">
             <ThemeToggle />
 
-
-
             <div className="hidden sm:flex">
-
               <SearchDialog />
-
             </div>
 
-
-
-            <Button variant="ghost" size="icon" className="h-9 w-9 hidden sm:flex" asChild>
-
-              <Link href="/account/wishlist">
-
-                <Heart className="h-4 w-4" />
-
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hidden sm:flex" asChild>
+              <Link href="/account/wishlist" className="text-muted-foreground hover:text-foreground">
+                <Heart className="h-5 w-5" strokeWidth={1.5} />
                 <span className="sr-only">Wishlist</span>
-
               </Link>
-
             </Button>
 
-
-
-            <Button variant="ghost" size="icon" className="h-9 w-9 hidden sm:flex" asChild>
-
-              <Link href="/account">
-
-                <User className="h-4 w-4" />
-
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hidden sm:flex" asChild>
+              <Link href="/account" className="text-muted-foreground hover:text-foreground">
+                <User className="h-5 w-5" strokeWidth={1.5} />
                 <span className="sr-only">Account</span>
-
               </Link>
-
             </Button>
 
-
-
-            <Button variant="ghost" size="icon" className="h-9 w-9 relative" asChild>
-
-              <Link href="/cart">
-
-                <ShoppingBag className="h-4 w-4" />
-
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg relative" asChild>
+              <Link href="/cart" className="text-muted-foreground hover:text-foreground">
+                <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
                 {cartItemCount > 0 && (
-
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
-
+                  <span className="absolute top-1 right-1 h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground flex items-center justify-center">
                     {cartItemCount > 99 ? "99+" : cartItemCount}
-
                   </span>
-
                 )}
-
                 <span className="sr-only">Cart</span>
-
               </Link>
-
             </Button>
 
 
 
             {/* Mobile Menu */}
-
             <Sheet>
-
               <SheetTrigger asChild>
-
-                <Button variant="ghost" size="icon" className="h-9 w-9 lg:hidden">
-
-                  <Menu className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg lg:hidden">
+                  <Menu className="h-5 w-5" strokeWidth={1.5} />
 
                   <span className="sr-only">Open menu</span>
 
@@ -229,86 +174,49 @@ export function Header(_props: HeaderProps) {
 
 
 
-                  <nav className="flex flex-col gap-1">
-
-                    {navigation.map((item) => (
-
-                      <SheetClose key={item.name} asChild>
-
-                        <Link
-
-                          href={item.href}
-
-                          className={cn(
-
-                            "px-4 py-3 text-base font-medium rounded-lg transition-colors",
-
-                            pathname === item.href || pathname.startsWith(item.href + "/")
-
-                              ? "bg-accent/10 text-foreground"
-
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-
-                          )}
-
-                        >
-
-                          {item.name}
-
-                        </Link>
-
-                      </SheetClose>
-
-                    ))}
-
+                  <nav className="flex flex-col gap-0.5" aria-label="Main">
+                    {navigation.map((item) => {
+                      const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                      return (
+                        <SheetClose key={item.name} asChild>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              "px-4 py-3.5 text-[15px] font-semibold rounded-lg transition-colors",
+                              isActive ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            )}
+                          >
+                            {item.name}
+                          </Link>
+                        </SheetClose>
+                      )
+                    })}
                   </nav>
 
 
 
                   <div className="mt-auto pt-8 border-t border-border">
-
-                    <div className="flex items-center gap-2">
-
+                    <div className="flex items-center gap-1">
                       <SheetClose asChild>
-
-                        <div className="h-10 w-10 flex items-center justify-center">
-
+                        <div className="h-11 w-11 flex items-center justify-center rounded-lg">
                           <SearchDialog />
-
                         </div>
-
                       </SheetClose>
-
                       <SheetClose asChild>
-
-                        <Button variant="ghost" size="icon" className="h-10 w-10" asChild>
-
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-lg" asChild>
                           <Link href="/account/wishlist">
-
-                            <Heart className="h-5 w-5" />
-
+                            <Heart className="h-5 w-5" strokeWidth={1.5} />
                           </Link>
-
                         </Button>
-
                       </SheetClose>
-
                       <SheetClose asChild>
-
-                        <Button variant="ghost" size="icon" className="h-10 w-10" asChild>
-
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-lg" asChild>
                           <Link href="/account">
-
-                            <User className="h-5 w-5" />
-
+                            <User className="h-5 w-5" strokeWidth={1.5} />
                           </Link>
-
                         </Button>
-
                       </SheetClose>
-
                     </div>
-
                   </div>
 
                 </div>
