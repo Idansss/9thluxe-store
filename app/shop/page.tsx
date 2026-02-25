@@ -30,7 +30,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ShopPage({ searchParams }: { searchParams?: Promise<ShopSearchParams> }) {
   const params = (await searchParams) || {}
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (params.category) {
     const mapped = CATEGORY_MAP[params.category.toLowerCase()]
@@ -44,14 +44,14 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
   if (params.minPrice) {
     const min = Number(params.minPrice)
     if (!Number.isNaN(min)) {
-      where.priceNGN = { ...(where.priceNGN ?? {}), gte: min }
+      where.priceNGN = { ...((where.priceNGN as object) ?? {}), gte: min }
     }
   }
 
   if (params.maxPrice) {
     const max = Number(params.maxPrice)
     if (!Number.isNaN(max)) {
-      where.priceNGN = { ...(where.priceNGN ?? {}), lte: max }
+      where.priceNGN = { ...((where.priceNGN as object) ?? {}), lte: max }
     }
   }
 
@@ -80,34 +80,63 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
 
   const orderBy = SORT_MAP[params.sort || 'newest'] || SORT_MAP.newest
 
-  const [products, brandRows] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        ...where,
-        deletedAt: null, // Exclude soft-deleted products
-      },
-      orderBy: orderBy,
-      take: 24,
-    }),
-    prisma.product.findMany({
-      where: {
-        deletedAt: null, // Exclude soft-deleted products
-      },
-      distinct: ['brand'],
-      select: { brand: true },
-    }),
-  ])
+  let products: Awaited<ReturnType<typeof prisma.product.findMany>>
+  let brands: string[]
+  let fetchError: Error | null = null
 
-  const brands = brandRows.map((row) => row.brand).filter(Boolean) as string[]
+  try {
+    const [productsResult, brandRows] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          ...where,
+          deletedAt: null,
+        },
+        orderBy: orderBy,
+        take: 24,
+      }),
+      prisma.product.findMany({
+        where: { deletedAt: null },
+        distinct: ['brand'],
+        select: { brand: true },
+      }),
+    ])
+    products = productsResult
+    brands = brandRows.map((row) => row.brand).filter(Boolean) as string[]
+  } catch (err) {
+    console.error('Shop page data fetch failed:', err)
+    fetchError = err instanceof Error ? err : new Error(String(err))
+    products = []
+    brands = []
+  }
 
-  const formParams = new URLSearchParams()
-  if (params.category) formParams.set('category', params.category)
-  if (params.brand) formParams.set('brand', params.brand)
-  if (params.minPrice) formParams.set('minPrice', params.minPrice)
-  if (params.maxPrice) formParams.set('maxPrice', params.maxPrice)
-  if (params.sort) formParams.set('sort', params.sort)
-  if (params.note) formParams.set('note', params.note)
-  if (params.q) formParams.set('q', params.q)
+  if (fetchError) {
+    return (
+      <section className="py-16">
+        <div className="container mx-auto max-w-[1200px] px-6">
+          <div className="rounded-2xl border border-border bg-muted/30 p-8 text-center">
+            <h1 className="text-xl font-semibold text-foreground">Couldn’t load the shop</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Something went wrong while loading products. Please try again or browse without filters.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/shop"
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Back to shop
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-medium hover:bg-muted"
+              >
+                Go to homepage
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-16">
