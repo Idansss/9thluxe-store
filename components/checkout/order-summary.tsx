@@ -12,9 +12,15 @@ import { Input } from "@/components/ui/input"
 
 import { Button } from "@/components/ui/button"
 
-import { Tag, Lock, Shield, RotateCcw } from "lucide-react"
+import { Tag, Lock, Shield, RotateCcw, Gift } from "lucide-react"
 
 import { toast } from "sonner"
+
+import { Checkbox } from "@/components/ui/checkbox"
+
+import { Textarea } from "@/components/ui/textarea"
+
+import { useCheckoutStore } from "@/lib/stores/checkout-store"
 
 import type { Product } from "@/components/ui/product-card"
 
@@ -87,6 +93,8 @@ export function OrderSummary({
   const [isApplyingCoupon, setIsApplyingCoupon] = React.useState(false)
 
   const appliedCoupon = propCouponCode
+
+  const { formData, updateFormData } = useCheckoutStore()
 
 
 
@@ -223,6 +231,88 @@ export function OrderSummary({
             </div>
 
           ))}
+
+        </div>
+
+
+
+        {/* Gift Options */}
+
+        <div className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
+
+          <p className="text-sm font-medium flex items-center gap-2">
+
+            <Gift className="h-4 w-4 text-primary" />
+
+            Gift Options
+
+          </p>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+
+            <Checkbox
+
+              id="isGift"
+
+              checked={formData.isGift}
+
+              onCheckedChange={(checked) => updateFormData({ isGift: !!checked })}
+
+              className="mt-0.5"
+
+            />
+
+            <div>
+
+              <span className="text-sm font-medium">This is a gift</span>
+
+              <p className="text-xs text-muted-foreground">Add a personal message to your order</p>
+
+            </div>
+
+          </label>
+
+          {formData.isGift && (
+
+            <Textarea
+
+              placeholder="Write your gift message here..."
+
+              value={formData.giftMessage}
+
+              onChange={(e) => updateFormData({ giftMessage: e.target.value })}
+
+              rows={2}
+
+              className="text-sm"
+
+            />
+
+          )}
+
+          <label className="flex items-start gap-3 cursor-pointer">
+
+            <Checkbox
+
+              id="giftWrapping"
+
+              checked={formData.giftWrapping}
+
+              onCheckedChange={(checked) => updateFormData({ giftWrapping: !!checked })}
+
+              className="mt-0.5"
+
+            />
+
+            <div>
+
+              <span className="text-sm font-medium">Luxury gift wrapping</span>
+
+              <p className="text-xs text-muted-foreground">Premium gold ribbon packaging +₦2,500</p>
+
+            </div>
+
+          </label>
 
         </div>
 
@@ -370,9 +460,27 @@ export function OrderSummary({
 
             <span className="text-muted-foreground">Shipping</span>
 
-            <span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span>
+            <span>{shipping === 0 ? "Free" : formatPrice(formData.giftWrapping ? shipping - 2500 : shipping)}</span>
 
           </div>
+
+          {formData.giftWrapping && (
+
+            <div className="flex justify-between text-sm text-primary">
+
+              <span className="flex items-center gap-1.5">
+
+                <Gift className="h-3.5 w-3.5" />
+
+                Gift wrapping
+
+              </span>
+
+              <span>+{formatPrice(2500)}</span>
+
+            </div>
+
+          )}
 
           <Separator className="my-2" />
 

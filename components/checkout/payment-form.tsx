@@ -14,6 +14,9 @@ export interface OrderPayload {
   shippingNGN: number
   totalNGN: number
   couponId?: string | null
+  isGift?: boolean
+  giftMessage?: string
+  giftWrapping?: boolean
 }
 
 interface PaymentFormProps {

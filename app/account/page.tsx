@@ -1,14 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+import { Badge } from "@/components/ui/badge"
+
 import { Button } from "@/components/ui/button"
 
-import { Package, Heart, MapPin, ArrowRight } from "lucide-react"
+import { Package, Heart, MapPin, ArrowRight, Crown, Share2 } from "lucide-react"
 
 import Link from "next/link"
 
 import { requireUser } from "@/lib/session"
 
 import { prisma } from "@/lib/prisma"
+
+import { formatPrice } from "@/lib/format"
 
 
 
@@ -37,6 +41,12 @@ export default async function AccountOverviewPage() {
       email: true,
 
       createdAt: true,
+
+      loyaltyTier: true,
+
+      totalLifetimeSpend: true,
+
+      referralCode: true,
 
     },
 
@@ -89,6 +99,28 @@ export default async function AccountOverviewPage() {
   const displayName = userData?.name || user.name || "User"
 
   const displayEmail = userData?.email || user.email
+
+  const tier = userData?.loyaltyTier || "STANDARD"
+
+  const spend = userData?.totalLifetimeSpend || 0
+
+  const tierConfig: Record<string, { label: string; color: string; next: string; nextThreshold: number }> = {
+
+    STANDARD: { label: "Standard",  color: "bg-muted text-muted-foreground",               next: "Obsidian", nextThreshold: 200_000 },
+
+    OBSIDIAN: { label: "Obsidian",  color: "bg-stone-800 text-white",                       next: "Gold",     nextThreshold: 1_000_000 },
+
+    GOLD:     { label: "Gold",      color: "bg-yellow-500 text-yellow-950",                 next: "Platinum", nextThreshold: 5_000_000 },
+
+    PLATINUM: { label: "Platinum",  color: "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900", next: "",         nextThreshold: 0 },
+
+  }
+
+  const tc = tierConfig[tier] || tierConfig.STANDARD
+
+  const toNextTier = tc.nextThreshold > 0 ? Math.max(0, tc.nextThreshold - spend) : 0
+
+  const tierProgress = tc.nextThreshold > 0 ? Math.min(100, (spend / tc.nextThreshold) * 100) : 100
 
 
 
@@ -157,6 +189,116 @@ export default async function AccountOverviewPage() {
               <p className="text-sm text-muted-foreground">{displayEmail}</p>
 
               <p className="text-xs text-muted-foreground mt-1">Member since {memberSince}</p>
+
+            </div>
+
+          </div>
+
+        </CardContent>
+
+      </Card>
+
+
+
+      {/* Loyalty Tier */}
+
+      <Card>
+
+        <CardContent className="pt-6">
+
+          <div className="flex items-center justify-between mb-4">
+
+            <div className="flex items-center gap-3">
+
+              <Crown className="h-5 w-5 text-primary" />
+
+              <div>
+
+                <p className="text-sm font-medium">Loyalty Status</p>
+
+                <p className="text-xs text-muted-foreground">Lifetime spend: {formatPrice(spend)}</p>
+
+              </div>
+
+            </div>
+
+            <Badge className={tc.color}>{tc.label}</Badge>
+
+          </div>
+
+          {tc.nextThreshold > 0 && (
+
+            <div className="space-y-1.5">
+
+              <div className="flex justify-between text-xs text-muted-foreground">
+
+                <span>{formatPrice(toNextTier)} to {tc.next}</span>
+
+                <span>{Math.round(tierProgress)}%</span>
+
+              </div>
+
+              <progress
+
+                className="w-full h-1.5 rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-value]:bg-primary [&::-webkit-progress-value]:rounded-full [&::-moz-progress-bar]:bg-primary"
+
+                value={tierProgress}
+
+                max={100}
+
+              />
+
+            </div>
+
+          )}
+
+          {userData?.referralCode && (
+
+            <div className="mt-4 flex items-center justify-between rounded-lg border border-dashed border-border p-3 bg-muted/30">
+
+              <div>
+
+                <p className="text-xs text-muted-foreground">Your referral code</p>
+
+                <p className="font-mono font-semibold tracking-widest text-sm mt-0.5">{userData.referralCode}</p>
+
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+
+                <Share2 className="h-3.5 w-3.5" />
+
+                <span>Give ₦5k, Get ₦5k</span>
+
+              </div>
+
+            </div>
+
+          )}
+
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground">
+
+            <div className="space-y-0.5">
+
+              <p className="font-medium text-foreground">Standard</p>
+
+              <p>₦0+</p>
+
+            </div>
+
+            <div className="space-y-0.5">
+
+              <p className="font-medium text-foreground">Obsidian</p>
+
+              <p>₦200k+</p>
+
+            </div>
+
+            <div className="space-y-0.5">
+
+              <p className="font-medium text-foreground">Gold</p>
+
+              <p>₦1M+</p>
 
             </div>
 

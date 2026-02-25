@@ -242,19 +242,27 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
         {product.inStock ? (
 
-          <>
+          product.stockCount <= 5 ? (
 
-            <Check className="h-4 w-4 text-primary" />
+            <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 px-3 py-1 rounded-full text-xs font-medium">
 
-            <span className="text-sm">
+              <AlertCircle className="h-3.5 w-3.5" />
 
-              In Stock{" "}
-
-              {product.stockCount <= 5 && <span className="text-muted-foreground">({product.stockCount} left)</span>}
+              {product.stockCount === 1 ? "Last one — order soon" : `Only ${product.stockCount} left`}
 
             </span>
 
-          </>
+          ) : (
+
+            <>
+
+              <Check className="h-4 w-4 text-primary" />
+
+              <span className="text-sm">In Stock</span>
+
+            </>
+
+          )
 
         ) : (
 

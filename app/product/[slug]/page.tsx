@@ -7,7 +7,6 @@ import { StickyProductBar } from "@/components/product/sticky-product-bar"
 import { RelatedProducts } from "@/components/product/related-products"
 import { ProductJsonLd } from "@/components/seo/product-json-ld"
 import { getProductBySlug, getProducts } from "@/lib/services/product-service"
-import { dummyProducts } from "@/lib/dummy-data"
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>
@@ -15,27 +14,21 @@ interface ProductPageProps {
 
 export async function generateMetadata({ params }: ProductPageProps) {
   const { slug } = await params
-  const dbProduct = await getProductBySlug(slug)
-  const fallback = dummyProducts.find((p) => p.slug === slug)
+  const product = await getProductBySlug(slug)
 
-  if (!dbProduct && !fallback) {
-    return { title: "Product Not Found | Faded Essence" }
+  if (!product) {
+    return { title: "Product Not Found | Fàdè" }
   }
 
-  const name = dbProduct?.name || fallback!.name
-  const brand = dbProduct?.brand || fallback!.brand || "Faded"
-  const description = dbProduct?.description || `Shop ${name} by ${brand}.`
-  const images = dbProduct
-    ? (Array.isArray(dbProduct.images) ? dbProduct.images : [])
-    : [fallback!.image]
+  const images = Array.isArray(product.images) ? (product.images as string[]) : []
   const firstImage = images[0] || ""
 
   return {
-    title: `${name} | ${brand} | Faded Essence`,
-    description,
+    title: `${product.name} | ${product.brand || "Fàdè"} | Fàdè Essence`,
+    description: product.description,
     openGraph: {
-      title: `${name} | Faded Essence`,
-      description,
+      title: `${product.name} | Fàdè Essence`,
+      description: product.description,
       images: firstImage ? [firstImage] : [],
     },
   }
@@ -44,100 +37,69 @@ export async function generateMetadata({ params }: ProductPageProps) {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params
   const product = await getProductBySlug(slug)
-  const fallback = dummyProducts.find((p) => p.slug === slug)
 
-  if (!product && !fallback) {
+  if (!product) {
     notFound()
   }
 
-  const isFallback = !product && !!fallback
-  const category = isFallback ? "PERFUMES" : product!.category
+  const images = Array.isArray(product.images)
+    ? (product.images as string[]).filter((img): img is string => typeof img === "string")
+    : []
 
-  const relatedProducts = isFallback
-    ? dummyProducts
-        .filter((p) => p.slug !== slug && p.category === fallback!.category)
-        .slice(0, 4)
-        .map((p) => ({
-          id: p.id,
-          slug: p.slug,
-          name: p.name,
-          brand: p.brand || "",
-          price: p.price,
-          originalPrice: p.originalPrice,
-          image: p.image,
-          rating: p.rating,
-          reviewCount: p.reviewCount,
-          tags: p.tags || [],
-          category: "perfumes" as const,
-        }))
-    : (await getProducts({ category: product!.category, limit: 5 }))
-        .filter((p) => p.id !== product!.id)
-        .slice(0, 4)
-        .map((p) => {
-          const images = Array.isArray(p.images)
-            ? (p.images as string[]).filter((img): img is string => typeof img === "string")
-            : []
-
-          return {
-            id: p.id,
-            slug: p.slug,
-            name: p.name,
-            brand: p.brand || "",
-            price: p.priceNGN,
-            originalPrice: p.oldPriceNGN || undefined,
-            image: images[0] || "",
-            rating: p.ratingAvg,
-            reviewCount: p.ratingCount,
-            tags: [
-              p.isNew && "new",
-              p.isBestseller && "bestseller",
-              p.isLimited && "limited",
-            ].filter(Boolean) as ("new" | "bestseller" | "limited")[],
-            category: "perfumes" as const,
-          }
-        })
-
-  const images = isFallback
-    ? [fallback!.image]
-    : Array.isArray(product!.images)
-      ? (product!.images as string[]).filter((img): img is string => typeof img === "string")
-      : []
+  const relatedProducts = (await getProducts({ category: product.category, limit: 5 }))
+    .filter((p) => p.id !== product.id)
+    .slice(0, 4)
+    .map((p) => {
+      const pImages = Array.isArray(p.images)
+        ? (p.images as string[]).filter((img): img is string => typeof img === "string")
+        : []
+      return {
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        brand: p.brand || "",
+        price: p.priceNGN,
+        originalPrice: p.oldPriceNGN || undefined,
+        image: pImages[0] || "",
+        rating: p.ratingAvg,
+        reviewCount: p.ratingCount,
+        tags: [
+          p.isNew && "new",
+          p.isBestseller && "bestseller",
+          p.isLimited && "limited",
+        ].filter(Boolean) as ("new" | "bestseller" | "limited")[],
+        category: "perfumes" as const,
+      }
+    })
 
   const productDetails = {
-    id: product?.id || fallback!.id,
-    slug: product?.slug || fallback!.slug,
-    name: product?.name || fallback!.name,
-    brand: product?.brand || fallback!.brand || "",
-    price: product?.priceNGN || fallback!.price,
-    originalPrice: product?.oldPriceNGN || fallback?.originalPrice,
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    brand: product.brand || "",
+    price: product.priceNGN,
+    originalPrice: product.oldPriceNGN || undefined,
     image: images[0] || "",
-    rating: product?.ratingAvg ?? fallback!.rating,
-    reviewCount: product?.ratingCount ?? fallback!.reviewCount,
-    tags: product
-      ? ([
-          product.isNew && "new",
-          product.isBestseller && "bestseller",
-          product.isLimited && "limited",
-        ].filter(Boolean) as ("new" | "bestseller" | "limited")[])
-      : fallback!.tags || [],
+    rating: product.ratingAvg,
+    reviewCount: product.ratingCount,
+    tags: ([
+      product.isNew && "new",
+      product.isBestseller && "bestseller",
+      product.isLimited && "limited",
+    ].filter(Boolean)) as ("new" | "bestseller" | "limited")[],
     category: "perfumes" as const,
     images: images.length > 0 ? images : ["/placeholder.svg"],
-    description:
-      product?.description ||
-      "Experience the epitome of luxury craftsmanship with this exceptional piece.",
+    description: product.description,
     specifications: [
-      ...(product?.notesTop ? [{ label: "Top Notes", value: product.notesTop }] : []),
-      ...(product?.notesHeart ? [{ label: "Heart Notes", value: product.notesHeart }] : []),
-      ...(product?.notesBase ? [{ label: "Base Notes", value: product.notesBase }] : []),
-      ...(product?.longevity ? [{ label: "Wear time", value: product.longevity }] : []),
-      ...(product?.occasion ? [{ label: "Occasion", value: product.occasion }] : []),
+      ...(product.longevity ? [{ label: "Wear time", value: product.longevity }] : []),
+      ...(product.occasion ? [{ label: "Occasion", value: product.occasion }] : []),
+      ...(product.productType ? [{ label: "Type", value: product.productType }] : []),
     ].filter(Boolean) as { label: string; value: string }[],
-    inStock: product ? product.stock > 0 : true,
-    stockCount: product?.stock ?? 10,
+    inStock: product.stock > 0,
+    stockCount: product.stock,
   }
 
-  const price = product?.priceNGN ?? fallback!.price
-  const availability = product && product.stock > 0 ? "InStock" : "OutOfStock"
+  const availability = product.stock > 0 ? "InStock" : "OutOfStock"
 
   return (
     <MainLayout>
@@ -145,7 +107,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         name={productDetails.name}
         description={productDetails.description}
         image={productDetails.images}
-        price={price}
+        price={product.priceNGN}
         currency="NGN"
         brand={productDetails.brand || undefined}
         availability={availability}
@@ -164,6 +126,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
           specifications={productDetails.specifications}
           productId={productDetails.id}
           productSlug={productDetails.slug}
+          notesTop={product.notesTop ?? undefined}
+          notesHeart={product.notesHeart ?? undefined}
+          notesBase={product.notesBase ?? undefined}
+          longevity={product.longevity ?? undefined}
+          occasion={product.occasion ?? undefined}
         />
 
         {relatedProducts.length > 0 && <RelatedProducts products={relatedProducts} />}

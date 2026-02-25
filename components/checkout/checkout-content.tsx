@@ -108,7 +108,11 @@ export function CheckoutContent({ items: propItems = [] }: CheckoutContentProps)
 
     const subtotalNGN = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0)
 
-    const shippingNGN = deliveryMethod === "express" ? 35000 : 15000
+    const baseShippingNGN = deliveryMethod === "express" ? 35000 : 15000
+
+    const giftWrappingNGN = formData.giftWrapping ? 2500 : 0
+
+    const shippingNGN = baseShippingNGN + giftWrappingNGN
 
     const discountNGN = discount
 
@@ -128,9 +132,15 @@ export function CheckoutContent({ items: propItems = [] }: CheckoutContentProps)
 
       couponId: couponId || null,
 
+      isGift: formData.isGift,
+
+      giftMessage: formData.giftMessage || undefined,
+
+      giftWrapping: formData.giftWrapping,
+
     }
 
-  }, [items, discount, deliveryMethod, couponId])
+  }, [items, discount, deliveryMethod, couponId, formData.isGift, formData.giftMessage, formData.giftWrapping])
 
 
 

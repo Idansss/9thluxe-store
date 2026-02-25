@@ -17,6 +17,11 @@ export interface CheckoutFormData {
 
   // Delivery Method
   deliveryMethod: "standard" | "express"
+
+  // Gift options
+  isGift: boolean
+  giftMessage: string
+  giftWrapping: boolean
 }
 
 interface CheckoutStore {
@@ -36,6 +41,9 @@ const defaultFormData: CheckoutFormData = {
   state: "",
   postalCode: "",
   deliveryMethod: "express",
+  isGift: false,
+  giftMessage: "",
+  giftWrapping: false,
 }
 
 export const useCheckoutStore = create<CheckoutStore>()(

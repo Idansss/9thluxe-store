@@ -71,7 +71,8 @@ function SidebarContent() {
           disabled={isSigningOut}
           onClick={() => {
             startSignOutTransition(async () => {
-              await signOutAction("/")
+              const home = typeof window !== "undefined" ? `${window.location.origin}/` : "/"
+              await signOutAction(home)
             })
           }}
         >

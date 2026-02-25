@@ -20,6 +20,9 @@ const createOrderSchema = z.object({
   shippingNGN: z.number().int().min(0),
   totalNGN: z.number().int().min(0),
   couponId: z.string().optional().nullable(),
+  isGift: z.boolean().optional().default(false),
+  giftMessage: z.string().max(500).optional().nullable(),
+  giftWrapping: z.boolean().optional().default(false),
 })
 
 export async function POST(req: NextRequest) {
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    const { addressLine1, city, state, phone, items, subtotalNGN, discountNGN, shippingNGN, totalNGN, couponId } = parsed.data
+    const { addressLine1, city, state, phone, items, subtotalNGN, discountNGN, shippingNGN, totalNGN, couponId, isGift, giftMessage, giftWrapping } = parsed.data
 
     // Resolve product IDs and validate prices (use DB price for consistency)
     const productIds = [...new Set(items.map((i) => i.productId))]
@@ -89,12 +92,16 @@ export async function POST(req: NextRequest) {
         status: "PENDING",
         subtotalNGN: computedSubtotal,
         discountNGN,
+        shippingNGN,
         totalNGN: orderTotal,
         couponId: couponId || null,
         addressLine1,
         city,
         state,
         phone,
+        isGift: isGift ?? false,
+        giftMessage: giftMessage || null,
+        giftWrapping: giftWrapping ?? false,
         items: {
           create: orderItems.map((i) => ({
             productId: i.productId,

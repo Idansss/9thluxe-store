@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
       }
 
-      // Atomically: mark PAID, decrement stock, increment coupon usage
+      // Atomically: mark PAID, decrement stock, increment coupon usage, update loyalty
       const order = await prisma.$transaction(async (tx) => {
         const updated = await tx.order.update({
           where: { id: orderId },
@@ -57,6 +57,22 @@ export async function POST(req: NextRequest) {
             data: { usedCount: { increment: 1 } },
           })
         }
+
+        // Update user loyalty tier and lifetime spend
+        const updatedUser = await tx.user.update({
+          where: { id: updated.userId },
+          data: { totalLifetimeSpend: { increment: updated.totalNGN } },
+          select: { totalLifetimeSpend: true },
+        })
+        const newSpend = updatedUser.totalLifetimeSpend
+        const tier =
+          newSpend >= 5_000_000 ? 'PLATINUM' :
+          newSpend >= 1_000_000 ? 'GOLD' :
+          newSpend >= 200_000   ? 'OBSIDIAN' : 'STANDARD'
+        await tx.user.update({
+          where: { id: updated.userId },
+          data: { loyaltyTier: tier },
+        })
 
         return updated
       })

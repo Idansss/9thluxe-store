@@ -24,9 +24,10 @@ export function SignOutButton({
     try {
       // Clear all client-side stores first
       clearAllStores()
-      
-      // Call server action to sign out (will redirect)
-      await signOutAction(redirectTo)
+      // Use current origin so logout stays on same site (avoids redirect to localhost when NEXTAUTH_URL is localhost)
+      const base = typeof window !== "undefined" ? window.location.origin : ""
+      const to = base ? `${base}${redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`}` : redirectTo
+      await signOutAction(to)
     } catch (error: any) {
       // NextAuth redirects throw errors, which is expected
       // If it's a redirect error, the redirect will happen automatically

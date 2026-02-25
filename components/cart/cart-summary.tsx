@@ -312,17 +312,37 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
 
 
-        {/* Free Shipping Notice */}
+        {/* Free Shipping Progress Bar */}
 
-        {shipping > 0 && (
+        <div className="space-y-1.5 pt-1">
 
-          <p className="text-xs text-muted-foreground text-center">
+          <div className="flex justify-between text-xs">
 
-            Add {formatPrice(500000 - subtotal)} more for free shipping
+            <span className={shipping === 0 ? "text-primary font-medium" : "text-muted-foreground"}>
 
-          </p>
+              {shipping === 0
 
-        )}
+                ? "Free shipping unlocked!"
+
+                : `Add ${formatPrice(500000 - subtotal)} for free shipping`}
+
+            </span>
+
+            <span className="text-muted-foreground">{Math.min(100, Math.round((subtotal / 500000) * 100))}%</span>
+
+          </div>
+
+          <progress
+
+            className="w-full h-1.5 rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-value]:bg-primary [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:transition-all [&::-moz-progress-bar]:bg-primary"
+
+            value={Math.min(100, (subtotal / 500000) * 100)}
+
+            max={100}
+
+          />
+
+        </div>
 
       </div>
 
