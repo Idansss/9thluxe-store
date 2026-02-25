@@ -46,7 +46,7 @@ export default async function OrdersPage() {
 
   // Fetch orders from database for the current user
 
-  const orders = await (prisma as any).order.findMany({
+  const orders = await prisma.order.findMany({
 
     where: { userId: user.id },
 
@@ -66,33 +66,7 @@ export default async function OrdersPage() {
 
     orderBy: { createdAt: "desc" },
 
-  }) as Array<{
-
-    id: string
-
-    status: string
-
-    totalNGN: number
-
-    createdAt: Date
-
-    items: Array<{
-
-      id: string
-
-      product: {
-
-        id: string
-
-        name: string
-
-        images: unknown
-
-      }
-
-    }>
-
-  }>
+  })
 
   // Helper to get first product image
   const getProductImage = (product: any): string => {

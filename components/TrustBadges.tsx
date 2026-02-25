@@ -1,4 +1,4 @@
-import { Shield, Truck, RotateCcw, CreditCard } from 'lucide-react'
+import { Shield, Truck, RotateCcw, CreditCard, BadgeCheck } from 'lucide-react'
 
 export function TrustBadges() {
   const badges = [
@@ -10,7 +10,7 @@ export function TrustBadges() {
     {
       icon: Truck,
       title: 'Free Shipping',
-      note: 'On orders over ₦50,000',
+      note: 'On orders over ₦500,000',
     },
     {
       icon: RotateCcw,
@@ -22,10 +22,15 @@ export function TrustBadges() {
       title: 'Trusted Platform',
       note: 'Paystack & Bank Transfer',
     },
+    {
+      icon: BadgeCheck,
+      title: 'Authenticity',
+      note: '100% genuine',
+    },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {badges.map((badge) => (
         <div
           key={badge.title}

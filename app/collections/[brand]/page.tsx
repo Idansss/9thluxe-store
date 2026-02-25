@@ -4,9 +4,9 @@ import Link from "next/link"
 import { MainLayout } from "@/components/layout/main-layout"
 import { ProductGrid } from "@/components/ui/product-grid"
 import { Button } from "@/components/ui/button"
-import { dummyProducts } from "@/lib/dummy-data"
 import { getBrandNameFromSlug } from "@/lib/brand-slug-map"
-import type { Product } from "@/components/ui/product-card"
+import { prisma } from "@/lib/prisma"
+import { mapPrismaProductToCard } from "@/lib/queries/products"
 
 interface BrandPageProps {
   params: Promise<{ brand: string }>
@@ -37,10 +37,12 @@ export default async function BrandCollectionPage({ params }: BrandPageProps) {
     notFound()
   }
 
-  // Filter products by brand name
-  const brandProducts = dummyProducts.filter(
-    (product: Product) => product.brand === brandName
-  )
+  // Fetch products by brand from the database
+  const dbProducts = await prisma.product.findMany({
+    where: { brand: brandName, deletedAt: null },
+    orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
+  })
+  const brandProducts = dbProducts.map(mapPrismaProductToCard)
 
   return (
     <MainLayout>

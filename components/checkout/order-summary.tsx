@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 
 import { Button } from "@/components/ui/button"
 
-import { Tag, Lock } from "lucide-react"
+import { Tag, Lock, Shield, RotateCcw } from "lucide-react"
 
 import { toast } from "sonner"
 
@@ -392,7 +392,7 @@ export function OrderSummary({
 
         {currentStep === 2 ? (
 
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
 
             <Button className="w-full h-12 text-base" onClick={onPaymentClick} type="button">
 
@@ -402,11 +402,33 @@ export function OrderSummary({
 
             </Button>
 
-            <p className="text-xs text-center text-muted-foreground mt-3">
+            <p className="text-xs text-center text-muted-foreground">
 
               Your payment information is secure and encrypted.
 
             </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-1 text-muted-foreground">
+
+              <span className="flex items-center gap-1.5 text-xs">
+
+                <Shield className="h-3.5 w-3.5" />
+
+                SSL Secured
+
+              </span>
+
+              <span className="text-xs">Paystack</span>
+
+              <span className="flex items-center gap-1.5 text-xs">
+
+                <RotateCcw className="h-3.5 w-3.5" />
+
+                7-day returns
+
+              </span>
+
+            </div>
 
           </div>
 

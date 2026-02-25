@@ -4,6 +4,8 @@ import * as React from "react"
 
 import Link from "next/link"
 
+import { Shield, Truck, RotateCcw, BadgeCheck } from "lucide-react"
+
 import { Input } from "@/components/ui/input"
 
 import { Button } from "@/components/ui/button"
@@ -136,11 +138,33 @@ export function Footer() {
 
 
 
+  const trustStrip = [
+    { icon: Shield, label: "Secure payment", detail: "SSL & Paystack" },
+    { icon: Truck, label: "Free shipping", detail: "On orders over ₦500,000" },
+    { icon: RotateCcw, label: "Easy returns", detail: "7-day comfort policy" },
+    { icon: BadgeCheck, label: "Authenticity", detail: "100% genuine" },
+  ]
+
   return (
 
     <footer className="bg-card border-t border-border">
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+
+        {/* Trust strip - e-commerce best practice: reassurance site-wide */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-12 pb-8 border-b border-border">
+          {trustStrip.map(({ icon: Icon, label, detail }) => (
+            <div key={label} className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{label}</p>
+                <p className="text-xs text-muted-foreground">{detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
 

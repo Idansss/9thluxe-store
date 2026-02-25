@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { ProductGallery } from "@/components/product/product-gallery"
 import { ProductInfo } from "@/components/product/product-info"
 import { ProductTabs } from "@/components/product/product-tabs"
+import { StickyProductBar } from "@/components/product/sticky-product-bar"
 import { RelatedProducts } from "@/components/product/related-products"
 import { ProductJsonLd } from "@/components/seo/product-json-ld"
 import { getProductBySlug, getProducts } from "@/lib/services/product-service"
@@ -151,11 +152,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
         rating={productDetails.rating}
         reviewCount={productDetails.reviewCount}
       />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24 lg:pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <ProductGallery images={productDetails.images} productName={productDetails.name} />
           <ProductInfo product={productDetails} />
         </div>
+        <StickyProductBar product={productDetails} />
 
         <ProductTabs
           description={productDetails.description}
