@@ -25,10 +25,10 @@ export function SearchDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 h-10 w-10 text-foreground/80 hover:text-foreground hover:bg-muted/50"
           aria-label="Search"
         >
-          <Search className="h-5 w-5" strokeWidth={1.5} />
+          <Search className="h-5 w-5 shrink-0" strokeWidth={2.25} />
           <span className="sr-only">Search</span>
         </button>
       </DialogTrigger>

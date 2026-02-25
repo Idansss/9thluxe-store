@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { ProductCard } from '@/components/ui/product-card'
 import { mapPrismaProductToCard } from '@/lib/queries/products'
+import { ShopFiltersForm } from '@/components/shop/shop-filters-form'
 import type { Product } from '@prisma/client'
 
 const CATEGORY_MAP: Record<string, Product['category']> = {
@@ -14,19 +15,6 @@ const SORT_MAP: Record<string, { [key: string]: 'asc' | 'desc' }> = {
   best_selling: { ratingCount: 'desc' },
   newest: { createdAt: 'desc' },
 }
-
-const NOTE_OPTIONS = [
-  { value: "", label: "Any scent" },
-  { value: "oud", label: "Oud" },
-  { value: "rose", label: "Rose" },
-  { value: "citrus", label: "Citrus" },
-  { value: "vanilla", label: "Vanilla" },
-  { value: "woody", label: "Woody" },
-  { value: "amber", label: "Amber" },
-  { value: "sandalwood", label: "Sandalwood" },
-  { value: "bergamot", label: "Bergamot" },
-  { value: "patchouli", label: "Patchouli" },
-]
 
 type ShopSearchParams = {
   category?: string
@@ -141,93 +129,7 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
           </p>
         </header>
 
-        <form className="grid gap-6 rounded-[32px] border border-border bg-background/80 p-6 shadow-[0_30px_60px_rgba(2,6,23,0.1)] md:grid-cols-[0.9fr,1.1fr]" method="get">
-          {params.q && <input type="hidden" name="q" value={params.q} />}
-          <div className="space-y-4">
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Category
-            </label>
-            <select
-              name="category"
-              defaultValue={params.category || ''}
-              className="input w-full"
-            >
-              <option value="">All</option>
-              <option value="perfumes">Perfumes</option>
-            </select>
-
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Brand
-            </label>
-            <select name="brand" defaultValue={params.brand || ''} className="input w-full">
-              <option value="">All brands</option>
-              {brands.map((brand) => (
-                <option key={brand} value={brand}>
-                  {brand}
-                </option>
-              ))}
-            </select>
-
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Scent / Note
-            </label>
-            <select name="note" defaultValue={params.note || ''} className="input w-full">
-              {NOTE_OPTIONS.map((opt) => (
-                <option key={opt.value || 'any'} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                  Min price (₦)
-                </label>
-                <input
-                  name="minPrice"
-                  type="number"
-                  defaultValue={params.minPrice || ''}
-                  className="input w-full"
-                  min={0}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                  Max price (₦)
-                </label>
-                <input
-                  name="maxPrice"
-                  type="number"
-                  defaultValue={params.maxPrice || ''}
-                  className="input w-full"
-                  min={0}
-                />
-              </div>
-            </div>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Sort
-            </label>
-            <select name="sort" defaultValue={params.sort || 'newest'} className="input w-full">
-              <option value="newest">Newest</option>
-              <option value="price_asc">Price low → high</option>
-              <option value="price_desc">Price high → low</option>
-              <option value="best_selling">Best selling</option>
-            </select>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="submit"
-                className="btn px-6 py-3 text-xs font-semibold uppercase tracking-[0.4em]"
-              >
-                Apply
-              </button>
-              <Link href="/shop" className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                Reset filters
-              </Link>
-            </div>
-          </div>
-        </form>
+        <ShopFiltersForm params={params} brands={brands} />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (

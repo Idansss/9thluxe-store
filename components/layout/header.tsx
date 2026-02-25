@@ -113,22 +113,22 @@ export function Header(_props: HeaderProps) {
             </div>
 
             <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hidden sm:flex" asChild>
-              <Link href="/account/wishlist" className="text-muted-foreground hover:text-foreground">
-                <Heart className="h-5 w-5" strokeWidth={1.5} />
+              <Link href="/account/wishlist" className="text-foreground/80 hover:text-foreground">
+                <Heart className="h-5 w-5 shrink-0" strokeWidth={2.25} />
                 <span className="sr-only">Wishlist</span>
               </Link>
             </Button>
 
             <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hidden sm:flex" asChild>
-              <Link href="/account" className="text-muted-foreground hover:text-foreground">
-                <User className="h-5 w-5" strokeWidth={1.5} />
+              <Link href="/account" className="text-foreground/80 hover:text-foreground">
+                <User className="h-5 w-5 shrink-0" strokeWidth={2.25} />
                 <span className="sr-only">Account</span>
               </Link>
             </Button>
 
             <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg relative" asChild>
-              <Link href="/cart" className="text-muted-foreground hover:text-foreground">
-                <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+              <Link href="/cart" className="text-foreground/80 hover:text-foreground">
+                <ShoppingBag className="h-5 w-5 shrink-0" strokeWidth={2.25} />
                 {cartItemCount > 0 && (
                   <span className="absolute top-1 right-1 h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground flex items-center justify-center">
                     {cartItemCount > 99 ? "99+" : cartItemCount}
@@ -144,7 +144,7 @@ export function Header(_props: HeaderProps) {
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg lg:hidden">
-                  <Menu className="h-5 w-5" strokeWidth={1.5} />
+                  <Menu className="h-5 w-5 shrink-0" strokeWidth={2.25} />
 
                   <span className="sr-only">Open menu</span>
 
@@ -161,11 +161,8 @@ export function Header(_props: HeaderProps) {
                     <Logo href="/" compact />
 
                     <SheetClose asChild>
-
-                      <Button variant="ghost" size="icon" className="h-9 w-9">
-
-                        <X className="h-5 w-5" />
-
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg">
+                        <X className="h-5 w-5 shrink-0" strokeWidth={2.25} />
                       </Button>
 
                     </SheetClose>
@@ -205,14 +202,14 @@ export function Header(_props: HeaderProps) {
                       <SheetClose asChild>
                         <Button variant="ghost" size="icon" className="h-11 w-11 rounded-lg" asChild>
                           <Link href="/account/wishlist">
-                            <Heart className="h-5 w-5" strokeWidth={1.5} />
+                            <Heart className="h-5 w-5 shrink-0" strokeWidth={2.25} />
                           </Link>
                         </Button>
                       </SheetClose>
                       <SheetClose asChild>
                         <Button variant="ghost" size="icon" className="h-11 w-11 rounded-lg" asChild>
                           <Link href="/account">
-                            <User className="h-5 w-5" strokeWidth={1.5} />
+                            <User className="h-5 w-5 shrink-0" strokeWidth={2.25} />
                           </Link>
                         </Button>
                       </SheetClose>
