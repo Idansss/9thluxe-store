@@ -3,12 +3,12 @@ import Link from "next/link"
 import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Clock, SprayCan, Glasses, Truck, Award, Heart } from "lucide-react"
+import { SprayCan, Truck, Award, Heart } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "About Fàdè",
   description:
-    "Fàdè is a fashion and beauty brand specializing in perfumes, sunglasses, wristwatches and other stylish products. High-quality, trendy, and luxurious items for everyday elegance.",
+    "Fàdè is a fashion and beauty brand specializing in luxury perfumes. High-quality, trendy, and luxurious fragrances for everyday elegance.",
 }
 
 export default function AboutPage() {
@@ -22,7 +22,7 @@ export default function AboutPage() {
               About Fàdè
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Curating luxury for the discerning individual
+              Curating luxury fragrances for the discerning individual
             </p>
           </div>
 
@@ -32,10 +32,9 @@ export default function AboutPage() {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-lg leading-relaxed text-foreground mb-6">
-                  <strong className="font-semibold">Fàdè</strong> is a fashion and beauty brand that specializes in selling{" "}
-                  <strong className="font-semibold">perfumes</strong>, <strong className="font-semibold">sunglasses</strong>,{" "}
-                  <strong className="font-semibold">wristwatches</strong> and other stylish products. Fàdè focuses on providing
-                  customers with high-quality, trendy, and luxurious items that enhance personal style and everyday elegance.
+                  <strong className="font-semibold">Fàdè</strong> is a fashion and beauty brand that specializes in{" "}
+                  <strong className="font-semibold">luxury perfumes</strong>. We focus on providing
+                  customers with high-quality, trendy, and luxurious fragrances that enhance personal style and everyday elegance.
                 </p>
               </CardContent>
             </Card>
@@ -43,9 +42,9 @@ export default function AboutPage() {
             {/* Product Categories */}
             <div>
               <h2 className="font-serif text-2xl md:text-3xl font-semibold tracking-tight mb-6 text-center">
-                Our Collections
+                Our Collection
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-1 max-w-md mx-auto gap-6">
                 <Card className="group hover:shadow-lg transition-shadow">
                   <CardContent className="pt-6 text-center">
                     <div className="rounded-full bg-primary/10 p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -54,30 +53,6 @@ export default function AboutPage() {
                     <h3 className="font-semibold text-lg mb-2">Premium Perfumes</h3>
                     <p className="text-sm text-muted-foreground">
                       Crafted for long-lasting presence and unforgettable moments
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="group hover:shadow-lg transition-shadow">
-                  <CardContent className="pt-6 text-center">
-                    <div className="rounded-full bg-primary/10 p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <Glasses className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">Polarized Sunglasses</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Crisp, UV-safe vision with timeless style
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="group hover:shadow-lg transition-shadow">
-                  <CardContent className="pt-6 text-center">
-                    <div className="rounded-full bg-primary/10 p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <Clock className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">Timeless Wristwatches</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Built to elevate your fit with precision and elegance
                     </p>
                   </CardContent>
                 </Card>
@@ -94,7 +69,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Nationwide Delivery</h3>
                     <p className="text-muted-foreground mb-4">
-                      We deliver across all 36 states and the FCT. Your luxury items are just a click away, no matter where you are in Nigeria.
+                      We deliver across all 36 states and the FCT. Your luxury fragrances are just a click away, no matter where you are in Nigeria.
                     </p>
                     <Button variant="outline" asChild>
                       <Link href="/help/shipping">Learn More About Shipping</Link>
@@ -115,7 +90,7 @@ export default function AboutPage() {
                     <div>
                       <h3 className="font-semibold text-lg mb-2">Quality First</h3>
                       <p className="text-sm text-muted-foreground">
-                        We curate only the finest luxury products from trusted brands, ensuring every item meets our high standards of excellence.
+                        We curate only the finest luxury perfumes from trusted brands, ensuring every fragrance meets our high standards of excellence.
                       </p>
                     </div>
                   </div>

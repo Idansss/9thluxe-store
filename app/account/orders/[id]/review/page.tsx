@@ -12,40 +12,51 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { dummyProducts } from "@/lib/dummy-data"
 import { useReviewStore } from "@/lib/stores/review-store"
 
-const orders: Record<string, any> = {
-  "ORD-001": {
-    id: "ORD-001",
-    items: [{ product: dummyProducts[0], quantity: 1 }],
-  },
-  "ORD-002": {
-    id: "ORD-002",
-    items: [
-      { product: dummyProducts[1], quantity: 1 },
-      { product: dummyProducts[4], quantity: 1 },
-    ],
-  },
+type OrderItem = {
+  product: { id: string; name: string; slug: string; brand: string | null; image: string; price: number }
+  quantity: number
 }
 
 export default function ReviewPage() {
   const params = useParams()
   const router = useRouter()
   const orderId = params.id as string
-  const order = orders[orderId]
+
+  const [order, setOrder] = React.useState<{ id: string; items: OrderItem[] } | null>(null)
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const res = await fetch(`/api/account/orders/${orderId}`)
+        if (!res.ok) {
+          if (!cancelled) setOrder(null)
+          return
+        }
+        const data = await res.json()
+        if (!cancelled) setOrder(data.order)
+      } catch {
+        if (!cancelled) setOrder(null)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [orderId])
 
   const addReview = useReviewStore((state) => state.addReview)
   const getReviewByOrderAndProduct = useReviewStore((state) => state.getReviewByOrderAndProduct)
 
-  // Load existing reviews for this order
   const [reviews, setReviews] = React.useState<Record<string, { rating: number; comment: string }>>({})
 
-  // Initialize reviews when order loads
   React.useEffect(() => {
     if (!order) return
     const initial: Record<string, { rating: number; comment: string }> = {}
-    order.items.forEach((item: any) => {
+    order.items.forEach((item) => {
       const existing = getReviewByOrderAndProduct(orderId, item.product.id)
       if (existing) {
         initial[item.product.id] = { rating: existing.rating, comment: existing.comment }
@@ -72,8 +83,8 @@ export default function ReviewPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!order) return
 
-    // Validate that at least one review has a rating
     const hasRating = Object.values(reviews).some((r) => r.rating > 0)
     if (!hasRating) {
       toast.error("Please provide a rating", {
@@ -82,9 +93,8 @@ export default function ReviewPage() {
       return
     }
 
-    // Save all reviews
     let savedCount = 0
-    order.items.forEach((item: any) => {
+    order.items.forEach((item) => {
       const review = reviews[item.product.id]
       if (review && review.rating > 0) {
         addReview({
@@ -107,6 +117,15 @@ export default function ReviewPage() {
         description: "Please provide at least one rating before submitting.",
       })
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-10 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-64 animate-pulse rounded-lg bg-muted" />
+      </div>
+    )
   }
 
   if (!order) {
@@ -136,7 +155,7 @@ export default function ReviewPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {order.items.map((item: any, index: number) => {
+        {order.items.map((item) => {
           const productId = item.product.id
           const review = reviews[productId] || { rating: 0, comment: "" }
           const hasExistingReview = getReviewByOrderAndProduct(orderId, productId)

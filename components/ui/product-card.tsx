@@ -40,7 +40,7 @@ export interface Product {
 
   tags?: ("new" | "bestseller" | "limited")[]
 
-  category: "watches" | "perfumes" | "eyeglasses"
+  category: "perfumes"
 
 }
 

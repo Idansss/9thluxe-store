@@ -54,9 +54,7 @@ export function HeroSection() {
 
           <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-xl">
 
-            Curated luxury in watches, perfumes & eyewear. Discover timeless elegance crafted for the discerning
-
-            individual.
+            Curated luxury perfumes. Discover timeless elegance crafted for the discerning individual.
 
           </p>
 
@@ -64,9 +62,9 @@ export function HeroSection() {
 
             <Button asChild size="lg" className="h-12 px-8 text-base">
 
-              <Link href="/category/watches">
+              <Link href="/category/perfumes">
 
-                Shop Watches
+                Shop Perfumes
 
                 <ArrowRight className="ml-2 h-4 w-4" />
 

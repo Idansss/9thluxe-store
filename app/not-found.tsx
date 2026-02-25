@@ -10,7 +10,7 @@ export default function NotFound() {
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Link href="/" className="btn">Go to Homepage</Link>
-        <Link href="/category/watches" className="btn-outline">Shop now &gt;</Link>
+        <Link href="/category/perfumes" className="btn-outline">Shop now &gt;</Link>
       </div>
     </main>
   )

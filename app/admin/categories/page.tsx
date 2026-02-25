@@ -39,9 +39,7 @@ interface Category {
 }
 
 const productCategoryOptions = [
-  { label: "Watches", value: ProductCategory.WATCHES },
   { label: "Perfumes", value: ProductCategory.PERFUMES },
-  { label: "Eyeglasses", value: ProductCategory.GLASSES },
 ]
 
 export default function AdminCategoriesPage() {
@@ -211,7 +209,7 @@ export default function AdminCategoriesPage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="Watches"
+                  placeholder="Perfumes"
                   required
                 />
               </div>
@@ -221,7 +219,7 @@ export default function AdminCategoriesPage() {
                   id="slug"
                   value={formData.slug}
                   onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                  placeholder="watches"
+                  placeholder="perfumes"
                   required
                 />
                 <p className="text-xs text-muted-foreground">Auto-created from name above. You can change it if needed.</p>

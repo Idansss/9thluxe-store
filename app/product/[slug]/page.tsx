@@ -4,6 +4,7 @@ import { ProductGallery } from "@/components/product/product-gallery"
 import { ProductInfo } from "@/components/product/product-info"
 import { ProductTabs } from "@/components/product/product-tabs"
 import { RelatedProducts } from "@/components/product/related-products"
+import { ProductJsonLd } from "@/components/seo/product-json-ld"
 import { getProductBySlug, getProducts } from "@/lib/services/product-service"
 import { dummyProducts } from "@/lib/dummy-data"
 
@@ -49,9 +50,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const isFallback = !product && !!fallback
-  const category = isFallback
-    ? (fallback!.category === "eyeglasses" ? "GLASSES" : fallback!.category.toUpperCase())
-    : product!.category
+  const category = isFallback ? "PERFUMES" : product!.category
 
   const relatedProducts = isFallback
     ? dummyProducts
@@ -68,7 +67,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           rating: p.rating,
           reviewCount: p.reviewCount,
           tags: p.tags || [],
-          category: p.category,
+          category: "perfumes" as const,
         }))
     : (await getProducts({ category: product!.category, limit: 5 }))
         .filter((p) => p.id !== product!.id)
@@ -93,7 +92,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               p.isBestseller && "bestseller",
               p.isLimited && "limited",
             ].filter(Boolean) as ("new" | "bestseller" | "limited")[],
-            category: product!.category.toLowerCase() as "watches" | "perfumes" | "eyeglasses",
+            category: "perfumes" as const,
           }
         })
 
@@ -120,39 +119,38 @@ export default async function ProductPage({ params }: ProductPageProps) {
           product.isLimited && "limited",
         ].filter(Boolean) as ("new" | "bestseller" | "limited")[])
       : fallback!.tags || [],
-    category: (product ? product.category.toLowerCase() : fallback!.category) as
-      | "watches"
-      | "perfumes"
-      | "eyeglasses",
+    category: "perfumes" as const,
     images: images.length > 0 ? images : ["/placeholder.svg"],
     description:
       product?.description ||
       "Experience the epitome of luxury craftsmanship with this exceptional piece.",
-    specifications:
-      category === "WATCHES"
-        ? [
-            { label: "Material", value: "Stainless Steel" },
-            { label: "Water Resistance", value: "100m" },
-            { label: "Warranty", value: "2 Years" },
-          ]
-        : category === "PERFUMES"
-          ? [
-              { label: "Top Notes", value: "Bergamot, Pink Pepper" },
-              { label: "Heart Notes", value: "Rose, Oud Wood" },
-              { label: "Base Notes", value: "Amber, Sandalwood" },
-              { label: "Longevity", value: "8-10 Hours" },
-            ]
-          : [
-              { label: "Material", value: "Acetate" },
-              { label: "Lens Type", value: "Polarized" },
-              { label: "Warranty", value: "2 Years" },
-            ],
+    specifications: [
+      ...(product?.notesTop ? [{ label: "Top Notes", value: product.notesTop }] : []),
+      ...(product?.notesHeart ? [{ label: "Heart Notes", value: product.notesHeart }] : []),
+      ...(product?.notesBase ? [{ label: "Base Notes", value: product.notesBase }] : []),
+      ...(product?.longevity ? [{ label: "Wear time", value: product.longevity }] : []),
+      ...(product?.occasion ? [{ label: "Occasion", value: product.occasion }] : []),
+    ].filter(Boolean) as { label: string; value: string }[],
     inStock: product ? product.stock > 0 : true,
     stockCount: product?.stock ?? 10,
   }
 
+  const price = product?.priceNGN ?? fallback!.price
+  const availability = product && product.stock > 0 ? "InStock" : "OutOfStock"
+
   return (
-    <MainLayout cartItemCount={3}>
+    <MainLayout>
+      <ProductJsonLd
+        name={productDetails.name}
+        description={productDetails.description}
+        image={productDetails.images}
+        price={price}
+        currency="NGN"
+        brand={productDetails.brand || undefined}
+        availability={availability}
+        rating={productDetails.rating}
+        reviewCount={productDetails.reviewCount}
+      />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <ProductGallery images={productDetails.images} productName={productDetails.name} />

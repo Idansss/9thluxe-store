@@ -2,8 +2,9 @@
 
 import type { Product } from '@prisma/client'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ProductCard } from './ProductCard'
-import { ProductGridSkeleton } from './ProductCardSkeleton'
+import { ProductCard } from '@/components/ui/product-card'
+import { ProductGridSkeleton } from '@/components/ui/product-card-skeleton'
+import { mapPrismaProductToCard } from '@/lib/queries/products'
 
 interface InfiniteScrollProductsProps {
   initialProducts: Product[]
@@ -80,7 +81,7 @@ export function InfiniteScrollProducts({
     <>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product.id} product={mapPrismaProductToCard(product)} />
         ))}
       </div>
 

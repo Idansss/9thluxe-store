@@ -90,9 +90,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
               Category *
             </label>
             <select id="category" name="category" required className="input w-full" defaultValue={productRecord.category}>
-              <option value="WATCHES">Watches</option>
               <option value="PERFUMES">Perfumes</option>
-              <option value="GLASSES">Eye Glasses</option>
             </select>
           </div>
 

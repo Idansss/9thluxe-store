@@ -45,9 +45,9 @@ const faqs = [
       "Yes, we offer premium gift wrapping services. You can select this option during checkout. Gift wrapping is available for an additional fee.",
   },
   {
-    question: "How do I care for my luxury watch?",
+    question: "How do I care for my perfume?",
     answer:
-      "We recommend regular servicing every 2-3 years, avoiding exposure to extreme temperatures, and keeping your watch away from strong magnetic fields. Each watch comes with specific care instructions in the packaging.",
+      "Store perfumes in a cool, dry place away from direct sunlight to preserve the fragrance. Keep the cap on when not in use and avoid exposing the bottle to extreme temperatures. Most perfumes last 3–5 years when stored properly.",
   },
   {
     question: "Can I cancel or modify my order?",

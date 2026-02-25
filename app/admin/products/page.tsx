@@ -22,9 +22,7 @@ interface AdminProductsPageProps {
 }
 
 const categoryLabels: Record<ProductCategory, string> = {
-  WATCHES: "Watches",
   PERFUMES: "Perfumes",
-  GLASSES: "Eyeglasses",
 }
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
@@ -87,9 +85,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                 className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-44"
               >
                 <option value="all">All categories</option>
-                <option value="watches">Watches</option>
                 <option value="perfumes">Perfumes</option>
-                <option value="eyeglasses">Eyeglasses</option>
               </select>
               <Button type="submit" variant="outline" size="sm" className="h-10 px-4">
                 Filter

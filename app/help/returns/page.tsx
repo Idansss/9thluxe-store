@@ -73,9 +73,7 @@ export default function ReturnsPage() {
               </CardHeader>
               <CardContent>
                 <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  <li>Unused watches in original packaging</li>
-                  <li>Unopened perfumes with original seals</li>
-                  <li>Eyeglasses with all original accessories</li>
+                  <li>Unopened perfumes with original seals and packaging</li>
                   <li>Items with manufacturing defects</li>
                 </ul>
               </CardContent>

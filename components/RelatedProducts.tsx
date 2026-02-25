@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/format'
 
 type Props = {
   productId: string
-  category: 'WATCHES' | 'PERFUMES' | 'GLASSES'
+  category: 'PERFUMES'
   brand?: string | null
   limit?: number
 }

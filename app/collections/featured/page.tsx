@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 
 export const metadata: Metadata = {
   title: "Featured Collections | Fàdè",
-  description: "Explore our featured collections of luxury watches, perfumes, and eyewear. Discover timeless elegance and premium craftsmanship.",
+  description: "Explore our featured collections of luxury perfumes. Discover timeless elegance and premium craftsmanship.",
 }
 
 export const dynamic = "force-dynamic"
@@ -49,7 +49,7 @@ export default async function FeaturedCollectionsPage() {
       oldPrice: product.oldPriceNGN || undefined,
       image: images[0] || "/placeholder.svg",
       images: images,
-      category: product.category.toLowerCase() as "watches" | "perfumes" | "eyeglasses",
+      category: "perfumes" as const,
       rating: product.ratingAvg,
       reviewCount: product.ratingCount,
       tags: [
@@ -61,7 +61,7 @@ export default async function FeaturedCollectionsPage() {
   })
 
   return (
-    <MainLayout cartItemCount={3}>
+    <MainLayout>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Header */}
         <div className="mb-8 lg:mb-12">

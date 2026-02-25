@@ -52,7 +52,7 @@ export function BrandStorySection() {
 
                 Founded on the principle that true luxury lies in the details, Fàdè curates an exceptional collection of
 
-                watches, perfumes, and eyewear from the world's most prestigious houses.
+                perfumes from the world's most prestigious houses.
 
               </p>
 

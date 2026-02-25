@@ -37,30 +37,30 @@ export async function POST(request: Request) {
     const plaintextFallback = text?.trim() || stripHtml(html)
     const resend = new Resend(resendKey)
 
-    const subscribers = await prisma.user.findMany({
-      where: { marketingEmails: true },
-      select: { id: true, email: true, name: true },
+    const subscribers = await prisma.newsletterSubscriber.findMany({
+      where: { unsubscribedAt: null },
+      select: { email: true },
     })
 
     if (subscribers.length === 0) {
       return NextResponse.json(
-        { error: 'No subscribers found' },
+        { error: 'No subscribers found. Subscriptions are stored in NewsletterSubscriber.' },
         { status: 400 }
       )
     }
 
     const results = await Promise.all(
-      subscribers.map((user) =>
+      subscribers.map((sub) =>
         resend.emails
           .send({
             from: fromAddress,
-            to: user.email,
+            to: sub.email,
             subject,
-            html: personalize(html, user.name),
-            text: personalize(plaintextFallback, user.name),
+            html: personalize(html, null),
+            text: personalize(plaintextFallback, null),
           })
           .then(() => ({ success: true }))
-          .catch((error) => ({ error: error instanceof Error ? error.message : String(error), email: user.email }))
+          .catch((error) => ({ error: error instanceof Error ? error.message : String(error), email: sub.email }))
       )
     )
 

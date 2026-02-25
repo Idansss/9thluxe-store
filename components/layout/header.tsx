@@ -26,42 +26,20 @@ import { useCartStore } from "@/lib/stores/cart-store"
 
 
 const navigation = [
-
-  { name: "Watches", href: "/category/watches" },
-
   { name: "Perfumes", href: "/category/perfumes" },
-
-  { name: "Eyeglasses", href: "/category/eyeglasses" },
-
   { name: "Collections", href: "/collections" },
-
   { name: "About", href: "/about" },
-
   { name: "Help", href: "/help" },
-
 ]
 
 
 
-interface HeaderProps {
+interface HeaderProps {}
 
-  cartItemCount?: number
-
-}
-
-
-
-export function Header({ cartItemCount: propCartItemCount }: HeaderProps) {
-
+export function Header(_props: HeaderProps) {
   const pathname = usePathname()
-
   const [isScrolled, setIsScrolled] = React.useState(false)
-
-  const storeCartItemCount = useCartStore((state) => state.getUniqueItemsCount())
-
-  // Use store count if available, otherwise fall back to prop
-
-  const cartItemCount = storeCartItemCount > 0 ? storeCartItemCount : (propCartItemCount || 0)
+  const cartItemCount = useCartStore((state) => state.getUniqueItemsCount())
 
 
 

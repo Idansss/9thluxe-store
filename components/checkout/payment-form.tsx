@@ -8,21 +8,29 @@ import { Lock, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { useCheckoutStore } from "@/lib/stores/checkout-store"
 
+export interface OrderPayload {
+  items: { productId: string; quantity: number; priceNGN: number }[]
+  subtotalNGN: number
+  discountNGN: number
+  shippingNGN: number
+  totalNGN: number
+  couponId?: string | null
+}
+
 interface PaymentFormProps {
   onBack: () => void
   onComplete: () => void
   total: number
+  orderPayload: OrderPayload
 }
 
-export function PaymentForm({ onBack, onComplete, total }: PaymentFormProps) {
-  const router = useRouter()
+export function PaymentForm({ onBack, onComplete, total, orderPayload }: PaymentFormProps) {
   const { formData } = useCheckoutStore()
   const [isProcessing, setIsProcessing] = React.useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validate email is provided
     if (!formData.email) {
       toast.error("Email required", {
         description: "Please provide your email address in the shipping information.",
@@ -33,16 +41,49 @@ export function PaymentForm({ onBack, onComplete, total }: PaymentFormProps) {
     setIsProcessing(true)
 
     try {
-      // Initialize Paystack payment
-      const response = await fetch("/api/paystack/initialize", {
+      const addressLine1 = [formData.address, formData.address2].filter(Boolean).join(", ").trim() || formData.address
+      if (!addressLine1 || !formData.city || !formData.state || !formData.phone) {
+        toast.error("Shipping required", { description: "Please complete shipping address and phone." })
+        setIsProcessing(false)
+        return
+      }
+
+      // 1) Create order (PENDING) and get orderId
+      const createRes = await fetch("/api/checkout/create-order", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addressLine1,
+          city: formData.city,
+          state: formData.state,
+          phone: formData.phone,
+          items: orderPayload.items,
+          subtotalNGN: orderPayload.subtotalNGN,
+          discountNGN: orderPayload.discountNGN,
+          shippingNGN: orderPayload.shippingNGN,
+          totalNGN: orderPayload.totalNGN,
+          couponId: orderPayload.couponId ?? null,
+        }),
+      })
+
+      const createData = await createRes.json()
+      if (!createRes.ok) {
+        throw new Error(createData.error || "Failed to create order")
+      }
+      const orderId = createData.orderId as string
+      if (!orderId) {
+        throw new Error("No order ID returned")
+      }
+
+      // 2) Initialize Paystack with orderId in metadata (webhook will mark order PAID)
+      const payRes = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: formData.email,
           amountNGN: total,
           metadata: {
+            orderId,
             firstName: formData.firstName,
             lastName: formData.lastName,
             phone: formData.phone,
@@ -54,19 +95,16 @@ export function PaymentForm({ onBack, onComplete, total }: PaymentFormProps) {
         }),
       })
 
-      const data = await response.json()
-
-      if (!response.ok || !data.authorization_url) {
-        throw new Error(data.error || "Failed to initialize payment")
+      const payData = await payRes.json()
+      if (!payRes.ok || !payData.authorization_url) {
+        throw new Error(payData.error || "Failed to initialize payment")
       }
 
-      // Redirect to Paystack payment page
-      window.location.href = data.authorization_url
-    } catch (error: any) {
+      window.location.href = payData.authorization_url
+    } catch (error: unknown) {
       setIsProcessing(false)
-      toast.error("Payment initialization failed", {
-        description: error.message || "Please try again later.",
-      })
+      const message = error instanceof Error ? error.message : "Please try again later."
+      toast.error("Payment initialization failed", { description: message })
     }
   }
 

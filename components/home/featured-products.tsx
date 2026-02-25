@@ -1,6 +1,7 @@
 import type { Product } from '@prisma/client'
-import { ProductCard } from '@/components/ProductCard'
+import { ProductCard } from '@/components/ui/product-card'
 import { Card } from '@/components/ui/card'
+import { mapPrismaProductToCard } from '@/lib/queries/products'
 
 type FeaturedProductsProps = {
   products: Product[]
@@ -30,7 +31,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
         </Card>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={mapPrismaProductToCard(product)} />
           ))}
         </div>
       </div>

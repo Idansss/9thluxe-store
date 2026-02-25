@@ -18,9 +18,9 @@ import { useCartStore } from "@/lib/stores/cart-store"
 
 import { useCheckoutStore } from "@/lib/stores/checkout-store"
 
-import { dummyProducts } from "@/lib/dummy-data"
-
 import type { Product } from "@/components/ui/product-card"
+
+import type { OrderPayload } from "./payment-form"
 
 
 
@@ -36,13 +36,13 @@ interface OrderItem {
 
 interface CheckoutContentProps {
 
-  items: OrderItem[]
+  items?: OrderItem[]
 
 }
 
 
 
-export function CheckoutContent({ items: propItems }: CheckoutContentProps) {
+export function CheckoutContent({ items: propItems = [] }: CheckoutContentProps) {
 
   const router = useRouter()
 
@@ -64,45 +64,71 @@ export function CheckoutContent({ items: propItems }: CheckoutContentProps) {
 
 
 
-  // Convert cart items to display format with product details
+  // Use cart store as single source: build display items and order payload from it
 
-  const items = React.useMemo(() => {
+  const items = React.useMemo((): OrderItem[] => {
 
-    if (propItems.length > 0) {
+    if (propItems.length > 0) return propItems
 
-      return propItems
+    return cartItems.map((cartItem) => ({
+
+      product: {
+
+        id: cartItem.id,
+
+        slug: cartItem.slug,
+
+        name: cartItem.name,
+
+        brand: cartItem.brand,
+
+        price: cartItem.price,
+
+        image: cartItem.image,
+
+        rating: 0,
+
+        reviewCount: 0,
+
+        category: "perfumes",
+
+      },
+
+      quantity: cartItem.quantity,
+
+    }))
+
+  }, [cartItems, propItems])
+
+
+
+  const orderPayload: OrderPayload = React.useMemo(() => {
+
+    const subtotalNGN = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0)
+
+    const shippingNGN = deliveryMethod === "express" ? 35000 : 15000
+
+    const discountNGN = discount
+
+    const totalNGN = subtotalNGN - discountNGN + shippingNGN
+
+    return {
+
+      items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity, priceNGN: i.product.price })),
+
+      subtotalNGN: subtotalNGN,
+
+      discountNGN: discountNGN,
+
+      shippingNGN,
+
+      totalNGN,
+
+      couponId: null,
 
     }
 
-    return cartItems.map((cartItem) => {
-
-      // Find product details from dummy data (in real app, this would come from API)
-
-      const product = dummyProducts.find((p) => p.id === cartItem.id)
-
-      if (!product) {
-
-        return null
-
-      }
-
-      return {
-
-        product: {
-
-          ...product,
-
-          image: cartItem.image || product.image,
-
-        },
-
-        quantity: cartItem.quantity,
-
-      }
-
-    }).filter(Boolean) as OrderItem[]
-
-  }, [cartItems, propItems])
+  }, [items, discount, deliveryMethod])
 
 
 
@@ -128,25 +154,11 @@ export function CheckoutContent({ items: propItems }: CheckoutContentProps) {
 
 
 
-  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+  const subtotal = orderPayload.subtotalNGN
 
-  // Calculate shipping based on delivery method
+  const shipping = orderPayload.shippingNGN
 
-  const shipping = deliveryMethod === "express" ? 35000 : 15000
-
-  // Recalculate discount if coupon is applied and subtotal changed
-
-  const currentDiscount = React.useMemo(() => {
-
-    if (couponCode === "FADE10") {
-
-      return subtotal * 0.1
-
-    }
-
-    return 0
-
-  }, [subtotal, couponCode])
+  const currentDiscount = orderPayload.discountNGN
 
   // Update store discount if it changed
 
@@ -160,7 +172,7 @@ export function CheckoutContent({ items: propItems }: CheckoutContentProps) {
 
   }, [currentDiscount, couponCode, discount])
 
-  const total = subtotal - currentDiscount + shipping
+  const total = orderPayload.totalNGN
 
 
 
@@ -211,6 +223,8 @@ export function CheckoutContent({ items: propItems }: CheckoutContentProps) {
               onComplete={() => setCurrentStep(3)}
 
               total={total}
+
+              orderPayload={orderPayload}
 
             />
 

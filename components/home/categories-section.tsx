@@ -18,7 +18,7 @@ export function CategoriesSection() {
 
           title="Shop by Category"
 
-          subtitle="Explore our curated selection of luxury accessories"
+          subtitle="Explore our curated selection of luxury perfumes"
 
           align="center"
 
@@ -26,44 +26,13 @@ export function CategoriesSection() {
 
 
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+        <div className="grid grid-cols-1 md:grid-cols-1 max-w-md mx-auto gap-6">
           <CategoryCard
-
-            title={categoryData.watches.title}
-
-            subtitle={categoryData.watches.subtitle}
-
-            image={categoryData.watches.image}
-
-            href="/category/watches"
-
-          />
-
-          <CategoryCard
-
             title={categoryData.perfumes.title}
-
             subtitle={categoryData.perfumes.subtitle}
-
             image={categoryData.perfumes.image}
-
             href="/category/perfumes"
-
           />
-
-          <CategoryCard
-
-            title={categoryData.eyeglasses.title}
-
-            subtitle={categoryData.eyeglasses.subtitle}
-
-            image={categoryData.eyeglasses.image}
-
-            href="/category/eyeglasses"
-
-          />
-
         </div>
 
       </div>

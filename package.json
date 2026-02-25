@@ -10,7 +10,11 @@
     "build": "next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

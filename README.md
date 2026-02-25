@@ -1,6 +1,6 @@
 # Fàdè Essence - Luxury E-Commerce Platform
 
-A modern, full-featured e-commerce platform built with Next.js 16, TypeScript, and Prisma. Fàdè Essence specializes in luxury watches, perfumes, and designer eyeglasses, offering a premium shopping experience with comprehensive admin management capabilities.
+A modern, full-featured e-commerce platform built with Next.js 16, TypeScript, and Prisma. Fàdè Essence specializes in luxury perfumes, offering a premium shopping experience with comprehensive admin management capabilities.
 
 ## 🎯 Project Overview
 
@@ -20,7 +20,7 @@ Fàdè Essence is a complete e-commerce solution featuring:
 ### 🛍️ Customer Features
 
 #### Shopping Experience
-- **Product Catalog**: Browse watches, perfumes, and eyeglasses
+- **Product Catalog**: Browse luxury perfumes
 - **Product Search**: Real-time search across products
 - **Product Filtering**: Filter by category, brand, price, and tags (New, Bestseller, Limited)
 - **Product Details**: Comprehensive product pages with galleries, specifications, and reviews
@@ -61,7 +61,7 @@ Fàdè Essence is a complete e-commerce solution featuring:
 - **Product CRUD**: Create, read, update, and delete products
 - **Bulk Operations**: Manage multiple products efficiently
 - **Image Upload**: Upload up to 4 product images with client-side compression
-- **Product Categories**: Organize products by category (Watches, Perfumes, Eyeglasses)
+- **Product Categories**: Organize products by category (Perfumes)
 - **Product Tags**: Mark products as New, Bestseller, Limited, or Featured
 - **Brand Management**: Add and manage product brands
 - **Collections**: Group products into collections

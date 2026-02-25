@@ -4,6 +4,7 @@ import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
 import { Analytics } from "@vercel/analytics/react"
 import { ThemeProvider } from "@/components/theme-provider"
+import { CartHydrator } from "@/components/cart/cart-hydrator"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,11 +30,11 @@ const siteUrl = resolveSiteUrl()
 export const metadata: Metadata = {
   metadataBase: siteUrl,
   title: {
-    default: "Fàdè Essence | Luxury Watches, Perfumes & Eyeglasses",
+    default: "Fàdè Essence | Luxury Perfumes",
     template: "%s | Fàdè Essence",
   },
-  description: "Discover premium luxury watches, exquisite perfumes, and designer eyeglasses at Fàdè Essence. Curated collection of timeless elegance and sophistication.",
-  keywords: ["luxury watches", "perfumes", "eyeglasses", "Fàdè", "premium fashion", "Nigeria"],
+  description: "Discover premium luxury perfumes at Fàdè Essence. Curated collection of timeless fragrances and sophistication.",
+  keywords: ["luxury perfumes", "fragrances", "Fàdè", "premium perfume", "Nigeria"],
   authors: [{ name: "Fàdè Essence" }],
   creator: "Fàdè Essence",
   publisher: "Fàdè Essence",
@@ -42,8 +43,8 @@ export const metadata: Metadata = {
     locale: "en_NG",
     url: siteUrl.toString(),
     siteName: "Fàdè Essence",
-    title: "Fàdè Essence | Luxury Watches, Perfumes & Eyeglasses",
-    description: "Discover premium luxury watches, exquisite perfumes, and designer eyeglasses at Fàdè Essence.",
+    title: "Fàdè Essence | Luxury Perfumes",
+    description: "Discover premium luxury perfumes at Fàdè Essence.",
     images: [
       {
         url: "/og-image.jpg",
@@ -55,8 +56,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fàdè Essence | Luxury Watches, Perfumes & Eyeglasses",
-    description: "Discover premium luxury watches, exquisite perfumes, and designer eyeglasses at Fàdè Essence.",
+    title: "Fàdè Essence | Luxury Perfumes",
+    description: "Discover premium luxury perfumes at Fàdè Essence.",
     images: ["/og-image.jpg"],
   },
   robots: {
@@ -86,6 +87,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <CartHydrator />
           {children}
           <Toaster position="top-center" />
           <Analytics />

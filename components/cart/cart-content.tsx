@@ -23,13 +23,7 @@ import { useCartStore } from "@/lib/stores/cart-store"
 export function CartContent() {
 
   const cartItems = useCartStore((state) => state.items)
-
-  const updateQuantity = useCartStore((state) => state.updateQuantity)
-
-  const removeItem = useCartStore((state) => state.removeItem)
-
   const getTotalPrice = useCartStore((state) => state.getTotalPrice)
-
   const getTotalItems = useCartStore((state) => state.getTotalItems)
 
 
@@ -48,7 +42,7 @@ export function CartContent() {
         description: "",
         rating: 0,
         reviewCount: 0,
-        category: "watches" as const,
+        category: "perfumes" as const,
         images: [cartItem.image],
       },
       quantity: cartItem.quantity,
@@ -57,34 +51,44 @@ export function CartContent() {
 
 
 
-  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
-
+  const handleUpdateQuantity = async (productId: string, newQuantity: number) => {
     if (newQuantity < 1) {
-
       handleRemoveItem(productId)
-
       return
-
     }
-
-    updateQuantity(productId, newQuantity)
-
+    try {
+      const res = await fetch("/api/cart/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ productId, quantity: newQuantity }),
+      })
+      if (res.ok) await useCartStore.getState().syncFromServer()
+    } catch {
+      toast.error("Could not update quantity")
+    }
   }
 
-
-
-  const handleRemoveItem = (productId: string) => {
-
+  const handleRemoveItem = async (productId: string) => {
     const item = items.find((i) => i.product.id === productId)
-
-    removeItem(productId)
-
-    toast.success("Item removed", {
-
-      description: `${item?.product.name} has been removed from your cart.`,
-
-    })
-
+    try {
+      const res = await fetch("/api/cart/remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ productId }),
+      })
+      if (res.ok) {
+        await useCartStore.getState().syncFromServer()
+        toast.success("Item removed", {
+          description: `${item?.product.name} has been removed from your cart.`,
+        })
+      } else {
+        toast.error("Could not remove item")
+      }
+    } catch {
+      toast.error("Could not remove item")
+    }
   }
 
 

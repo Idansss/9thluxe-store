@@ -70,7 +70,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
 
-    <MainLayout cartItemCount={3}>
+    <MainLayout>
 
       <CategoryHeader title={category.title} subtitle={category.subtitle} description={category.description} />
 

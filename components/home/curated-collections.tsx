@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import type { Collection } from '@/components/home/types'
-import { ProductCard } from '@/components/ProductCard'
+import { ProductCard } from '@/components/ui/product-card'
+import { mapPrismaProductToCard } from '@/lib/queries/products'
 
 type CuratedCollectionsProps = {
   collections: Collection[]
@@ -60,7 +61,7 @@ export function CuratedCollections({ collections }: CuratedCollectionsProps) {
                     </div>
                   ) : (
                     gridProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                      <ProductCard key={product.id} product={mapPrismaProductToCard(product)} />
                     ))
                   )}
                 </div>

@@ -7,59 +7,89 @@ import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
+import { AddressForm } from "@/components/account/address-form"
 
-import { useAddressStore } from "@/lib/stores/address-store"
+type AddressApi = {
+  id: string
+  name: string
+  address: string
+  city: string
+  state: string
+  postalCode: string
+  phone: string
+  isDefault: boolean
+}
 
 export default function EditAddressPage() {
   const router = useRouter()
   const params = useParams()
   const addressId = params.id as string
 
-  const address = useAddressStore((state) => state.getAddress(addressId))
-  const updateAddress = useAddressStore((state) => state.updateAddress)
+  const [address, setAddress] = React.useState<AddressApi | null>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
 
-  const [formData, setFormData] = React.useState({
-    name: address?.name || "",
-    address: address?.address || "",
-    city: address?.city || "",
-    state: address?.state || "",
-    postalCode: address?.postalCode || "",
-    phone: address?.phone || "",
-    isDefault: address?.isDefault || false,
-  })
-
-  // Update form data when address loads
   React.useEffect(() => {
-    if (address) {
-      setFormData({
-        name: address.name,
-        address: address.address,
-        city: address.city,
-        state: address.state,
-        postalCode: address.postalCode,
-        phone: address.phone,
-        isDefault: address.isDefault,
-      })
+    let cancelled = false
+    async function load() {
+      try {
+        const res = await fetch(`/api/account/addresses/${addressId}`)
+        if (!res.ok) {
+          if (res.status === 404) setError("Address not found")
+          else setError("Failed to load address")
+          return
+        }
+        const data = await res.json()
+        if (!cancelled) setAddress(data.address)
+      } catch {
+        if (!cancelled) setError("Failed to load address")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
-  }, [address])
+    load()
+    return () => { cancelled = true }
+  }, [addressId])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateAddress(addressId, formData)
+  const handleSubmit = async (data: Parameters<Parameters<typeof AddressForm>[0]["onSubmit"]>[0]) => {
+    const res = await fetch(`/api/account/addresses/${addressId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: data.name,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        postalCode: data.postalCode || null,
+        phone: data.phone,
+        isDefault: data.isDefault,
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || "Failed to update address")
+    }
+
     toast.success("Address updated", {
       description: "Your address has been successfully updated.",
     })
     router.push("/account/addresses")
   }
 
-  if (!address) {
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-10 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-64 animate-pulse rounded-lg bg-muted" />
+      </div>
+    )
+  }
+
+  if (error || !address) {
     return (
       <div className="space-y-4">
-        <p className="text-muted-foreground">Address not found</p>
+        <p className="text-muted-foreground">{error ?? "Address not found"}</p>
         <Button asChild variant="outline">
           <Link href="/account/addresses">Back to Addresses</Link>
         </Button>
@@ -79,95 +109,21 @@ export default function EditAddressPage() {
         <h1 className="font-serif text-2xl font-semibold">Edit Address</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Address Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Address Line</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="postalCode">Postal Code</Label>
-              <Input
-                id="postalCode"
-                value={formData.postalCode}
-                onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isDefault"
-                checked={formData.isDefault}
-                onCheckedChange={(checked) => setFormData({ ...formData, isDefault: checked === true })}
-              />
-              <Label htmlFor="isDefault" className="text-sm font-normal cursor-pointer">
-                Set as default address
-              </Label>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button type="submit">Save Changes</Button>
-              <Button type="button" variant="outline" asChild>
-                <Link href="/account/addresses">Cancel</Link>
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <AddressForm
+        defaultValues={{
+          name: address.name,
+          address: address.address,
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode || "",
+          phone: address.phone,
+          isDefault: address.isDefault,
+        }}
+        onSubmit={handleSubmit}
+        submitLabel="Save Changes"
+        onCancel={() => router.push("/account/addresses")}
+        cancelLabel="Cancel"
+      />
     </div>
   )
 }
-

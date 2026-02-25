@@ -3,29 +3,21 @@ import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// simple sanity test for sk_ keys
 function looksLikePaystackSecretKey(v: string) {
   return /^sk_(test|live)_/i.test(v.trim())
 }
 
 export async function POST(req: Request) {
   try {
-    const { email, amountNGN, meta } = await req.json()
+    const body = await req.json()
+    const { email, amountNGN, metadata, meta } = body
+    const paystackMeta = metadata ?? meta ?? {}
 
     const secret = (process.env.PAYSTACK_SECRET_KEY || '').trim()
-    
-    // Clean up the secret key if it contains "Bearer" prefix
-    let cleanSecret = secret
-    if (secret.toLowerCase().includes('bearer')) {
-      cleanSecret = secret.replace(/^bearer\s+/i, '').trim()
-      console.log('Cleaned secret key from Bearer prefix')
-    }
-    
-    // Debug logging to help identify the issue
-    console.log('PAYSTACK_SECRET_KEY length:', cleanSecret.length)
-    console.log('PAYSTACK_SECRET_KEY starts with:', cleanSecret.substring(0, 20) + '...')
-    console.log('PAYSTACK_SECRET_KEY contains "Bearer":', cleanSecret.includes('Bearer'))
-    
+    const cleanSecret = secret.toLowerCase().includes('bearer')
+      ? secret.replace(/^bearer\s+/i, '').trim()
+      : secret
+
     if (!cleanSecret) {
       return NextResponse.json(
         { error: 'PAYSTACK_SECRET_KEY missing in .env' },
@@ -62,8 +54,7 @@ export async function POST(req: Request) {
         email,
         amount: amountKobo,
         currency: 'NGN',
-        metadata: meta || {},
-        // optionally: callback_url: (process.env.APP_URL || 'http://localhost:3000') + '/checkout/success'
+        metadata: paystackMeta,
       }),
     })
 

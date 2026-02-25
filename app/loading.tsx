@@ -1,5 +1,5 @@
 // app/loading.tsx
-import { ProductCardSkeleton } from '@/components/ProductCardSkeleton'
+import { ProductCardSkeleton } from '@/components/ui/product-card-skeleton'
 
 export default function Loading() {
   return (

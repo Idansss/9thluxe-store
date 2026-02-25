@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <MainLayout cartItemCount={3}>
+    <MainLayout>
       <section className="container mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         <h1 className="font-serif text-3xl font-semibold tracking-tight">Terms of Service</h1>
         <p className="mt-4 text-sm text-muted-foreground">Last updated: February 10, 2026</p>

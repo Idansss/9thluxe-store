@@ -53,7 +53,7 @@ export default async function HomePage() {
       oldPrice: product.oldPriceNGN || undefined,
       image: images[0] || "/placeholder.svg",
       images: images,
-      category: product.category.toLowerCase() as "watches" | "perfumes" | "eyeglasses",
+      category: "perfumes" as const,
       rating: product.ratingAvg,
       reviewCount: product.ratingCount,
       tags: [
@@ -66,7 +66,7 @@ export default async function HomePage() {
 
   return (
 
-    <MainLayout cartItemCount={3}>
+    <MainLayout>
 
       <HeroSection />
 

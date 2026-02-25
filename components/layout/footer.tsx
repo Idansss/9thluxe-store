@@ -15,15 +15,10 @@ import { SocialLinks } from "@/components/footer/SocialLinks"
 
 
 const shopLinks = [
-
-  { name: "Watches", href: "/category/watches" },
-
   { name: "Perfumes", href: "/category/perfumes" },
-
-  { name: "Eyeglasses", href: "/category/eyeglasses" },
-
   { name: "Collections", href: "/collections" },
-
+  { name: "Find your fragrance", href: "/find-your-fragrance" },
+  { name: "Discovery & samples", href: "/discovery" },
 ]
 
 
@@ -161,7 +156,7 @@ export function Footer() {
 
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
 
-              Curated luxury in watches, perfumes & eyewear. We bring you the finest selection of premium accessories
+              Curated luxury perfumes. We bring you the finest selection of premium fragrances
 
               for the discerning individual.
 

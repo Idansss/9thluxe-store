@@ -1,8 +1,8 @@
-﻿import { formatPrice } from '@/lib/format'
-// app/checkout/success/page.tsx
+import { formatPrice } from '@/lib/format'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { OrderStatus } from '@prisma/client'
+import { ClearCartOnSuccess } from '@/components/checkout/clear-cart-on-success'
 
 export const runtime = 'nodejs'
 
@@ -85,6 +85,7 @@ export default async function SuccessPage({ searchParams }: PageProps) {
 
   return (
     <section className="mx-auto max-w-xl p-6">
+      {(reference || isMock) && <ClearCartOnSuccess />}
       <h1 className="mb-2 text-2xl font-semibold">Payment status</h1>
 
       <div className="rounded border p-4">
@@ -111,7 +112,7 @@ export default async function SuccessPage({ searchParams }: PageProps) {
         <Link href="/" className="btn">
           Continue shopping
         </Link>
-        <Link href="/orders" className="btn-outline">
+        <Link href="/account/orders" className="btn-outline">
           View my orders
         </Link>
       </div>

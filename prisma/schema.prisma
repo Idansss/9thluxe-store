@@ -10,9 +10,7 @@ datasource db {
 }
 
 enum ProductCategory {
-  WATCHES
   PERFUMES
-  GLASSES
 }
 
 enum OrderStatus {
@@ -66,7 +64,7 @@ model Product {
   currency     String      @default("NGN")
   category     ProductCategory
   brand        String?
-  productType  String?     // perfume, watch, sunglasses
+  productType  String?     // perfume
   notesTop     String?
   notesHeart   String?
   notesBase    String?
@@ -176,15 +174,17 @@ model Notification {
 }
 
 model Address {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  line1     String
-  city      String
-  state     String
-  phone     String
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String?
+  line1      String
+  city       String
+  state      String
+  postalCode String?
+  phone      String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([userId, isDefault])

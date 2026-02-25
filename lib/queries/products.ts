@@ -5,33 +5,31 @@ export interface ProductForCard {
   id: string
   slug: string
   name: string
-  brand: string | null
+  brand: string
   price: number
   originalPrice?: number
   image: string
   rating: number
   reviewCount: number
   tags?: ("new" | "bestseller" | "limited")[]
-  category: "watches" | "perfumes" | "eyeglasses"
+  category: "perfumes"
 }
 
 export function mapPrismaProductToCard(product: any): ProductForCard {
   const images = Array.isArray(product.images) ? product.images : []
   const mainImage = (images[0] as string) || "/placeholder.svg"
 
-  const categoryMap: Record<ProductCategory, "watches" | "perfumes" | "eyeglasses"> = {
-    WATCHES: "watches",
+  const categoryMap: Record<ProductCategory, "perfumes"> = {
     PERFUMES: "perfumes",
-    GLASSES: "eyeglasses",
   }
 
-  const category = (product.category as ProductCategory) || "WATCHES"
+  const category = (product.category as ProductCategory) || "PERFUMES"
 
   return {
     id: product.id,
     slug: product.slug,
     name: product.name,
-    brand: product.brand || "Unknown",
+    brand: product.brand ?? "",
     price: product.priceNGN,
     originalPrice: product.oldPriceNGN ?? undefined,
     image: mainImage,
@@ -42,16 +40,13 @@ export function mapPrismaProductToCard(product: any): ProductForCard {
       product.isBestseller ? "bestseller" : null,
       product.isLimited ? "limited" : null,
     ].filter(Boolean) as ("new" | "bestseller" | "limited")[],
-    category: categoryMap[category] || "watches",
+    category: categoryMap[category] || "perfumes",
   }
 }
 
 export async function getProductsByCategory(categorySlug: string) {
   const categoryMap: Record<string, ProductCategory> = {
-    watches: "WATCHES",
     perfumes: "PERFUMES",
-    eyeglasses: "GLASSES",
-    glasses: "GLASSES",
   }
 
   const category = categoryMap[categorySlug]

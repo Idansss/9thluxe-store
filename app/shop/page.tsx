@@ -1,13 +1,11 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { ProductCard } from '@/components/ProductCard'
+import { ProductCard } from '@/components/ui/product-card'
+import { mapPrismaProductToCard } from '@/lib/queries/products'
 import type { Product } from '@prisma/client'
 
 const CATEGORY_MAP: Record<string, Product['category']> = {
-  perfume: 'PERFUMES',
-  watches: 'WATCHES',
-  glasses: 'GLASSES',
-  accessories: 'GLASSES',
+  perfumes: 'PERFUMES',
 }
 
 const SORT_MAP: Record<string, { [key: string]: 'asc' | 'desc' }> = {
@@ -17,12 +15,26 @@ const SORT_MAP: Record<string, { [key: string]: 'asc' | 'desc' }> = {
   newest: { createdAt: 'desc' },
 }
 
+const NOTE_OPTIONS = [
+  { value: "", label: "Any scent" },
+  { value: "oud", label: "Oud" },
+  { value: "rose", label: "Rose" },
+  { value: "citrus", label: "Citrus" },
+  { value: "vanilla", label: "Vanilla" },
+  { value: "woody", label: "Woody" },
+  { value: "amber", label: "Amber" },
+  { value: "sandalwood", label: "Sandalwood" },
+  { value: "bergamot", label: "Bergamot" },
+  { value: "patchouli", label: "Patchouli" },
+]
+
 type ShopSearchParams = {
   category?: string
   brand?: string
   minPrice?: string
   maxPrice?: string
   sort?: string
+  note?: string
 }
 
 export const dynamic = 'force-dynamic'
@@ -54,6 +66,15 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
     }
   }
 
+  if (params.note && params.note.trim()) {
+    const term = params.note.trim().toLowerCase()
+    where.OR = [
+      { notesTop: { contains: term, mode: 'insensitive' } },
+      { notesHeart: { contains: term, mode: 'insensitive' } },
+      { notesBase: { contains: term, mode: 'insensitive' } },
+    ]
+  }
+
   const orderBy = SORT_MAP[params.sort || 'newest'] || SORT_MAP.newest
 
   const [products, brandRows] = await Promise.all([
@@ -82,6 +103,7 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
   if (params.minPrice) formParams.set('minPrice', params.minPrice)
   if (params.maxPrice) formParams.set('maxPrice', params.maxPrice)
   if (params.sort) formParams.set('sort', params.sort)
+  if (params.note) formParams.set('note', params.note)
 
   return (
     <section className="py-16">
@@ -103,9 +125,7 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
               className="input w-full"
             >
               <option value="">All</option>
-              <option value="perfume">Perfumes</option>
-              <option value="watches">Watches</option>
-              <option value="glasses">Sunglasses & Frames</option>
+              <option value="perfumes">Perfumes</option>
             </select>
 
             <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
@@ -116,6 +136,17 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
               {brands.map((brand) => (
                 <option key={brand} value={brand}>
                   {brand}
+                </option>
+              ))}
+            </select>
+
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+              Scent / Note
+            </label>
+            <select name="note" defaultValue={params.note || ''} className="input w-full">
+              {NOTE_OPTIONS.map((opt) => (
+                <option key={opt.value || 'any'} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>
@@ -172,7 +203,7 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={mapPrismaProductToCard(product)} />
           ))}
         </div>
       </div>

@@ -3,11 +3,11 @@ import { ProductGrid } from "@/components/product-grid"
 const wishlistProducts = [
   {
     id: "4",
-    name: "Royal Oak Automatic",
-    brand: "Audemars Piguet",
-    price: 1200000,
-    image: "/luxury-silver-watch-with-octagonal-bezel.jpg",
-    category: "watches",
+    name: "Aventus",
+    brand: "Creed",
+    price: 185000,
+    image: "/creed-aventus-perfume-bottle.jpg",
+    category: "perfumes",
   },
   {
     id: "5",

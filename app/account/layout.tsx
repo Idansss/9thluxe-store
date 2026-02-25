@@ -30,7 +30,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
   return (
 
-    <MainLayout cartItemCount={3}>
+    <MainLayout>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 

@@ -8,9 +8,7 @@ import { createProduct, parseProductFormData, getUniqueBrands } from "@/lib/serv
 export const dynamic = "force-dynamic"
 
 const categoryOptions = [
-  { label: "Watches", value: ProductCategory.WATCHES },
   { label: "Perfumes", value: ProductCategory.PERFUMES },
-  { label: "Eyeglasses", value: ProductCategory.GLASSES },
 ]
 
 export default async function NewProductPage() {

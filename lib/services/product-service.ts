@@ -88,9 +88,7 @@ export async function getAdminProducts(params: {
   const { search, categorySlug } = params
 
   let category: ProductCategory | undefined
-  if (categorySlug === "watches") category = "WATCHES"
   if (categorySlug === "perfumes") category = "PERFUMES"
-  if (categorySlug === "eyeglasses") category = "GLASSES"
 
   const whereConditions: Prisma.ProductWhereInput[] = [
     { deletedAt: null }, // Exclude soft-deleted products

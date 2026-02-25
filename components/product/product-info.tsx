@@ -50,8 +50,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
   const [quantity, setQuantity] = React.useState(1)
 
-  const addToCart = useCartStore((state) => state.addItem)
-
   const toggleWishlist = useWishlistStore((state) => state.toggleItem)
 
   const isInWishlist = useWishlistStore((state) => state.isInWishlist(product.id))
@@ -76,7 +74,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
 
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product.inStock) {
       toast.error("Out of stock", {
         description: "This product is currently out of stock.",
@@ -91,22 +89,21 @@ export function ProductInfo({ product }: ProductInfoProps) {
       return
     }
 
-    addToCart(
-      {
-        id: product.id,
-        slug: product.slug,
-        name: product.name,
-        brand: product.brand,
-        price: product.price,
-        image: product.image,
-      },
-      quantity,
-      product.stockCount,
-    )
-
-    toast.success("Added to cart", {
-      description: `${quantity} × ${product.name} added to your cart.`,
-    })
+    try {
+      const res = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ productId: product.id, quantity }),
+      })
+      if (!res.ok) throw new Error("Failed to add")
+      await useCartStore.getState().syncFromServer()
+      toast.success("Added to cart", {
+        description: `${quantity} × ${product.name} added to your cart.`,
+      })
+    } catch {
+      toast.error("Could not add to cart", { description: "Please try again." })
+    }
   }
 
 

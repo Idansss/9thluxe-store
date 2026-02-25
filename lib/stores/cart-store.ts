@@ -1,7 +1,18 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+
+/** Shape returned by GET /api/cart/summary */
+export interface CartSummaryItem {
+  productId: string
+  slug: string
+  name: string
+  brand: string | null
+  image: string
+  quantity: number
+  priceNGN: number
+  lineTotal: number
+}
 
 export interface CartItem {
   id: string
@@ -26,85 +37,98 @@ interface CartStore {
   getTotalPrice: () => number
   getTotalItems: () => number
   getUniqueItemsCount: () => number
+  /** Replace items from server (cookie cart). Single source of truth. */
+  setItemsFromServer: (items: CartSummaryItem[]) => void
+  /** Fetch /api/cart/summary and update store. Call after any cart mutation. */
+  syncFromServer: () => Promise<void>
 }
 
-export const useCartStore = create<CartStore>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      couponCode: null,
-      discount: 0,
-      addItem: (item, quantity = 1, maxStock) => {
-        set((state) => {
-          const existingItem = state.items.find((i) => i.id === item.id)
-          const newQuantity = existingItem ? existingItem.quantity + quantity : quantity
-          
-          // Check stock limit
-          if (maxStock !== undefined && newQuantity > maxStock) {
-            // Don't add if exceeds stock
-            return state
-          }
-          
-          if (existingItem) {
-            return {
-              items: state.items.map((i) => 
-                i.id === item.id 
-                  ? { ...i, quantity: Math.min(newQuantity, maxStock || newQuantity) } 
-                  : i
-              ),
-            }
-          }
-          return {
-            items: [...state.items, { ...item, quantity: Math.min(quantity, maxStock || quantity) }],
-          }
-        })
-      },
-      removeItem: (id) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.id !== id),
-        }))
-      },
-      updateQuantity: (id, quantity, maxStock) => {
-        if (quantity <= 0) {
-          get().removeItem(id)
-          return
-        }
-        set((state) => ({
-          items: state.items.map((item) => 
-            item.id === id 
-              ? { ...item, quantity: maxStock !== undefined ? Math.min(quantity, maxStock) : quantity } 
-              : item
+export const useCartStore = create<CartStore>()((set, get) => ({
+  items: [],
+  couponCode: null,
+  discount: 0,
+  addItem: (item, quantity = 1, maxStock) => {
+    set((state) => {
+      const existingItem = state.items.find((i) => i.id === item.id)
+      const newQuantity = existingItem ? existingItem.quantity + quantity : quantity
+      if (maxStock !== undefined && newQuantity > maxStock) return state
+      if (existingItem) {
+        return {
+          items: state.items.map((i) =>
+            i.id === item.id
+              ? { ...i, quantity: Math.min(newQuantity, maxStock ?? newQuantity) }
+              : i
           ),
-        }))
-      },
-      clearCart: () => {
-        set({ items: [], couponCode: null, discount: 0 })
-      },
-      applyCoupon: (code, subtotal) => {
-        const upperCode = code.trim().toUpperCase()
-        if (upperCode === "FADE10") {
-          const newDiscount = subtotal * 0.1
-          set({ couponCode: upperCode, discount: newDiscount })
-          return true
         }
-        return false
-      },
-      removeCoupon: () => {
-        set({ couponCode: null, discount: 0 })
-      },
-      getTotalPrice: () => {
-        return get().items.reduce((total, item) => total + item.price * item.quantity, 0)
-      },
-      getTotalItems: () => {
-        return get().items.reduce((total, item) => total + item.quantity, 0)
-      },
-      getUniqueItemsCount: () => {
-        return get().items.length
-      },
-    }),
-    {
-      name: "fade-cart-storage",
-    },
-  ),
-)
+      }
+      return {
+        items: [...state.items, { ...item, quantity: Math.min(quantity, maxStock ?? quantity) }],
+      }
+    })
+  },
+  removeItem: (id) => {
+    set((state) => ({
+      items: state.items.filter((item) => item.id !== id),
+    }))
+  },
+  updateQuantity: (id, quantity, maxStock) => {
+    if (quantity <= 0) {
+      get().removeItem(id)
+      return
+    }
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === id
+          ? { ...item, quantity: maxStock !== undefined ? Math.min(quantity, maxStock) : quantity }
+          : item
+      ),
+    }))
+  },
+  clearCart: () => {
+    set({ items: [], couponCode: null, discount: 0 })
+  },
+  applyCoupon: (code, subtotal) => {
+    const upperCode = code.trim().toUpperCase()
+    if (upperCode === "FADE10") {
+      const newDiscount = subtotal * 0.1
+      set({ couponCode: upperCode, discount: newDiscount })
+      return true
+    }
+    return false
+  },
+  removeCoupon: () => {
+    set({ couponCode: null, discount: 0 })
+  },
+  getTotalPrice: () => {
+    return get().items.reduce((total, item) => total + item.price * item.quantity, 0)
+  },
+  getTotalItems: () => {
+    return get().items.reduce((total, item) => total + item.quantity, 0)
+  },
+  getUniqueItemsCount: () => {
+    return get().items.length
+  },
+  setItemsFromServer: (items) => {
+    set({
+      items: items.map((i) => ({
+        id: i.productId,
+        slug: i.slug,
+        name: i.name,
+        brand: i.brand ?? "",
+        price: i.priceNGN,
+        image: i.image,
+        quantity: i.quantity,
+      })),
+    })
+  },
+  syncFromServer: async () => {
+    try {
+      const res = await fetch("/api/cart/summary", { credentials: "include" })
+      const data = await res.json()
+      get().setItemsFromServer(data.items ?? [])
+    } catch {
+      // Offline or API error; leave store as-is
+    }
+  },
+}))
 

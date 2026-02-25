@@ -66,7 +66,7 @@ export function ProductForm({ initialValues, categories, collections, brands = [
   const [selectedBrand, setSelectedBrand] = React.useState(initialValues?.brand ?? "")
   const [customBrand, setCustomBrand] = React.useState("")
   const [showCustomBrand, setShowCustomBrand] = React.useState(!initialValues?.brand || !brands.includes(initialValues.brand))
-  const [category, setCategory] = React.useState(initialValues?.category ?? ProductCategory.WATCHES)
+  const [category, setCategory] = React.useState(initialValues?.category ?? ProductCategory.PERFUMES)
   const [collectionId, setCollectionId] = React.useState(initialValues?.collectionId ?? "")
   const [currency, setCurrency] = React.useState(initialValues?.currency ?? "NGN")
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { X, Trash2 } from "lucide-react"
 import Link from "next/link"
 
@@ -98,7 +99,15 @@ export function CartDrawer({ open, cartCount, onClose }: CartDrawerProps) {
           ) : (
             items.map((item) => (
               <div key={item.productId} className="flex gap-3 px-4 py-4">
-                <img src={item.image} alt={item.name} className="h-16 w-16 overflow-hidden rounded-2xl object-cover" />
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-muted">
+                  <Image
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </div>
                 <div className="flex flex-1 flex-col">
                   <div className="flex items-center justify-between text-sm font-semibold text-foreground">
                     <span>{item.name}</span>

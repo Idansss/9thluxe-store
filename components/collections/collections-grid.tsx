@@ -70,7 +70,7 @@ export function CollectionsGrid({ products }: CollectionsGridProps) {
     return filtered
   }, [products, selectedCategory, selectedBrand, priceRange, sortBy])
 
-  const categories = ["all", "watches", "perfumes", "eyeglasses"]
+  const categories = ["all", "perfumes"]
   const brands = Array.from(new Set(products.map((p) => p.brand)))
   const priceRanges = [
     { value: "all", label: "All Prices" },

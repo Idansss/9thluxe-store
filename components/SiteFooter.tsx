@@ -2,9 +2,7 @@ import Link from 'next/link'
 import { Instagram, MessageCircle } from 'lucide-react'
 
 const shopLinks = [
-  { href: '/category/watches', label: 'Watches' },
   { href: '/category/perfumes', label: 'Perfumes' },
-  { href: '/category/glasses', label: 'Eye Glasses' },
 ]
 
 const helpLinks = [

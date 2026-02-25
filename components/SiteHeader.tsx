@@ -45,14 +45,8 @@ export async function SiteHeader() {
       <div className="border-t border-border">
         <div className="container mx-auto max-w-[1200px] px-6">
           <nav className="flex items-center gap-8 py-3">
-            <Link href="/category/watches" className="text-sm font-medium transition-colors hover:text-muted-foreground">
-              Watches
-            </Link>
             <Link href="/category/perfumes" className="text-sm font-medium transition-colors hover:text-muted-foreground">
               Perfumes
-            </Link>
-            <Link href="/category/glasses" className="text-sm font-medium transition-colors hover:text-muted-foreground">
-              Eye Glasses
             </Link>
           </nav>
         </div>

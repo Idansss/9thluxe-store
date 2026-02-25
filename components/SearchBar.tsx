@@ -132,7 +132,7 @@ export default function SearchBar() {
     router.push(`/product/${slug}`)
   }
 
-  const placeholder = useMemo(() => 'Search perfumes, watches, eyewear...', [])
+  const placeholder = useMemo(() => 'Search perfumes...', [])
 
   return (
     <div ref={rootRef} className="relative">

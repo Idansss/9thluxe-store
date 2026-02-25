@@ -36,18 +36,16 @@ export async function POST(request: Request) {
       } as any,
     })
 
-    // TODO: Send email with reset link
-    // For now, we'll return the link so it can be displayed in development
-    const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/auth/reset/${resetToken}`
-    console.log('Password reset link:', resetUrl)
-    console.log('Token:', resetToken)
-
-    return NextResponse.json({ 
+    // TODO: Send email with reset link (use Resend or your email provider)
+    const base = process.env.NEXTAUTH_URL || process.env.APP_URL || 'http://localhost:3000'
+    const resetUrl = `${base}/auth/reset/${resetToken}`
+    // Do not log or expose the token. Send resetUrl via email only.
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json({
       message: 'If an account exists for this email, a reset link has been sent.',
-      resetLink: resetUrl // Include in development
+      ...(isDev && { resetLink: resetUrl }),
     })
-  } catch (error) {
-    console.error('Reset password error:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to process reset request' },
       { status: 500 }

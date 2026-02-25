@@ -33,18 +33,8 @@ export function SiteFooter() {
             <h3 className="mb-4 text-sm font-semibold">Shop</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li>
-                <Link href="/watches" className="transition-colors hover:text-foreground">
-                  Watches
-                </Link>
-              </li>
-              <li>
                 <Link href="/perfumes" className="transition-colors hover:text-foreground">
                   Perfumes
-                </Link>
-              </li>
-              <li>
-                <Link href="/eyeglasses" className="transition-colors hover:text-foreground">
-                  Eye Glasses
                 </Link>
               </li>
             </ul>

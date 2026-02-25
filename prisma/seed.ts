@@ -6,16 +6,6 @@ const prisma = new PrismaClient()
 async function main() {
   const products = [
     {
-      name: 'Aurelius Black Chrono Watch',
-      slug: 'aurelius-black-chrono-watch',
-      description: 'Stainless steel chronograph, sapphire glass, 5ATM.',
-      images: ['/placeholder.png'], // JSON array
-      priceNGN: 175000,
-      category: ProductCategory.WATCHES,
-      brand: 'Aurelius',
-      stock: 20,
-    },
-    {
       name: 'Nocturne Eau de Parfum 100ml',
       slug: 'nocturne-eau-de-parfum',
       description: 'Amber, oud and vanilla. Long lasting.',
@@ -26,12 +16,22 @@ async function main() {
       stock: 50,
     },
     {
-      name: 'Vesper Classic Sunglasses',
-      slug: 'vesper-classic-sunglasses',
-      description: 'UV400 polarized lenses, unisex.',
+      name: 'Aurelius Noir Eau de Toilette 75ml',
+      slug: 'aurelius-noir-eau-de-toilette',
+      description: 'Fresh citrus top notes with woody base. Elegant and versatile.',
       images: ['/placeholder.png'],
-      priceNGN: 45000,
-      category: ProductCategory.GLASSES,
+      priceNGN: 75000,
+      category: ProductCategory.PERFUMES,
+      brand: 'Aurelius',
+      stock: 30,
+    },
+    {
+      name: 'Vesper Velvet Eau de Parfum 50ml',
+      slug: 'vesper-velvet-eau-de-parfum',
+      description: 'Rose and patchouli. Bold and memorable.',
+      images: ['/placeholder.png'],
+      priceNGN: 85000,
+      category: ProductCategory.PERFUMES,
       brand: 'Vesper',
       stock: 35,
     },

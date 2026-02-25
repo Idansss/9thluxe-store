@@ -3,7 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, Clock, SprayCan, Glasses } from "lucide-react"
+import { ArrowRight, SprayCan } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -15,17 +15,6 @@ interface FeaturedCollectionsProps {
 
 const collections = [
   {
-    id: "watches",
-    title: "Timepieces",
-    subtitle: "Masterful Craftsmanship",
-    description: "Discover precision-engineered watches from legendary Swiss and international manufacturers.",
-    icon: Clock,
-    href: "/category/watches",
-    image: "/luxury-watches-collection-display.jpg",
-    count: 3,
-    gradient: "from-blue-500/10 to-purple-500/10",
-  },
-  {
     id: "perfumes",
     title: "Fragrances",
     subtitle: "Signature Scents",
@@ -35,17 +24,6 @@ const collections = [
     image: "/luxury-perfume-bottles.png",
     count: 3,
     gradient: "from-amber-500/10 to-rose-500/10",
-  },
-  {
-    id: "eyeglasses",
-    title: "Eyewear",
-    subtitle: "Vision & Style",
-    description: "Premium frames that combine cutting-edge design with uncompromising quality.",
-    icon: Glasses,
-    href: "/category/eyeglasses",
-    image: "/luxury-sunglasses-eyeglasses-display.jpg",
-    count: 2,
-    gradient: "from-emerald-500/10 to-teal-500/10",
   },
 ]
 
