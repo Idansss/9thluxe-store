@@ -141,6 +141,12 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Payment</span>
+                <span className={`font-medium ${order.paymentMethod === "BANK_TRANSFER" ? "text-amber-600 dark:text-amber-400" : ""}`}>
+                  {order.paymentMethod === "BANK_TRANSFER" ? "Bank Transfer" : "Card / Paystack"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatPrice(order.subtotalNGN)}</span>
               </div>
@@ -156,6 +162,14 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                 <div className="pt-2 text-xs text-muted-foreground">
                   Coupon applied: <span className="font-mono">{order.coupon.code}</span>
                 </div>
+              )}
+              {order.paymentMethod === "BANK_TRANSFER" && order.status === "PENDING" && (
+                <form action={updateStatusAction} className="pt-3 border-t border-border mt-2">
+                  <input type="hidden" name="status" value="PAID" />
+                  <Button type="submit" size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    ✓ Mark as Paid (Bank Transfer Received)
+                  </Button>
+                </form>
               )}
             </CardContent>
           </Card>

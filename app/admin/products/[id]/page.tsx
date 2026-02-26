@@ -4,6 +4,8 @@ import { ProductCategory } from "@prisma/client"
 import { ProductForm, type ProductFormInitialValues } from "@/components/admin/product-form"
 import { getCollectionsWithCounts } from "@/lib/services/collection-service"
 import { getAdminProductById, parseProductFormData, updateProduct, getUniqueBrands } from "@/lib/services/product-service"
+import { prisma } from "@/lib/prisma"
+import { sendPriceDropAlert } from "@/emails/sendPriceDropAlert"
 
 export const dynamic = "force-dynamic"
 
@@ -49,6 +51,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     isLimited: product.isLimited,
     images,
     collectionId: product.collectionId,
+    fragranceFamily: product.fragranceFamily,
   }
 
   async function handleUpdate(formData: FormData) {
@@ -56,7 +59,36 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
     const { id: productId } = await params
     const input = parseProductFormData(formData)
+
+    // Check price before updating for price-drop alerts
+    const current = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { priceNGN: true, name: true, slug: true },
+    })
+
     await updateProduct(productId, input)
+
+    // Send price drop alerts to wishlist users if price decreased
+    if (current && input.priceNGN < current.priceNGN) {
+      try {
+        const wishlistEntries = await prisma.wishlist.findMany({
+          where: { productId },
+          include: { user: { select: { email: true, name: true } } },
+        })
+        for (const entry of wishlistEntries) {
+          await sendPriceDropAlert({
+            to: entry.user.email,
+            customerName: entry.user.name,
+            productName: input.name,
+            productSlug: current.slug,
+            oldPriceNGN: current.priceNGN,
+            newPriceNGN: input.priceNGN,
+          })
+        }
+      } catch (e) {
+        console.error("Price drop alert failed:", e)
+      }
+    }
 
     redirect("/admin/products?success=updated")
   }

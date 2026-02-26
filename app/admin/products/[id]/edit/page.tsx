@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin'
 import { ImageUploader } from '@/components/admin/image-uploader'
+import { sendPriceDropAlert } from '@/emails/sendPriceDropAlert'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,14 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       }
     }
 
+    const fragranceFamily = ((formData.get('fragranceFamily') as string) || '').trim() || null
+
+    // Fetch current price to check for price drops
+    const currentProduct = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { priceNGN: true, name: true, slug: true },
+    })
+
     await prisma.product.update({
       where: { id: productId },
       data: {
@@ -54,8 +63,31 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         brand: brand || null,
         stock,
         images,
+        fragranceFamily,
       },
     })
+
+    // Send price drop alerts if price decreased
+    if (currentProduct && !isNaN(priceNGN) && priceNGN < currentProduct.priceNGN) {
+      try {
+        const wishlistEntries = await prisma.wishlist.findMany({
+          where: { productId },
+          include: { user: { select: { email: true, name: true } } },
+        })
+        for (const entry of wishlistEntries) {
+          await sendPriceDropAlert({
+            to: entry.user.email,
+            customerName: entry.user.name,
+            productName: name || currentProduct.name,
+            productSlug: currentProduct.slug,
+            oldPriceNGN: currentProduct.priceNGN,
+            newPriceNGN: priceNGN,
+          })
+        }
+      } catch (e) {
+        console.error('Price drop alert failed:', e)
+      }
+    }
 
     redirect('/admin/products')
   }
@@ -136,6 +168,27 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
               className="input w-full"
               placeholder="Enter stock quantity"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="fragranceFamily" className="text-sm font-medium text-foreground">
+              Fragrance Family
+            </label>
+            <select
+              id="fragranceFamily"
+              name="fragranceFamily"
+              defaultValue={productRecord.fragranceFamily || ''}
+              className="input w-full"
+            >
+              <option value="">None</option>
+              <option value="CITRUS">Citrus</option>
+              <option value="WOODY">Woody</option>
+              <option value="FLORAL">Floral</option>
+              <option value="ORIENTAL">Oriental</option>
+              <option value="FRESH">Fresh</option>
+              <option value="SPICY">Spicy</option>
+              <option value="GOURMAND">Gourmand</option>
+            </select>
           </div>
         </div>
 

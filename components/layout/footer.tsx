@@ -19,8 +19,8 @@ import { SocialLinks } from "@/components/footer/SocialLinks"
 const shopLinks = [
   { name: "Perfumes", href: "/category/perfumes" },
   { name: "Collections", href: "/collections" },
-  { name: "Find your fragrance", href: "/find-your-fragrance" },
-  { name: "Discovery & samples", href: "/discovery" },
+  { name: "Limited Drops", href: "/drops" },
+  { name: "The Journal", href: "/journal" },
 ]
 
 

@@ -34,6 +34,17 @@ const SORT_OPTIONS = [
   { value: "best_selling", label: "Best selling" },
 ]
 
+const FAMILY_OPTIONS = [
+  { value: EMPTY, label: "Any family" },
+  { value: "CITRUS", label: "Citrus" },
+  { value: "WOODY", label: "Woody" },
+  { value: "FLORAL", label: "Floral" },
+  { value: "ORIENTAL", label: "Oriental" },
+  { value: "FRESH", label: "Fresh" },
+  { value: "SPICY", label: "Spicy" },
+  { value: "GOURMAND", label: "Gourmand" },
+]
+
 type ShopFiltersFormProps = {
   params: {
     category?: string
@@ -43,6 +54,7 @@ type ShopFiltersFormProps = {
     sort?: string
     note?: string
     q?: string
+    family?: string
   }
   brands: string[]
 }
@@ -58,6 +70,7 @@ export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
   const [category, setCategory] = React.useState(params.category && params.category !== "" ? params.category : EMPTY)
   const [brand, setBrand] = React.useState(params.brand && params.brand !== "" ? params.brand : EMPTY)
   const [note, setNote] = React.useState(params.note && params.note !== "" ? params.note : EMPTY)
+  const [family, setFamily] = React.useState(params.family && params.family !== "" ? params.family : EMPTY)
   const [sort, setSort] = React.useState(params.sort || "newest")
 
   return (
@@ -69,6 +82,7 @@ export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
       <input type="hidden" name="category" value={toFormValue(category)} />
       <input type="hidden" name="brand" value={toFormValue(brand)} />
       <input type="hidden" name="note" value={toFormValue(note)} />
+      <input type="hidden" name="family" value={toFormValue(family)} />
       <input type="hidden" name="sort" value={sort} />
 
       <div className="space-y-4">
@@ -111,6 +125,22 @@ export function ShopFiltersForm({ params, brands }: ShopFiltersFormProps) {
           </SelectTrigger>
           <SelectContent className="bg-popover text-popover-foreground border-border">
             {NOTE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+          Fragrance Family
+        </label>
+        <Select value={family} onValueChange={setFamily}>
+          <SelectTrigger className={formInputBase}>
+            <SelectValue placeholder="Any family" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover text-popover-foreground border-border">
+            {FAMILY_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>

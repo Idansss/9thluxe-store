@@ -6,6 +6,8 @@ import { CategoriesSection } from "@/components/home/categories-section"
 
 import { FeaturedProductsSection } from "@/components/home/featured-products-section"
 
+import { FragranceFamilies } from "@/components/home/fragrance-families"
+
 import { BrandStorySection } from "@/components/home/brand-story-section"
 
 import { NewsletterSection } from "@/components/home/newsletter-section"
@@ -73,6 +75,8 @@ export default async function HomePage() {
       <CategoriesSection />
 
       <FeaturedProductsSection products={featuredProducts} />
+
+      <FragranceFamilies />
 
       <BrandStorySection />
 

@@ -27,8 +27,9 @@ import { useCartStore } from "@/lib/stores/cart-store"
 const navigation = [
   { name: "Perfumes", href: "/category/perfumes" },
   { name: "Collections", href: "/collections" },
+  { name: "Drops", href: "/drops" },
+  { name: "Journal", href: "/journal" },
   { name: "About", href: "/about" },
-  { name: "Help", href: "/help" },
 ]
 
 

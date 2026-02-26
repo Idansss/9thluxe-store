@@ -22,6 +22,7 @@ export const productInputSchema = z.object({
   isLimited: z.boolean().optional().default(false),
   images: z.array(z.string()).optional().default([]),
   collectionId: z.string().optional().nullable(),
+  fragranceFamily: z.string().optional().nullable(),
 })
 
 export type ProductInput = z.infer<typeof productInputSchema>
@@ -76,6 +77,7 @@ export function parseProductFormData(formData: FormData): ProductInput {
     isLimited: Boolean(formData.get("isLimited")),
     images,
     collectionId: ((formData.get("collectionId") as string) || "").trim() || null,
+    fragranceFamily: ((formData.get("fragranceFamily") as string) || "").trim() || null,
   }
 
   return productInputSchema.parse(result)
@@ -195,6 +197,7 @@ export async function createProduct(input: ProductInput) {
       isLimited: input.isLimited,
       images: input.images,
       collectionId: input.collectionId,
+      fragranceFamily: input.fragranceFamily,
     },
   })
 }
@@ -220,6 +223,7 @@ export async function updateProduct(id: string, input: ProductInput) {
       isLimited: input.isLimited,
       images: input.images,
       collectionId: input.collectionId,
+      fragranceFamily: input.fragranceFamily,
     },
   })
 }

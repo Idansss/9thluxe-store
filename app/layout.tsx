@@ -35,6 +35,13 @@ export const metadata: Metadata = {
   },
   description: "Discover premium luxury perfumes at Fàdè Essence. Curated collection of timeless fragrances and sophistication.",
   keywords: ["luxury perfumes", "fragrances", "Fàdè", "premium perfume", "Nigeria"],
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Fàdè",
+  },
+  formatDetection: { telephone: false },
   authors: [{ name: "Fàdè Essence" }],
   creator: "Fàdè Essence",
   publisher: "Fàdè Essence",
@@ -85,6 +92,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#0a0a0a" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <CartHydrator />

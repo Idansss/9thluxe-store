@@ -24,6 +24,7 @@ type ShopSearchParams = {
   sort?: string
   note?: string
   q?: string
+  family?: string
 }
 
 export const dynamic = 'force-dynamic'
@@ -53,6 +54,10 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
     if (!Number.isNaN(max)) {
       where.priceNGN = { ...((where.priceNGN as object) ?? {}), lte: max }
     }
+  }
+
+  if (params.family && params.family.trim()) {
+    where.fragranceFamily = params.family.trim().toUpperCase()
   }
 
   if (params.note && params.note.trim()) {

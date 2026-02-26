@@ -23,6 +23,7 @@ const createOrderSchema = z.object({
   isGift: z.boolean().optional().default(false),
   giftMessage: z.string().max(500).optional().nullable(),
   giftWrapping: z.boolean().optional().default(false),
+  paymentMethod: z.enum(["CARD", "BANK_TRANSFER"]).optional().default("CARD"),
 })
 
 export async function POST(req: NextRequest) {
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    const { addressLine1, city, state, phone, items, subtotalNGN, discountNGN, shippingNGN, totalNGN, couponId, isGift, giftMessage, giftWrapping } = parsed.data
+    const { addressLine1, city, state, phone, items, subtotalNGN, discountNGN, shippingNGN, totalNGN, couponId, isGift, giftMessage, giftWrapping, paymentMethod } = parsed.data
 
     // Resolve product IDs and validate prices (use DB price for consistency)
     const productIds = [...new Set(items.map((i) => i.productId))]
@@ -102,6 +103,7 @@ export async function POST(req: NextRequest) {
         isGift: isGift ?? false,
         giftMessage: giftMessage || null,
         giftWrapping: giftWrapping ?? false,
+        paymentMethod: paymentMethod ?? "CARD",
         items: {
           create: orderItems.map((i) => ({
             productId: i.productId,

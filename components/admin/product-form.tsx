@@ -41,6 +41,7 @@ export interface ProductFormInitialValues {
   isLimited?: boolean
   images?: string[]
   collectionId?: string | null
+  fragranceFamily?: string | null
 }
 
 interface ProductFormProps {
@@ -69,6 +70,7 @@ export function ProductForm({ initialValues, categories, collections, brands = [
   const [category, setCategory] = React.useState(initialValues?.category ?? ProductCategory.PERFUMES)
   const [collectionId, setCollectionId] = React.useState(initialValues?.collectionId ?? "")
   const [currency, setCurrency] = React.useState(initialValues?.currency ?? "NGN")
+  const [fragranceFamily, setFragranceFamily] = React.useState(initialValues?.fragranceFamily ?? "")
 
   // Auto-generate slug from name
   React.useEffect(() => {
@@ -201,6 +203,26 @@ export function ProductForm({ initialValues, categories, collections, brands = [
                 </SelectContent>
               </Select>
               <input type="hidden" name="collectionId" value={collectionId} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fragranceFamily">Fragrance Family</Label>
+              <Select value={fragranceFamily || "__none__"} onValueChange={(v) => setFragranceFamily(v === "__none__" ? "" : v)}>
+                <SelectTrigger id="fragranceFamily">
+                  <SelectValue placeholder="Select family (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">None</SelectItem>
+                  <SelectItem value="CITRUS">Citrus</SelectItem>
+                  <SelectItem value="WOODY">Woody</SelectItem>
+                  <SelectItem value="FLORAL">Floral</SelectItem>
+                  <SelectItem value="ORIENTAL">Oriental</SelectItem>
+                  <SelectItem value="FRESH">Fresh</SelectItem>
+                  <SelectItem value="SPICY">Spicy</SelectItem>
+                  <SelectItem value="GOURMAND">Gourmand</SelectItem>
+                </SelectContent>
+              </Select>
+              <input type="hidden" name="fragranceFamily" value={fragranceFamily} />
             </div>
           </CardContent>
         </Card>
