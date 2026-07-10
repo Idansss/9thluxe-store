@@ -64,8 +64,8 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
 - [x] Perfume identity/fragrance/performance/commerce/experience/trust/SEO fields (new models: `ProductFragrance`, `ProductVariant`, `ProductMedia`, `ProductTrust`, `ProductSeo`)
 - [~] Core domain models (customer profile, consent, scent profile, quiz, wishlists, discovery sets, sample credits, loyalty ledger, referrals, reviews+moderation, support, notifications log, audit log, approvals, owner reports, supplier/inventory signals, integration events, webhook receipts, idempotency, job runs, feature flags) — schema authored; migration generated
 - [x] Migration `prisma/migrations/*_backend_upgrade` (additive; drops only non-perfume columns) + rollback SQL in `docs/ROLLBACK_PLAN.md`
-- [x] Dev fixtures (`prisma/fixtures/*`) clearly labelled non-production
-- [ ] `prisma migrate` applied to clean DB — **cannot run without DATABASE_URL** (documented; dry-run + validation scripts provided)
+- [x] Dev fixtures (perfume-only seed) clearly labelled non-production
+- [ ] `prisma migrate` applied — **deliberately NOT applied.** A live `DATABASE_URL` is connected but still on the OLD schema (validation confirms `sku` absent). Applying alters a possibly-production DB and is an irreversible/live-system change requiring explicit owner approval (which DB + permission). Read-only `scripts/migrate/validate.ts` verified: 3 products, 3 users, 1 order, no non-perfume rows, no orphaned orders, no blocking issues.
 
 ## Phase 4 — Services & feature backends
 - [~] Catalogue & inventory services (sync, publish rules, low/out-of-stock, back-in-stock, preorder/waitlist, reconciliation, dup-SKU, source-of-truth doc)
@@ -86,7 +86,7 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
 ## Phase 5 — Security, privacy, reliability
 - [~] Security review doc + fixes (`docs/SECURITY_REVIEW.md`) — authz, IDOR, CSRF, webhook forgery, replay, race/oversell, coupon/referral/review abuse, prompt injection, PII-in-logs
 - [x] Input/output validation (Zod), request-size limits, error normalization, safe logging
-- [~] Rate limiting (durable store) — in-memory today; Redis adapter interface added
+- [ ] Rate limiting (durable store) — existing in-memory limiter (`lib/middleware/rate-limit.ts`) retained; durable Redis-backed limiter NOT yet added (documented as follow-up in SECURITY_REVIEW)
 - [x] Data governance doc (`docs/DATA_GOVERNANCE.md`) + consent/export/deletion workflow boundaries
 - [x] Observability doc (`docs/OBSERVABILITY.md`) — logs, requestId, health/readiness, job/webhook logs, retry/circuit-breaker/backup/rollback
 - [x] Analytics typed first-party events (`lib/analytics/events.ts`)
@@ -113,4 +113,9 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
 - [x] `docs/OWNER_COPILOT.md`
 - [x] `docs/BACKEND_HANDOFF.md`
 - [x] `.env.example` refreshed
-- [~] Completion protocol run (install, env-validate, lint, typecheck, build, tests, migrate dry-run, rollback, secret scan) — items runnable without a live DB executed; DB-dependent steps documented as blocked
+- [~] Completion protocol run — **executed this session:** `npm install` ✓, env validation ✓,
+  ESLint (new code) ✓ 0 errors, `tsc --noEmit` ✓ 0 errors, `vitest run` ✓ 89/89, `npm run build`
+  ✓ success, migration dry-run (read-only `validate.ts`) ✓ no blocking issues, offline
+  rollback.sql generated ✓, secret scan ✓ (no secrets committed, no live-key patterns in source).
+  **Blocked (needs owner approval / live DB):** applying migrations, seeding the live DB, and the
+  DB/E2E/security test suites that require a migrated Postgres.

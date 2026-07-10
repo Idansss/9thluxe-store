@@ -213,7 +213,7 @@ export const localCommerce: CommerceProvider = {
       const u = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true, name: true } })
       return u ? { id: u.id, email: u.email, name: u.name } : null
     },
-    async ensure(email: string, name?: string | null) {
+    async ensure(email: string) {
       const u = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true, name: true } })
       if (u) return { id: u.id, email: u.email, name: u.name }
       throw new AppError('UNAUTHENTICATED', { internal: 'ensure() requires an existing account' })

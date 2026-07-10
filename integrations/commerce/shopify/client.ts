@@ -39,7 +39,6 @@ export async function shopifyGraphQL<T>(
   correlationId?: string,
 ): Promise<T> {
   let attempt = 0
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     attempt++
     const controller = new AbortController()

@@ -8,11 +8,6 @@
 //  - We never print secret values, only which keys are missing/invalid.
 import { z } from 'zod'
 
-const bool = z
-  .string()
-  .optional()
-  .transform((v) => v === 'true' || v === '1')
-
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 

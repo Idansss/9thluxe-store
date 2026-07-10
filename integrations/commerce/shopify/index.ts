@@ -109,7 +109,7 @@ export const shopifyCommerce: CommerceProvider = {
   },
 
   cart: {
-    async getOrCreateCart(cartId?: string): Promise<CommerceCart> {
+    async getOrCreateCart(): Promise<CommerceCart> {
       // Shopify cart create/query returns a checkoutUrl for handoff. Full mapping pending import.
       throw new AppError('FEATURE_DISABLED', { internal: 'shopify cart mapping pending approved import' })
     },

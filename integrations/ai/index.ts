@@ -115,7 +115,7 @@ export async function generateStructured<T>(
       const result = await attempt(provider)
       recordSuccess(provider.name)
       return result
-    } catch (e) {
+    } catch {
       recordFailure(provider.name)
       logger.warn('ai_attempt_failed', { provider: provider.name, task: opts.task })
       // continue to next provider/attempt
