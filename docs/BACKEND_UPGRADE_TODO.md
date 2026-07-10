@@ -74,8 +74,10 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
 - [x] Recommendation engine (`lib/recommendations/engine.ts`: intent → constraints → retrieve → score → safeguards → revalidate → typed results) + `GET /api/v1/recommendations`; grounding invariant tested (never returns unavailable-as-available)
 - [x] AI Scent Concierge backend (`POST /api/v1/concierge`: catalogue-grounded, refusal/clarification for out-of-catalogue intent, no medical claims, feature-flag gated)
 - [x] v1 storefront routes on the envelope: `GET /api/v1/products`, `/products/[slug]`, `/search`, `/recommendations`, `POST /concierge`
-- [ ] Fragrance DNA quiz (versioned, anon+auth, derived profile)
-- [ ] Gift Concierge (delivery feasibility validated separately)
+- [x] Fragrance DNA quiz (`GET/POST /api/v1/quiz`: versioned definition, pure deterministic
+  derivation, anon quiz session + consented profile persistence, grounded recommendations; tested)
+- [x] Gift Concierge (`POST /api/v1/gift`: structured inputs → grounded suggestions; delivery
+  feasibility computed deterministically, separate from AI generation; tested)
 - [ ] Layering Lab (editorial rules + AI explanation, non-guaranteed)
 - [x] Reviews (`POST/GET /api/v1/reviews`: verified-purchase enforced, one-per-user, moderation
   PENDING flag; `GET /api/v1/reviews/summary`: AI summary of real reviews with count + isAiSummary)
