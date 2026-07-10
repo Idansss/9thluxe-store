@@ -91,13 +91,19 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
   min/max from config, DB-priced, stock-validated) + sample-credit balance/preview
   (`GET/POST /api/v1/sample-credits`, expiry-aware, expiring-soonest-first, no over-apply; redemption
   flag-gated OFF). Full-bottle conversion + admin credit granting still to wire.
-- [ ] Loyalty & referrals (configurable, disabled until approved)
+- [~] Loyalty & referrals — pure points logic (earn 1pt/₦1,000, balance, redemption **refused unless
+  `loyalty_rewards` flag on**), `GET /api/v1/loyalty` (tier/spend/points); referral code get-or-create
+  `GET /api/v1/referrals` with `referral_rewards` flag OFF. Earn-on-payment wiring + payout approval
+  still to add. Tested.
 - [~] Notifications events + consent/quiet-hours/dedup
 - [~] Owner Copilot — **daily brief live** (`GET /api/v1/admin/daily-brief`, ADMIN-gated, read-only
   aggregation with every metric traceable via `brief.sources`, margin reports `no_cost_price_data`
   rather than fabricating, + best-effort AI summary/actions that execute nothing). Inventory/
   marketing/insight assistants + Approval Centre execution surfaces still to wire.
-- [ ] Admin/operational APIs (sync, moderation, reports, job/webhook reprocess, flags, audit search)
+- [~] Admin/operational APIs — `GET /api/v1/admin/status` (integration/provider/flag status, no
+  secrets), review moderation (`GET /api/v1/admin/reviews`, `POST /api/v1/admin/reviews/[id]` with
+  audit), `GET /api/v1/admin/daily-brief`, `GET /api/v1/admin/audit` (search). Job/webhook reprocess
+  + product sync endpoints still to add. `lib/audit.ts` writes the audit trail.
 
 ## Phase 5 — Security, privacy, reliability
 - [~] Security review doc + fixes (`docs/SECURITY_REVIEW.md`) — authz, IDOR, CSRF, webhook forgery, replay, race/oversell, coupon/referral/review abuse, prompt injection, PII-in-logs
