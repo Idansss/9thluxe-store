@@ -92,11 +92,11 @@ export function CartItem({ product, quantity, onUpdateQuantity, onRemove }: Cart
 
             <div>
 
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">{product.brand}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">{product.brand}</p>
 
               <Link href={`/product/${product.slug}`}>
 
-                <h3 className="font-medium text-sm sm:text-base hover:text-accent transition-colors line-clamp-2">
+                <h3 className="mt-0.5 font-serif text-sm font-medium leading-snug hover:text-accent transition-colors line-clamp-2 sm:text-base">
 
                   {product.name}
 

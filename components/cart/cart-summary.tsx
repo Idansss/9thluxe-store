@@ -6,7 +6,7 @@ import * as React from "react"
 
 import Link from "next/link"
 
-import { Tag } from "lucide-react"
+import { Tag, Lock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -28,11 +28,21 @@ interface CartSummaryProps {
 
   itemCount: number
 
+  /** Commerce policy from backend config (lib/config/commerce). */
+  freeShippingThreshold?: number
+
+  flatShippingFee?: number
+
 }
 
 
 
-export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
+export function CartSummary({
+  subtotal,
+  itemCount,
+  freeShippingThreshold = 500000,
+  flatShippingFee = 15000,
+}: CartSummaryProps) {
 
   const couponCode = useCartStore((state) => state.couponCode)
 
@@ -66,7 +76,7 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
 
 
-  const shipping = subtotal > 500000 ? 0 : 15000
+  const shipping = subtotal >= freeShippingThreshold ? 0 : flatShippingFee
 
   const currentDiscount = discount
 
@@ -318,25 +328,25 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
           <div className="flex justify-between text-xs">
 
-            <span className={shipping === 0 ? "text-primary font-medium" : "text-muted-foreground"}>
+            <span className={shipping === 0 ? "font-medium text-accent" : "text-muted-foreground"}>
 
               {shipping === 0
 
-                ? "Free shipping unlocked!"
+                ? "Complimentary delivery unlocked"
 
-                : `Add ${formatPrice(500000 - subtotal)} for free shipping`}
+                : `Add ${formatPrice(Math.max(0, freeShippingThreshold - subtotal))} for free delivery`}
 
             </span>
 
-            <span className="text-muted-foreground">{Math.min(100, Math.round((subtotal / 500000) * 100))}%</span>
+            <span className="text-muted-foreground">{Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100))}%</span>
 
           </div>
 
           <progress
 
-            className="w-full h-1.5 rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-value]:bg-primary [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:transition-all [&::-moz-progress-bar]:bg-primary"
+            className="w-full h-1.5 rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-value]:bg-accent [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:transition-all [&::-moz-progress-bar]:bg-accent"
 
-            value={Math.min(100, (subtotal / 500000) * 100)}
+            value={Math.min(100, (subtotal / freeShippingThreshold) * 100)}
 
             max={100}
 
@@ -358,11 +368,21 @@ export function CartSummary({ subtotal, itemCount }: CartSummaryProps) {
 
 
 
+      <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+
+        <Lock className="h-3 w-3 text-accent" />
+
+        Secure checkout · payment verified server-side
+
+      </p>
+
+
+
       {/* Continue Shopping */}
 
       <Button asChild variant="ghost" className="w-full mt-2">
 
-        <Link href="/">Continue Shopping</Link>
+        <Link href="/shop">Continue Shopping</Link>
 
       </Button>
 
