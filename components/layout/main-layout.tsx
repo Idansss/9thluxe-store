@@ -10,15 +10,17 @@ import { Footer } from "./footer"
 
 interface MainLayoutProps {
   children: React.ReactNode
+  /** Hide the marketing footer (e.g. for focused, app-like pages such as the Concierge). */
+  hideFooter?: boolean
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children, hideFooter = false }: MainLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <AnnouncementBar />
       <Header />
       <main className="flex-1">{children}</main>
-      <Footer />
+      {!hideFooter && <Footer />}
     </div>
   )
 }

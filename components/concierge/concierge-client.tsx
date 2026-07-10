@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Sparkles, Send, RotateCcw, ArrowRight } from "lucide-react"
+import { Sparkles, ArrowUp, RotateCcw, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -39,7 +39,7 @@ const SUGGESTED_PROMPTS = [
   "A warm oud for Lagos evenings",
   "Something clean and fresh for the office",
   "Vanilla, but not too sweet",
-  "A romantic scent for a wedding under ₦200,000",
+  "A romantic scent under ₦200,000",
 ]
 
 const AVAILABILITY_LABEL: Record<ConciergeItem["availability"], string> = {
@@ -88,8 +88,7 @@ export function ConciergeClient() {
         const json = await res.json()
 
         if (!res.ok || json?.error) {
-          const code = json?.error?.code
-          if (code === "FEATURE_DISABLED") {
+          if (json?.error?.code === "FEATURE_DISABLED") {
             setStatus("unavailable")
             return
           }
@@ -117,40 +116,95 @@ export function ConciergeClient() {
 
   const isEmpty = turns.length === 0
 
-  return (
-    <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col">
-      {/* Conversation */}
-      <div
-        ref={scrollRef}
-        className="flex-1 space-y-6 overflow-y-auto pb-6"
-        aria-live="polite"
-        aria-busy={status === "loading"}
-      >
-        {isEmpty && (
-          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent/12 text-accent">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <h2 className="mt-4 font-serif text-2xl font-medium">How can I help you find a scent?</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Tell me the mood, the occasion, notes you love or want to avoid, and your budget.
-              I only recommend fragrances that are really in our catalogue.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {SUGGESTED_PROMPTS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => ask(p)}
-                  className="rounded-full border border-border bg-secondary/60 px-3.5 py-1.5 text-xs font-medium text-foreground/80 transition-colors hover:border-accent/40 hover:text-foreground"
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+  const composer = (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        ask(input)
+      }}
+      className="w-full"
+    >
+      <div className="rounded-[22px] border border-border bg-card shadow-[0_10px_30px_-18px_rgba(33,24,19,0.45)] transition-colors focus-within:border-accent/60">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault()
+              ask(input)
+            }
+          }}
+          rows={1}
+          placeholder="Describe the scent you’re looking for…"
+          className="max-h-44 w-full resize-none border-0 bg-transparent px-5 pt-4 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none"
+        />
+        <div className="flex items-center justify-between gap-3 px-3 pb-3 pl-5">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={sampleFirst}
+              onChange={(e) => setSampleFirst(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border accent-accent"
+            />
+            Sample-first
+          </label>
+          <Button
+            type="submit"
+            size="icon"
+            className="h-9 w-9 shrink-0 rounded-full"
+            disabled={status === "loading" || !input.trim()}
+          >
+            <ArrowUp className="h-4 w-4" />
+            <span className="sr-only">Send</span>
+          </Button>
+        </div>
+      </div>
+      <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
+        <Sparkles className="h-3 w-3 text-accent" />
+        AI concierge · grounded in the Fàdè catalogue. Not medical or allergy advice.
+      </p>
+    </form>
+  )
 
+  const suggestions = (
+    <div className="mt-6 flex flex-wrap justify-center gap-2">
+      {SUGGESTED_PROMPTS.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => ask(p)}
+          className="rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground/80 transition-colors hover:border-accent/40 hover:text-foreground"
+        >
+          {p}
+        </button>
+      ))}
+    </div>
+  )
+
+  // ---- Empty state: centered, Claude-like ----
+  if (isEmpty && status !== "error" && status !== "unavailable") {
+    return (
+      <div className="mx-auto flex min-h-[calc(100dvh-7rem)] w-full max-w-2xl flex-col items-center justify-center px-4 py-10">
+        <span className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-accent/12 text-accent">
+          <Sparkles className="h-6 w-6" />
+        </span>
+        <h1 className="text-center font-serif text-3xl font-semibold tracking-tight md:text-4xl">
+          How can I help you find a scent?
+        </h1>
+        <p className="mt-3 max-w-md text-center leading-relaxed text-muted-foreground">
+          Tell me the mood, occasion, notes you love or want to avoid, and your budget.
+          I only recommend fragrances we genuinely stock.
+        </p>
+        <div className="mt-9 w-full">{composer}</div>
+        {suggestions}
+      </div>
+    )
+  }
+
+  // ---- Conversation view: messages scroll, composer pinned ----
+  return (
+    <div className="mx-auto flex h-[calc(100dvh-7rem)] w-full max-w-2xl flex-col px-4">
+      <div ref={scrollRef} className="flex-1 space-y-6 overflow-y-auto py-8" aria-live="polite" aria-busy={status === "loading"}>
         {turns.map((turn, i) =>
           turn.role === "user" ? (
             <div key={i} className="flex justify-end">
@@ -222,52 +276,7 @@ export function ConciergeClient() {
         )}
       </div>
 
-      {/* Composer */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          ask(input)
-        }}
-        className="sticky bottom-0 border-t border-border bg-background/95 pt-4 backdrop-blur"
-      >
-        <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={sampleFirst}
-            onChange={(e) => setSampleFirst(e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-border accent-accent"
-          />
-          Prefer sample-first suggestions
-        </label>
-        <div className="flex items-end gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault()
-                ask(input)
-              }
-            }}
-            rows={1}
-            placeholder="Describe the scent you’re looking for…"
-            className="max-h-40 flex-1 resize-none rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          />
-          <Button
-            type="submit"
-            size="icon"
-            className="h-12 w-12 shrink-0 rounded-xl"
-            disabled={status === "loading" || !input.trim()}
-          >
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send</span>
-          </Button>
-        </div>
-        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Sparkles className="h-3 w-3 text-accent" />
-          AI concierge · grounded in the Fàdè catalogue. Not medical or allergy advice.
-        </p>
-      </form>
+      <div className="shrink-0 pb-6">{composer}</div>
     </div>
   )
 }
@@ -295,9 +304,7 @@ function ConciergeCard({ item }: { item: ConciergeItem }) {
           <span
             className={cn(
               "rounded-full px-2 py-0.5 text-[10px] font-medium",
-              item.availability === "in_stock"
-                ? "bg-moss/15 text-moss"
-                : "bg-accent/15 text-accent",
+              item.availability === "in_stock" ? "bg-moss/15 text-moss" : "bg-accent/15 text-accent",
             )}
           >
             {AVAILABILITY_LABEL[item.availability]}
