@@ -103,23 +103,33 @@ export function CartContent() {
 
     return (
 
-      <div className="text-center py-16">
+      <div className="mx-auto max-w-md rounded-2xl border border-dashed border-border bg-card/50 px-8 py-16 text-center">
 
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent/12">
 
-          <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+          <ShoppingBag className="h-7 w-7 text-accent" />
 
         </div>
 
-        <h2 className="font-serif text-2xl font-semibold mb-2">Your cart is empty</h2>
+        <h2 className="mb-2 font-serif text-2xl font-semibold">Your bag is empty</h2>
 
-        <p className="text-muted-foreground mb-8">Looks like you haven't added any items yet.</p>
+        <p className="mb-8 text-muted-foreground">Discover a fragrance worth carrying home.</p>
 
-        <Button asChild>
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
 
-          <Link href="/">Continue Shopping</Link>
+          <Button asChild>
 
-        </Button>
+            <Link href="/shop">Shop perfumes</Link>
+
+          </Button>
+
+          <Button asChild variant="outline" className="bg-transparent">
+
+            <Link href="/concierge">Ask the Concierge</Link>
+
+          </Button>
+
+        </div>
 
       </div>
 

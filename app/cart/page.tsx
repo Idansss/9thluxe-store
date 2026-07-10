@@ -30,7 +30,10 @@ export default async function CartPage() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
-        <h1 className="font-serif text-3xl md:text-4xl font-semibold tracking-tight mb-8">Shopping Cart</h1>
+        <div className="mb-8">
+          <span className="eyebrow">Your selection</span>
+          <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight md:text-4xl">Shopping Bag</h1>
+        </div>
 
         <CartContent />
 

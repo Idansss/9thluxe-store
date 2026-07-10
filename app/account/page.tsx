@@ -106,13 +106,13 @@ export default async function AccountOverviewPage() {
 
   const tierConfig: Record<string, { label: string; color: string; next: string; nextThreshold: number }> = {
 
-    STANDARD: { label: "Standard",  color: "bg-muted text-muted-foreground",               next: "Obsidian", nextThreshold: 200_000 },
+    STANDARD: { label: "Standard",  color: "bg-muted text-muted-foreground",                        next: "Obsidian", nextThreshold: 200_000 },
 
-    OBSIDIAN: { label: "Obsidian",  color: "bg-stone-800 text-white",                       next: "Gold",     nextThreshold: 1_000_000 },
+    OBSIDIAN: { label: "Obsidian",  color: "bg-espresso text-[color:var(--primary-foreground)]",    next: "Gold",     nextThreshold: 1_000_000 },
 
-    GOLD:     { label: "Gold",      color: "bg-yellow-500 text-yellow-950",                 next: "Platinum", nextThreshold: 5_000_000 },
+    GOLD:     { label: "Gold",      color: "bg-amber text-[#1b140f]",                                next: "Platinum", nextThreshold: 5_000_000 },
 
-    PLATINUM: { label: "Platinum",  color: "bg-gradient-to-r from-slate-300 to-slate-500 text-slate-900", next: "",         nextThreshold: 0 },
+    PLATINUM: { label: "Platinum",  color: "bg-gradient-to-r from-bronze to-walnut text-white",     next: "",         nextThreshold: 0 },
 
   }
 
@@ -162,9 +162,9 @@ export default async function AccountOverviewPage() {
 
           <div className="flex items-center gap-4">
 
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-accent/12 flex items-center justify-center">
 
-              <span className="text-2xl font-serif font-semibold text-primary">
+              <span className="text-2xl font-serif font-semibold text-accent">
 
                 {displayName
 
@@ -210,7 +210,7 @@ export default async function AccountOverviewPage() {
 
             <div className="flex items-center gap-3">
 
-              <Crown className="h-5 w-5 text-primary" />
+              <Crown className="h-5 w-5 text-accent" />
 
               <div>
 
@@ -332,9 +332,9 @@ export default async function AccountOverviewPage() {
 
                   </div>
 
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-accent/12 flex items-center justify-center">
 
-                    <stat.icon className="h-6 w-6 text-muted-foreground" />
+                    <stat.icon className="h-6 w-6 text-accent" />
 
                   </div>
 
