@@ -62,6 +62,9 @@ export const mockAiProvider: AiProvider = {
       case 'draft_marketing':
         text = JSON.stringify({ draft: 'Discover our latest fragrance. Crafted for lasting impression.' })
         break
+      case 'layering_tip':
+        text = JSON.stringify({ tip: 'Layer the heavier scent first, then a light veil of the second — go easy and test on one wrist.' })
+        break
       case 'owner_brief':
         text = JSON.stringify({
           summary: 'Revenue steady; watch low-stock items.',

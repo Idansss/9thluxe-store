@@ -78,7 +78,9 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
   derivation, anon quiz session + consented profile persistence, grounded recommendations; tested)
 - [x] Gift Concierge (`POST /api/v1/gift`: structured inputs → grounded suggestions; delivery
   feasibility computed deterministically, separate from AI generation; tested)
-- [ ] Layering Lab (editorial rules + AI explanation, non-guaranteed)
+- [x] Layering Lab (`POST /api/v1/layering`: deterministic editorial compatibility rules — spray
+  order, ratio, intensity warnings — + best-effort AI phrasing; results labelled guidance, tested.
+  Saved-combinations deferred until migration applied.)
 - [x] Reviews (`POST/GET /api/v1/reviews`: verified-purchase enforced, one-per-user, moderation
   PENDING flag; `GET /api/v1/reviews/summary`: AI summary of real reviews with count + isAiSummary)
 - [x] Back-in-stock subscribe (`POST /api/v1/back-in-stock`, idempotent per product+email)
