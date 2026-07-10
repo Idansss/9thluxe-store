@@ -1,170 +1,231 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { X } from "lucide-react"
+import { X, GitCompareArrows } from "lucide-react"
+import { MainLayout } from "@/components/layout/main-layout"
 import { formatPrice } from "@/lib/format"
+import { useCompareStore } from "@/lib/stores/compare-store"
+import { cn } from "@/lib/utils"
 
-interface CompareProduct {
-  id: string
+interface Enriched {
   slug: string
-  name: string
-  priceNGN: number
-  images: string[]
-  brand?: string | null
-  description: string
-  stock: number | null
-  ratingAvg: number | null
-  ratingCount: number | null
+  notesTop: string | null
+  notesHeart: string | null
+  notesBase: string | null
+  longevity: string | null
+  sillage: string | null
+  concentration: string | null
+  fragranceFamily: string | null
+  pricePerMl: number | null
 }
 
+/**
+ * Dedicated comparison page (up to 4). Reads the persisted compare store and enriches each item with
+ * its real public product data. Rows that are identical across all items are de-emphasised so
+ * meaningful DIFFERENCES stand out rather than a flat raw table. Fully responsive: horizontal scroll
+ * with a sticky attribute column on small screens.
+ */
 export default function ComparePage() {
-  const [products, setProducts] = useState<CompareProduct[]>([])
+  const items = useCompareStore((s) => s.items)
+  const remove = useCompareStore((s) => s.remove)
+  const clear = useCompareStore((s) => s.clear)
+  const [enriched, setEnriched] = React.useState<Record<string, Enriched>>({})
+  const [mounted, setMounted] = React.useState(false)
 
-  useEffect(() => {
-    // Load compared products from localStorage
-    const stored = localStorage.getItem("compare")
-    if (stored) {
-      try {
-        setProducts(JSON.parse(stored))
-      } catch (error) {
-        console.error("Failed to load compared products:", error)
-      }
+  React.useEffect(() => setMounted(true), [])
+
+  React.useEffect(() => {
+    let cancelled = false
+    Promise.all(
+      items.map(async (it) => {
+        try {
+          const res = await fetch(`/api/v1/products/${encodeURIComponent(it.slug)}`)
+          if (!res.ok) return null
+          const json = await res.json()
+          const p = json.data
+          const variant = p?.variants?.[0]
+          const size: string | null = variant?.size ?? null
+          const ml = size ? Number((size.match(/(\d+(?:\.\d+)?)\s*ml/i) || [])[1]) : NaN
+          return [
+            it.slug,
+            {
+              slug: it.slug,
+              notesTop: p?.notesTop ?? null,
+              notesHeart: p?.notesHeart ?? null,
+              notesBase: p?.notesBase ?? null,
+              longevity: p?.longevity ?? null,
+              sillage: p?.sillage ?? null,
+              concentration: p?.concentration ?? null,
+              fragranceFamily: p?.fragranceFamily ?? null,
+              pricePerMl: Number.isFinite(ml) && ml > 0 ? Math.round(it.priceNGN / ml) : null,
+            } as Enriched,
+          ] as const
+        } catch {
+          return null
+        }
+      }),
+    ).then((results) => {
+      if (cancelled) return
+      const map: Record<string, Enriched> = {}
+      for (const r of results) if (r) map[r[0]] = r[1]
+      setEnriched(map)
+    })
+    return () => {
+      cancelled = true
     }
-  }, [])
+  }, [items])
 
-  const removeProduct = (productId: string) => {
-    const updated = products.filter((p) => p.id !== productId)
-    setProducts(updated)
-    localStorage.setItem("compare", JSON.stringify(updated))
-  }
+  if (!mounted) return null
 
-  const clearAll = () => {
-    setProducts([])
-    localStorage.removeItem("compare")
-  }
-
-  if (products.length === 0) {
+  if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-16">
-        <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
-          <h1 className="mb-4 text-3xl font-semibold">Compare Products</h1>
-          <p className="mb-8 text-muted-foreground">Add products to compare their features and prices.</p>
-          <Link href="/" className="btn">
-            Start Shopping
+      <MainLayout>
+        <div className="container mx-auto flex min-h-[50vh] flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+          <GitCompareArrows className="h-10 w-10 text-muted-foreground opacity-40" />
+          <h1 className="font-serif text-2xl">Nothing to compare yet</h1>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Add fragrances to your comparison from any product to see them side by side.
+          </p>
+          <Link href="/shop" className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+            Browse fragrances
           </Link>
         </div>
-      </div>
+      </MainLayout>
     )
   }
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">Compare Products</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Compare up to 4 products • {products.length} {products.length === 1 ? 'product' : 'products'} selected
-          </p>
-        </div>
-        <button
-          onClick={clearAll}
-          className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          Clear All
-        </button>
-      </div>
+  const val = (slug: string, key: keyof Enriched): string => {
+    const e = enriched[slug]
+    const v = e ? e[key] : null
+    return v == null || v === "" ? "—" : String(v)
+  }
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card/80 backdrop-blur-sm shadow-xl">
-        <table className="w-full border-collapse">
-          <thead className="bg-muted/50">
-            <tr className="border-b-2 border-border/60">
-              <th className="p-4 text-left text-sm font-semibold text-foreground bg-muted/30">Features</th>
-              {products.map((product) => (
-                <th key={product.id} className="relative min-w-[250px] border-l-2 border-border/60 p-4 text-center bg-muted/20">
-                  <button
-                    onClick={() => removeProduct(product.id)}
-                    className="absolute right-2 top-2 rounded-full p-1.5 transition-colors hover:bg-destructive hover:text-destructive-foreground bg-muted"
-                    aria-label="Remove from comparison"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <Link href={`/product/${product.slug}`} className="group block">
-                    <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-2 border-border bg-muted">
-                      <Image
-                        src={product.images[0] || "/placeholder.png"}
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
+  const rows: { label: string; render: (slug: string, priceNGN: number) => React.ReactNode; key?: keyof Enriched }[] = [
+    { label: "Price", render: (_s, price) => formatPrice(price) },
+    { label: "Price / ml", render: (s) => (enriched[s]?.pricePerMl ? formatPrice(enriched[s].pricePerMl as number) : "—") },
+    { label: "Concentration", key: "concentration", render: (s) => val(s, "concentration") },
+    {
+      label: "Family",
+      key: "fragranceFamily",
+      render: (s) => <span className="capitalize">{val(s, "fragranceFamily").toLowerCase()}</span>,
+    },
+    { label: "Top notes", key: "notesTop", render: (s) => val(s, "notesTop") },
+    { label: "Heart notes", key: "notesHeart", render: (s) => val(s, "notesHeart") },
+    { label: "Base notes", key: "notesBase", render: (s) => val(s, "notesBase") },
+    { label: "Longevity", key: "longevity", render: (s) => val(s, "longevity") },
+    { label: "Sillage", key: "sillage", render: (s) => val(s, "sillage") },
+  ]
+
+  const sameAcross = (key?: keyof Enriched) => {
+    if (!key) return false
+    const vals = items.map((it) => enriched[it.slug]?.[key] ?? null)
+    return vals.every((v) => v === vals[0]) && vals[0] != null
+  }
+
+  return (
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8 lg:py-12">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="font-serif text-2xl md:text-3xl">Compare fragrances</h1>
+          <button type="button" onClick={clear} className="text-sm text-muted-foreground underline">
+            Clear all
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="sticky left-0 z-10 bg-background" />
+                {items.map((it) => (
+                  <th key={it.id} className="p-3 align-top">
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <div className="relative h-28 w-28 overflow-hidden rounded-xl bg-secondary/40">
+                        {it.image && <Image src={it.image} alt={it.name} fill sizes="112px" className="object-cover" />}
+                        <button
+                          type="button"
+                          onClick={() => remove(it.id)}
+                          aria-label={`Remove ${it.name}`}
+                          className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-background/90 text-foreground"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      {it.brand && <span className="text-[10px] uppercase tracking-wide text-accent">{it.brand}</span>}
+                      <Link href={`/product/${it.slug}`} className="line-clamp-2 text-xs font-medium hover:underline">
+                        {it.name}
+                      </Link>
+                      {it.ratingCount > 0 && (
+                        <span className="text-[11px] text-muted-foreground">
+                          {it.ratingAvg.toFixed(1)}★ ({it.ratingCount})
+                        </span>
+                      )}
                     </div>
-                    <h3 className="mt-3 text-sm font-semibold text-foreground">{product.name}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground font-medium">{product.brand}</p>
-                  </Link>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const identical = sameAcross(row.key)
+                return (
+                  <tr key={row.label} className="border-t border-border">
+                    <th
+                      scope="row"
+                      className="sticky left-0 z-10 bg-background p-3 text-left text-xs font-medium text-muted-foreground"
+                    >
+                      {row.label}
+                    </th>
+                    {items.map((it) => (
+                      <td
+                        key={it.id}
+                        className={cn(
+                          "p-3 text-center align-top",
+                          identical ? "text-muted-foreground" : "font-medium text-foreground",
+                        )}
+                      >
+                        {row.render(it.slug, it.priceNGN)}
+                      </td>
+                    ))}
+                  </tr>
+                )
+              })}
+              <tr className="border-t border-border">
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 bg-background p-3 text-left text-xs font-medium text-muted-foreground"
+                >
+                  Sample
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b border-border/60 bg-background/40">
-              <td className="p-4 text-sm font-semibold text-foreground bg-muted/20">Price</td>
-              {products.map((product) => (
-                <td key={product.id} className="border-l-2 border-border/60 p-4 text-center text-xl font-bold text-foreground bg-background/40">
-                  {formatPrice(product.priceNGN)}
-                </td>
-              ))}
-            </tr>
-            <tr className="border-b border-border/60 bg-background/40">
-              <td className="p-4 text-sm font-semibold text-foreground bg-muted/20">Rating</td>
-              {products.map((product) => (
-                <td key={product.id} className="border-l-2 border-border/60 p-4 text-center bg-background/40">
-                  {product.ratingAvg ? (
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-yellow-500 text-xl">★</span>
-                      <span className="text-base font-semibold text-foreground">{product.ratingAvg.toFixed(1)}</span>
-                      <span className="text-xs text-muted-foreground">({product.ratingCount})</span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No ratings</span>
-                  )}
-                </td>
-              ))}
-            </tr>
-            <tr className="border-b border-border/60 bg-background/40">
-              <td className="p-4 text-sm font-semibold text-foreground bg-muted/20">Stock</td>
-              {products.map((product) => (
-                <td key={product.id} className="border-l-2 border-border/60 p-4 text-center bg-background/40">
-                  <span className={`text-sm font-semibold ${(product.stock ?? 0) > 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}>
-                    {(product.stock ?? 0) > 0 ? "In Stock" : "Out of Stock"}
-                  </span>
-                </td>
-              ))}
-            </tr>
-            <tr className="border-b border-border/60 bg-background/40">
-              <td className="p-4 text-sm font-semibold text-foreground bg-muted/20">Description</td>
-              {products.map((product) => (
-                <td key={product.id} className="border-l-2 border-border/60 p-4 text-left text-sm text-foreground/90 bg-background/40 leading-relaxed">
-                  {product.description}
-                </td>
-              ))}
-            </tr>
-            <tr className="bg-background/40">
-              <td className="p-4 text-sm font-semibold text-foreground bg-muted/20">Actions</td>
-              {products.map((product) => (
-                <td key={product.id} className="border-l-2 border-border/60 p-4 bg-background/40">
-                  <Link
-                    href={`/product/${product.slug}`}
-                    className="btn-outline block w-full text-center"
-                  >
-                    View Details
-                  </Link>
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+                {items.map((it) => (
+                  <td key={it.id} className="p-3 text-center">
+                    {it.hasSample ? "Available" : "—"}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-t border-border">
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 bg-background p-3 text-left text-xs font-medium text-muted-foreground"
+                >
+                  Availability
+                </th>
+                {items.map((it) => (
+                  <td key={it.id} className="p-3 text-center capitalize">
+                    {it.availability.replace(/_/g, " ")}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Rows where every fragrance matches are dimmed so the differences stand out. Some attributes may show
+          &ldquo;—&rdquo; where the brand hasn&apos;t supplied that detail yet.
+        </p>
       </div>
-    </div>
+    </MainLayout>
   )
 }

@@ -1,13 +1,48 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import dynamic from "next/dynamic"
 import { MainLayout } from "@/components/layout/main-layout"
-import { ProductGallery } from "@/components/product/product-gallery"
-import { ProductInfo } from "@/components/product/product-info"
-import { ProductTabs } from "@/components/product/product-tabs"
-import { StickyProductBar } from "@/components/product/sticky-product-bar"
-import { RelatedProducts } from "@/components/product/related-products"
 import { ProductJsonLd } from "@/components/seo/product-json-ld"
-import { getProductBySlug, getProducts } from "@/lib/services/product-service"
+import { PdpStructuredData } from "@/components/seo/pdp-structured-data"
+import { PdpSection } from "@/components/pdp/section"
+import { PdpGallery } from "@/components/pdp/pdp-gallery"
+import { PurchasePanel } from "@/components/pdp/purchase-panel"
+import { StickyPurchaseBar } from "@/components/pdp/sticky-purchase-bar"
+import { AtAGlance } from "@/components/pdp/at-a-glance"
+import { ScentExplanation } from "@/components/pdp/scent-explanation"
+import { FragrancePyramid } from "@/components/pdp/fragrance-pyramid"
+import { MainAccords } from "@/components/pdp/main-accords"
+import { WearTimeline } from "@/components/pdp/wear-timeline"
+import { PerformanceProfile } from "@/components/pdp/performance-profile"
+import { ClimateGuidance } from "@/components/pdp/climate-guidance"
+import { Authenticity } from "@/components/pdp/authenticity"
+import { DeliveryReturnsFaq } from "@/components/pdp/delivery-returns-faq"
+import { BrandPerfumer } from "@/components/pdp/brand-perfumer"
+import { DnaQuizPromo } from "@/components/pdp/dna-quiz-promo"
+import { CompareDrawer } from "@/components/pdp/compare-drawer"
+import { loadPdpData } from "@/lib/pdp/loader"
+import { getPdpPolicy } from "@/lib/pdp/policy"
+
+// Below-the-fold / interaction-only islands are code-split so the critical purchase path stays light.
+const AiFitCheck = dynamic(() => import("@/components/pdp/ai-fit-check").then((m) => m.AiFitCheck), {
+  loading: () => <SectionSkeleton />,
+})
+const LayeringLab = dynamic(() => import("@/components/pdp/layering-lab").then((m) => m.LayeringLab), {
+  loading: () => <SectionSkeleton />,
+})
+const ReviewsSection = dynamic(() => import("@/components/pdp/reviews-section").then((m) => m.ReviewsSection), {
+  loading: () => <SectionSkeleton />,
+})
+const QaSection = dynamic(() => import("@/components/pdp/qa-section").then((m) => m.QaSection), {
+  loading: () => <SectionSkeleton />,
+})
+const Recommendations = dynamic(() => import("@/components/pdp/recommendations").then((m) => m.Recommendations), {
+  loading: () => <SectionSkeleton />,
+})
+
+function SectionSkeleton() {
+  return <div className="h-40 w-full animate-pulse rounded-xl bg-secondary/50" aria-hidden />
+}
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>
@@ -15,21 +50,15 @@ interface ProductPageProps {
 
 export async function generateMetadata({ params }: ProductPageProps) {
   const { slug } = await params
-  const product = await getProductBySlug(slug)
-
-  if (!product) {
-    return { title: "Product Not Found | Fádé" }
-  }
-
-  const images = Array.isArray(product.images) ? (product.images as string[]) : []
-  const firstImage = images[0] || ""
-
+  const data = await loadPdpData(slug)
+  if (!data) return { title: "Product Not Found | Fàdè" }
+  const firstImage = data.media.find((m) => m.kind === "image")?.url
   return {
-    title: `${product.name} | ${product.brand || "Fádé"} | Fádé Essence`,
-    description: product.description,
+    title: data.seo.title,
+    description: data.seo.description,
     openGraph: {
-      title: `${product.name} | Fádé Essence`,
-      description: product.description,
+      title: data.seo.title,
+      description: data.seo.description,
       images: firstImage ? [firstImage] : [],
     },
   }
@@ -37,123 +66,192 @@ export async function generateMetadata({ params }: ProductPageProps) {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params
-  const product = await getProductBySlug(slug)
+  const data = await loadPdpData(slug)
+  if (!data) notFound()
 
-  if (!product) {
-    notFound()
-  }
+  const policy = getPdpPolicy()
+  const images = data.media.filter((m) => m.kind === "image").map((m) => m.url)
+  const availability = data.stock > 0 ? "InStock" : "OutOfStock"
 
-  const images = Array.isArray(product.images)
-    ? (product.images as string[]).filter((img): img is string => typeof img === "string")
-    : []
+  const crumbs = [
+    { name: "Home", url: "/" },
+    { name: "Perfumes", url: "/shop" },
+    ...(data.brand ? [{ name: data.brand, url: `/shop?brand=${encodeURIComponent(data.brand)}` }] : []),
+    { name: data.name, url: `/product/${data.slug}` },
+  ]
 
-  const relatedProducts = (await getProducts({ category: product.category, limit: 5 }))
-    .filter((p) => p.id !== product.id)
-    .slice(0, 4)
-    .map((p) => {
-      const pImages = Array.isArray(p.images)
-        ? (p.images as string[]).filter((img): img is string => typeof img === "string")
-        : []
-      return {
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        brand: p.brand || "",
-        price: p.priceNGN,
-        originalPrice: p.oldPriceNGN || undefined,
-        image: pImages[0] || "",
-        rating: p.ratingAvg,
-        reviewCount: p.ratingCount,
-        tags: [
-          p.isNew && "new",
-          p.isBestseller && "bestseller",
-          p.isLimited && "limited",
-        ].filter(Boolean) as ("new" | "bestseller" | "limited")[],
-        category: "perfumes" as const,
-      }
-    })
-
-  const productDetails = {
-    id: product.id,
-    slug: product.slug,
-    name: product.name,
-    brand: product.brand || "",
-    price: product.priceNGN,
-    originalPrice: product.oldPriceNGN || undefined,
-    image: images[0] || "",
-    rating: product.ratingAvg,
-    reviewCount: product.ratingCount,
-    tags: ([
-      product.isNew && "new",
-      product.isBestseller && "bestseller",
-      product.isLimited && "limited",
-    ].filter(Boolean)) as ("new" | "bestseller" | "limited")[],
-    category: "perfumes" as const,
-    images: images.length > 0 ? images : ["/placeholder.svg"],
-    description: product.description,
-    specifications: [
-      ...(product.longevity ? [{ label: "Wear time", value: product.longevity }] : []),
-      ...(product.occasion ? [{ label: "Occasion", value: product.occasion }] : []),
-      ...(product.productType ? [{ label: "Type", value: product.productType }] : []),
-    ].filter(Boolean) as { label: string; value: string }[],
-    inStock: product.stock > 0,
-    stockCount: product.stock,
-  }
-
-  const availability = product.stock > 0 ? "InStock" : "OutOfStock"
+  const hasProfile = data.profileFacets.length > 0
+  const hasPyramid = data.notesTop.length + data.notesHeart.length + data.notesBase.length > 0
+  const hasScentStory =
+    !!data.scentStory.summary ||
+    !!data.scentStory.opening ||
+    !!data.scentStory.heart ||
+    !!data.scentStory.dryDown ||
+    !!data.scentStory.mood
+  const hasAccords = data.accords.length > 0
+  const hasTimeline = data.timeline.length > 0
+  const hasPerformance = data.performance.length > 0
+  const hasClimate = hasPyramid || !!data.fragranceFamily || !!data.concentration
 
   return (
     <MainLayout>
       <ProductJsonLd
-        name={productDetails.name}
-        description={productDetails.description}
-        image={productDetails.images}
-        price={product.priceNGN}
-        currency="NGN"
-        brand={productDetails.brand || undefined}
+        name={data.name}
+        description={data.description}
+        image={images.length ? images : ["/placeholder.svg"]}
+        price={data.basePriceNGN}
+        currency={data.currency}
+        brand={data.brand || undefined}
         availability={availability}
-        rating={productDetails.rating}
-        reviewCount={productDetails.reviewCount}
+        rating={data.reviewSummary ? data.reviewSummary.ratingAvg : undefined}
+        reviewCount={data.reviewSummary ? data.reviewSummary.ratingCount : undefined}
       />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-24 lg:pb-12">
-        <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <Link href="/" className="transition-colors hover:text-foreground">Home</Link>
-          <span aria-hidden className="text-border">/</span>
-          <Link href="/shop" className="transition-colors hover:text-foreground">Perfumes</Link>
-          {productDetails.brand ? (
-            <>
-              <span aria-hidden className="text-border">/</span>
-              <Link
-                href={`/shop?brand=${encodeURIComponent(productDetails.brand)}`}
-                className="transition-colors hover:text-foreground"
-              >
-                {productDetails.brand}
-              </Link>
-            </>
-          ) : null}
-          <span aria-hidden className="text-border">/</span>
-          <span className="truncate text-foreground/70">{productDetails.name}</span>
+      <PdpStructuredData crumbs={crumbs} faqs={policy.faqs} />
+
+      <div className="container mx-auto px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-16 lg:pt-10">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {crumbs.map((c, i) => (
+            <span key={c.url} className="flex items-center gap-2">
+              {i > 0 && <span aria-hidden className="text-border">/</span>}
+              {i < crumbs.length - 1 ? (
+                <Link href={c.url} className="transition-colors hover:text-foreground">
+                  {c.name}
+                </Link>
+              ) : (
+                <span className="truncate text-foreground/70">{c.name}</span>
+              )}
+            </span>
+          ))}
         </nav>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          <ProductGallery images={productDetails.images} productName={productDetails.name} />
-          <ProductInfo product={productDetails} />
+
+        {/* Hero: gallery + purchase panel */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <PdpGallery media={data.media} productName={data.name} productId={data.id} />
+          </div>
+          <div>
+            <PurchasePanel
+              data={data}
+              policyShipping={policy.shippingSummary}
+              policyReturns={policy.returnsSummary(data.returnEligible)}
+            />
+          </div>
         </div>
-        <StickyProductBar product={productDetails} />
+        {/* Sentinel marks the end of the hero for the mobile sticky bar. */}
+        <div id="pdp-hero-sentinel" aria-hidden />
 
-        <ProductTabs
-          description={productDetails.description}
-          specifications={productDetails.specifications}
-          productId={productDetails.id}
-          productSlug={productDetails.slug}
-          notesTop={product.notesTop ?? undefined}
-          notesHeart={product.notesHeart ?? undefined}
-          notesBase={product.notesBase ?? undefined}
-          longevity={product.longevity ?? undefined}
-          occasion={product.occasion ?? undefined}
-        />
+        {/* Editorial stack */}
+        <PdpSection show={hasProfile} eyebrow="At a glance" title="Fragrance profile">
+          <AtAGlance facets={data.profileFacets} />
+        </PdpSection>
 
-        {relatedProducts.length > 0 && <RelatedProducts products={relatedProducts} />}
+        <PdpSection show={hasScentStory} eyebrow="The impression" title="What it smells like">
+          <ScentExplanation story={data.scentStory} />
+        </PdpSection>
+
+        <PdpSection
+          show={hasPyramid}
+          eyebrow="Composition"
+          title="The fragrance pyramid"
+          description="A scent unfolds in three acts. Select any note to explore other fragrances built around it."
+        >
+          <FragrancePyramid
+            productId={data.id}
+            notesTop={data.notesTop}
+            notesHeart={data.notesHeart}
+            notesBase={data.notesBase}
+          />
+        </PdpSection>
+
+        <PdpSection show={hasAccords} eyebrow="Character" title="Main accords">
+          <MainAccords accords={data.accords} productId={data.id} />
+        </PdpSection>
+
+        <PdpSection
+          show={hasTimeline}
+          eyebrow="Over the day"
+          title="How it wears"
+          description="An editorial guide to how this fragrance is likely to evolve on skin."
+        >
+          <WearTimeline stages={data.timeline} />
+        </PdpSection>
+
+        <PdpSection
+          show={hasPerformance}
+          eyebrow="From wearers"
+          title="Performance"
+          description="Aggregated from verified customer reviews — not a laboratory measurement."
+        >
+          <PerformanceProfile metrics={data.performance} />
+        </PdpSection>
+
+        <PdpSection
+          show={hasClimate}
+          eyebrow="For your weather"
+          title="Wearing it in Nigeria"
+          description="Descriptive guidance for local conditions. Choose a setting — we never use your location automatically."
+        >
+          <ClimateGuidance
+            family={data.fragranceFamily}
+            concentration={data.concentration}
+            sillage={data.reviewSummary?.sillage.score ? String(data.reviewSummary.sillage.score) : null}
+            longevity={data.performance.find((m) => m.key === "longevity")?.score?.toString() ?? null}
+          />
+        </PdpSection>
+
+        <PdpSection eyebrow="Personal fit" title="Will this suit me?">
+          <AiFitCheck
+            product={{
+              id: data.id,
+              name: data.name,
+              notes: [...data.notesTop, ...data.notesHeart, ...data.notesBase].map((n) => n.name),
+              family: data.fragranceFamily,
+              priceNGN: data.basePriceNGN,
+              occasion: data.recommendationSeed.occasion,
+              climate: data.recommendationSeed.climate,
+              hasSample: data.hasSample,
+            }}
+          />
+        </PdpSection>
+
+        {data.fragranceFamily && (
+          <LayeringLab productId={data.id} productName={data.name} family={data.fragranceFamily} />
+        )}
+
+        <PdpSection id="reviews" eyebrow="Reviews" title="What wearers say">
+          <ReviewsSection productId={data.id} summary={data.reviewSummary} />
+        </PdpSection>
+
+        <PdpSection eyebrow="Questions" title="Questions & answers">
+          <QaSection productId={data.id} />
+        </PdpSection>
+
+        <PdpSection id="authenticity" eyebrow="Trust" title="Authenticity & sourcing">
+          <Authenticity authenticity={data.authenticity} />
+        </PdpSection>
+
+        <PdpSection eyebrow="Before you buy" title="Delivery, returns & FAQs">
+          <DeliveryReturnsFaq policy={policy} />
+        </PdpSection>
+
+        <PdpSection
+          show={!!data.brandProfile || !!data.perfumer}
+          eyebrow="The maker"
+          title="Brand & perfumer"
+        >
+          <BrandPerfumer brand={data.brandProfile} perfumer={data.perfumer} />
+        </PdpSection>
+
+        <Recommendations seed={data.recommendationSeed} excludeId={data.id} />
+
+        <PdpSection>
+          <DnaQuizPromo />
+        </PdpSection>
       </div>
+
+      <StickyPurchaseBar data={data} />
+      <CompareDrawer />
     </MainLayout>
   )
 }
