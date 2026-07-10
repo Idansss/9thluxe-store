@@ -15,11 +15,17 @@ export interface LoyaltyTier {
   minLifetimeSpend: number
 }
 
+export interface DiscoveryPolicy {
+  minItems: number
+  maxItems: number
+}
+
 export interface CommerceConfig {
   shipping: ShippingPolicy
   /** Tiers ordered ascending by threshold. Money values only; rewards stay disabled until approved. */
   loyaltyTiers: LoyaltyTier[]
   supportedCurrencies: string[]
+  discovery: DiscoveryPolicy
 }
 
 export function getCommerceConfig(): CommerceConfig {
@@ -37,6 +43,7 @@ export function getCommerceConfig(): CommerceConfig {
       { key: 'PLATINUM', minLifetimeSpend: 5_000_000 },
     ],
     supportedCurrencies: [env.COMMERCE_CURRENCY],
+    discovery: { minItems: 3, maxItems: 8 },
   }
 }
 

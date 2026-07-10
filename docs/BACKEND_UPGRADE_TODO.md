@@ -65,7 +65,10 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
 - [~] Core domain models (customer profile, consent, scent profile, quiz, wishlists, discovery sets, sample credits, loyalty ledger, referrals, reviews+moderation, support, notifications log, audit log, approvals, owner reports, supplier/inventory signals, integration events, webhook receipts, idempotency, job runs, feature flags) — schema authored; migration generated
 - [x] Migration `prisma/migrations/*_backend_upgrade` (additive; drops only non-perfume columns) + rollback SQL in `docs/ROLLBACK_PLAN.md`
 - [x] Dev fixtures (perfume-only seed) clearly labelled non-production
-- [ ] `prisma migrate` applied — **deliberately NOT applied.** A live `DATABASE_URL` is connected but still on the OLD schema (validation confirms `sku` absent). Applying alters a possibly-production DB and is an irreversible/live-system change requiring explicit owner approval (which DB + permission). Read-only `scripts/migrate/validate.ts` verified: 3 products, 3 users, 1 order, no non-perfume rows, no orphaned orders, no blocking issues.
+- [x] `prisma migrate deploy` **applied** (2026-07-10, owner-authorized) to the connected Prisma
+  Postgres. Only the new migration was pending (3 baselines already applied); applied cleanly.
+  Post-migration `validate.ts`: 3 products, 3 users, 1 order, **no issues**. Note: the 3 pre-existing
+  products defaulted to `publishStatus=DRAFT` (nothing filters on it yet, so still visible).
 
 ## Phase 4 — Services & feature backends
 - [~] Catalogue & inventory services (sync, publish rules, low/out-of-stock, back-in-stock, preorder/waitlist, reconciliation, dup-SKU, source-of-truth doc)
@@ -84,7 +87,10 @@ Anything marked `[blocked]` has an implemented adapter + `.env.example` entry + 
 - [x] Reviews (`POST/GET /api/v1/reviews`: verified-purchase enforced, one-per-user, moderation
   PENDING flag; `GET /api/v1/reviews/summary`: AI summary of real reviews with count + isAiSummary)
 - [x] Back-in-stock subscribe (`POST /api/v1/back-in-stock`, idempotent per product+email)
-- [ ] Samples & discovery sets (credit ledger, redemption, expiry, conversion, abuse prevention)
+- [~] Samples & discovery sets — discovery-set build/price/validate (`POST/GET /api/v1/discovery-sets`,
+  min/max from config, DB-priced, stock-validated) + sample-credit balance/preview
+  (`GET/POST /api/v1/sample-credits`, expiry-aware, expiring-soonest-first, no over-apply; redemption
+  flag-gated OFF). Full-bottle conversion + admin credit granting still to wire.
 - [ ] Loyalty & referrals (configurable, disabled until approved)
 - [~] Notifications events + consent/quiet-hours/dedup
 - [~] Owner Copilot — **daily brief live** (`GET /api/v1/admin/daily-brief`, ADMIN-gated, read-only
