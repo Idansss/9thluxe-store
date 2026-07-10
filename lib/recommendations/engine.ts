@@ -118,21 +118,35 @@ export async function recommend(input: RecommendInput, deps: EngineDeps): Promis
   }
 
   // 3. Retrieve with HARD filters (in-catalogue, in-stock unless sample-first, within budget).
+  //    Note: we do NOT pass the raw natural-language sentence to the provider's substring `q` — that
+  //    matches almost nothing. We retrieve by structured filters + a short keyword (a matched note or
+  //    a 1-2 word query), then fall back to a filtered listing so there are always candidates to rank.
+  const wantN = limit * 4
+  const sharedFilters = {
+    family: constraints.family ?? undefined,
+    occasion: constraints.occasion ?? undefined,
+    inStock: !constraints.preferSample ? true : undefined,
+    maxPriceNGN: constraints.budgetMaxNGN ?? undefined,
+  }
+  const shortQuery = input.query && input.query.trim().split(/\s+/).length <= 2 ? input.query.trim() : undefined
+  const keyword = constraints.includeNotes?.[0] ?? shortQuery
+
   const search = await deps.search.search({
-    q: input.query,
-    filters: {
-      family: constraints.family ?? undefined,
-      note: constraints.includeNotes?.[0],
-      occasion: constraints.occasion ?? undefined,
-      inStock: !constraints.preferSample ? true : undefined,
-      maxPriceNGN: constraints.budgetMaxNGN ?? undefined,
-    },
-    limit: limit * 3, // over-fetch so scoring has room after disqualification
+    q: keyword,
+    filters: { ...sharedFilters, note: constraints.includeNotes?.[0] },
+    limit: wantN,
   })
+
+  const ids = new Set(search.hits.map((h) => h.productId))
+  // Fallback: fill candidates from a filtered listing when retrieval is thin (e.g. weak note extraction).
+  if (ids.size < limit) {
+    const page = await deps.catalog.listProducts({ ...sharedFilters, limit: wantN })
+    for (const p of page.items) ids.add(p.id)
+  }
 
   // 4. Load full products (source of truth for price/stock/notes) — never trust the search cache alone.
   const products = (
-    await Promise.all(search.hits.map((h) => deps.catalog.getProductById(h.productId)))
+    await Promise.all([...ids].map((id) => deps.catalog.getProductById(id)))
   ).filter((p): p is CommerceProduct => p !== null)
 
   // 5-6. Score + rank the validated candidate set.
