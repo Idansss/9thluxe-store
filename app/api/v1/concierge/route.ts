@@ -6,6 +6,7 @@ import { route, raise } from '@/lib/http/handler'
 import { isFeatureEnabled } from '@/lib/config/feature-flags'
 import { getSearch, getCommerce, getAi } from '@/integrations/registry'
 import { recommend } from '@/lib/recommendations/engine'
+import { enforceRateLimit } from '@/lib/middleware/limiter'
 
 export const runtime = 'nodejs'
 
@@ -19,6 +20,8 @@ const bodySchema = z.object({
 
 export const POST = route(async ({ req }) => {
   if (!isFeatureEnabled('ai_concierge')) raise('FEATURE_DISABLED')
+  // AI calls are expensive: cap per-client requests (durable when Upstash is configured).
+  await enforceRateLimit(req, 'concierge', 20, 60_000)
   const body = bodySchema.parse(await req.json())
 
   const result = await recommend(

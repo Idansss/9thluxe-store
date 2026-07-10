@@ -35,11 +35,17 @@ const schema = z.object({
   SHOPIFY_API_VERSION: z.string().default('2025-01'),
   SHOPIFY_WEBHOOK_SECRET: z.string().optional(),
 
-  // AI providers (default provider = mock)
-  AI_PROVIDER: z.enum(['mock', 'anthropic', 'openai']).default('mock'),
+  // AI providers (default provider = mock). Model IDs are the current latest (2026-07) and are
+  // env-overridable so they can be bumped without code changes.
+  AI_PROVIDER: z.enum(['mock', 'anthropic', 'openai', 'gemini']).default('mock'),
   ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_MODEL: z.string().default('claude-haiku-4-5-20251001'),
   OPENAI_API_KEY: z.string().optional(),
+  OPENAI_MODEL: z.string().default('gpt-5.6-terra'),
   XAI_API_KEY: z.string().optional(),
+  XAI_MODEL: z.string().default('grok-4.5'),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
 
   // Messaging
   WHATSAPP_TOKEN: z.string().optional(),
@@ -55,6 +61,11 @@ const schema = z.object({
 
   // Feature flags (comma-separated list of enabled flags)
   FEATURE_FLAGS: z.string().default(''),
+
+  // Durable rate limiting / cache (optional; Upstash Redis REST — serverless-friendly, fetch-based).
+  // When absent, rate limiting degrades to an in-memory per-instance limiter (documented limitation).
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 })
 
 export type Env = z.infer<typeof schema>
@@ -97,7 +108,8 @@ export function integrationStatus() {
     aiKeyPresent:
       e.AI_PROVIDER === 'mock' ||
       (e.AI_PROVIDER === 'anthropic' && Boolean(e.ANTHROPIC_API_KEY)) ||
-      (e.AI_PROVIDER === 'openai' && Boolean(e.OPENAI_API_KEY)),
+      (e.AI_PROVIDER === 'openai' && Boolean(e.OPENAI_API_KEY)) ||
+      (e.AI_PROVIDER === 'gemini' && Boolean(e.GEMINI_API_KEY)),
     whatsapp: Boolean(e.WHATSAPP_TOKEN && e.WHATSAPP_PHONE_ID),
     sms: Boolean(e.TWILIO_ACCOUNT_SID && e.TWILIO_AUTH_TOKEN),
   }

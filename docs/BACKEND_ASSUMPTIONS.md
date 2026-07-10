@@ -63,6 +63,32 @@ claimed to work in production.
   consent records). Marketing (email/WhatsApp/SMS) requires stored consent; transactional messages
   do not. Addresses, payment data, and private conversations are **not** sent to AI providers.
 
+## Takeover-session assumptions (2026-07-10)
+- **No new database migration.** Every feature added in this session (loyalty redemption/reversal,
+  referral attribution/qualification/reward, sample-credit granting/redemption/full-bottle
+  conversion, notification dispatch, Copilot assistants, admin ops, agentic feed, rate limiter)
+  reuses tables that already exist in the applied schema. This deliberately avoids touching the live
+  connected Postgres.
+- **Referral reward economics are undefined**, so `requestReferralReward` only creates an Approval
+  Centre record (action `compensation`) and is refused unless `referral_rewards` is on. No monetary
+  value is assumed or paid.
+- **Payment-fee model** for the margin assistant assumes the standard Paystack NGN schedule
+  (1.5% + ₦100, ₦100 waived under ₦2,500, capped at ₦2,000). It is a pure, overridable model
+  (`DEFAULT_FEE_MODEL`) — adjust when the merchant's real rate is confirmed.
+- **Full-bottle conversion credit** = the sample's price, valid 90 days, granted once per
+  (customer, sample product). This is a reasonable default pending an approved policy; redemption is
+  still gated by `sample_credits`.
+- **Quiet hours** default to 21:00–08:00 local and apply only to promotional (never transactional)
+  messages. The recipient's local hour is supplied by the caller; when unknown, quiet hours are not
+  enforced (transactional delivery is never delayed).
+- **Durable rate limiting** uses Upstash Redis REST when `UPSTASH_REDIS_REST_*` are set; otherwise an
+  in-memory per-instance limiter (under-counts across serverless instances — documented). The limiter
+  fails **open** so an outage never blocks the API.
+- **Marketing assistant never sends.** It returns drafts with `autoSend:false`; any real send must go
+  through the Approval Centre (`campaign`) + the existing newsletter/notification pipeline.
+- **AI cost tracking is per-process** (serverless-instance scoped). Durable cross-instance accounting
+  (persist to a table) is noted as a follow-up in `docs/AI_ARCHITECTURE.md`.
+
 ## Frontend boundary
 - We do not modify storefront visual components, motion, or `FRONTEND/` (the separate v0 project).
 - The frontend consumes: the `/api/v1` envelope, `contracts/storefront-api.openapi.yaml`, the error

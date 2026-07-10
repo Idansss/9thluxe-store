@@ -49,3 +49,30 @@ charges until real keys are supplied and reviewed.
 ## Where things live
 See `docs/BACKEND_ARCHITECTURE.md`. Provider selection: `integrations/registry.ts`. Policy:
 `lib/config/`. Errors/envelope: `lib/http/`. AI: `integrations/ai/`. Data model: `docs/DATA_MODEL.md`.
+
+## New endpoints (takeover session)
+Customer:
+- `POST /api/v1/loyalty/redeem` — redeem points (403 `FEATURE_DISABLED` unless `loyalty_rewards` on).
+- `GET  /api/v1/feed/products` — machine-readable product feed for AI-shopping channels
+  (403 `FEATURE_DISABLED` unless `agentic_feed` on). Public commerce data only; cursor-paginated.
+
+Admin (all require an ADMIN session; return `FORBIDDEN` otherwise):
+- `POST /api/v1/admin/loyalty` — points adjustment `{ userId, delta, reason }`.
+- `GET/POST /api/v1/admin/referrals` — list; request reward (→ Approval Centre) or reverse.
+- `POST /api/v1/admin/sample-credits` — grant a sample credit.
+- `POST /api/v1/admin/products/sync` — catalogue sync/validate (`{ apply?: boolean }`, dry-run default).
+- `GET/POST /api/v1/admin/inventory` — inventory-health report; set absolute stock.
+- `GET  /api/v1/admin/feature-flags` — effective + persisted flags (read-only).
+- `GET  /api/v1/admin/ai-cost` — AI usage/cost + prompt versions (per-process scope).
+- `GET  /api/v1/admin/copilot/inventory|margin|insights` — Owner Copilot read-only assistants.
+- `POST /api/v1/admin/copilot/marketing` — AI marketing DRAFT (`autoSend:false`, never sends).
+
+## Guarantees preserved this session
+- Financial rewards stay OFF behind flags: points redemption (`loyalty_rewards`), referral payout
+  (`referral_rewards`), sample-credit redemption (`sample_credits`). Payouts route through the
+  Approval Centre (two-step create → decide → execute; never auto-executes).
+- Loyalty points reverse automatically on Paystack `refund.processed`/`charge.refunded` (idempotent).
+- Notifications: promotional sends require stored consent and respect quiet hours; all sends are
+  durably de-duplicated via `NotificationLog`. WhatsApp promo is never sent without consent + creds.
+- Margin/insight/inventory assistants never fabricate numbers (`no_cost_price_data` when cost absent)
+  and every metric is traceable via a `sources` map.

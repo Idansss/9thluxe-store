@@ -18,8 +18,8 @@ addressed / interface provided · ⬜ tracked (see `docs/BACKEND_UPGRADE_TODO.md
 | Race / oversell | 🟡 | Stock decrement in a `$transaction` on webhook; checkout revalidates stock. True reservation tracked ⬜. Cached availability never trusted. |
 | Payment-state manipulation | ✅ | Paid only via server verify / verified webhook; amount+currency validated; totals recomputed. |
 | Coupon abuse | ✅ | DB-validated, usage-capped, min-subtotal enforced, usage incremented atomically. |
-| Referral / review abuse | 🟡 | Referral rewards flag-gated OFF; reviews require matching PAID order; moderation + `reportedCount`. Rate limiting ⬜durable. |
-| Rate-limit bypass | 🟡 | In-memory limiter present; durable Redis-backed limiter interface documented (serverless multi-instance caveat). |
+| Referral / review abuse | ✅ | Referral rewards flag-gated OFF + Approval-Centre-only payout; no self-referral, one attribution per user, reversible; reviews require matching PAID order; moderation + `reportedCount`. |
+| Rate-limit bypass | ✅ | Durable limiter (`lib/middleware/limiter.ts`) — Upstash Redis REST when configured, in-memory fallback; fails open; applied to AI concierge; `enforceRateLimit()` reusable on any mutating route. [Upstash creds blocked → in-memory in this env.] |
 | File upload | ⬜ | No untrusted upload path added; when added, enforce type/size. |
 | Prompt injection / AI tool abuse | ✅ | Untrusted text redacted + length-bounded; structured-output validation; no tool authority; allowlist-only when tools added. |
 | Secret leakage | ✅ | `lib/env.ts` centralizes secrets; logger redacts; no secrets in responses. |
@@ -35,5 +35,6 @@ addressed / interface provided · ⬜ tracked (see `docs/BACKEND_UPGRADE_TODO.md
 - Secret-safe structured logging with redaction (tested).
 
 ## Highest-priority follow-ups
-Durable rate limiting; Origin/CSRF checks on all mutating v1 routes; IDOR audit during v1 migration;
-stock reservation for high-contention drops.
+Provision Upstash (or Redis) creds to activate the durable limiter across serverless instances;
+Origin/CSRF checks on all mutating v1 routes; IDOR audit during v1 migration; stock reservation for
+high-contention drops; persist AI usage to a table for cross-instance cost accounting.

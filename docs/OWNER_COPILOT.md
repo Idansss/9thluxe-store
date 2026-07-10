@@ -32,6 +32,21 @@ segments, offers, post-campaign summaries. **Never sends** — drafts only (`dra
 Aggregated cohort/return/support/repeat-purchase analysis; margin = revenue − COGS − payment fee −
 delivery subsidy − discount − refund (only when inputs exist).
 
+## Live endpoints (all ADMIN-gated, read-only aggregation unless noted)
+- Daily brief: `GET /api/v1/admin/daily-brief` (`lib/copilot/daily-brief.ts`)
+- Inventory assistant: `GET /api/v1/admin/copilot/inventory` (`lib/copilot/inventory-assistant.ts`)
+- Margin assistant: `GET /api/v1/admin/copilot/margin?days=30` (`lib/copilot/margin.ts`)
+- Customer-insight assistant: `GET /api/v1/admin/copilot/insights` (`lib/copilot/insights.ts`)
+- Marketing assistant (draft only, never sends): `POST /api/v1/admin/copilot/marketing`
+- AI cost + prompt versions: `GET /api/v1/admin/ai-cost`
+- Inventory health + set-stock: `GET/POST /api/v1/admin/inventory`
+
+Every assistant returns a `sources` map making each metric traceable to its query, and reports
+missing inputs honestly (e.g. margin → `no_cost_price_data`) instead of fabricating values.
+
 ## Approval Centre (`ApprovalRequest`)
 Fields: action, reason, dataSource, riskLevel, createdBy, requiredApprover, status, decidedBy,
 decidedAt, executed, payload — with an `AuditLog` trail. High-risk actions never auto-execute.
+Create/list: `GET/POST /api/v1/admin/approvals`; decide/execute (two separate steps):
+`POST /api/v1/admin/approvals/[id]` `{ op: 'approve' | 'reject' | 'execute' }`. Referral-reward
+requests and customer compensation flow through here (action `compensation`).

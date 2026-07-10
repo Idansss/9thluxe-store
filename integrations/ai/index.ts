@@ -18,6 +18,8 @@ import type {
 import { mockAiProvider } from './mock'
 import { anthropicProvider } from './anthropic'
 import { openaiProvider } from './openai'
+import { geminiProvider } from './gemini'
+import { recordAiUsage } from './cost'
 
 function selectProvider(): AiProvider {
   switch (env.AI_PROVIDER) {
@@ -25,6 +27,8 @@ function selectProvider(): AiProvider {
       return env.ANTHROPIC_API_KEY ? anthropicProvider : mockAiProvider
     case 'openai':
       return env.OPENAI_API_KEY ? openaiProvider : mockAiProvider
+    case 'gemini':
+      return env.GEMINI_API_KEY ? geminiProvider : mockAiProvider
     default:
       return mockAiProvider
   }
@@ -97,6 +101,14 @@ export async function generateStructured<T>(
       task: opts.task,
       promptVersion: opts.promptVersion,
       latencyMs: usage.latencyMs,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+    })
+    recordAiUsage({
+      task: opts.task,
+      provider: provider.name,
+      model: provider.model,
+      promptVersion: opts.promptVersion,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
     })

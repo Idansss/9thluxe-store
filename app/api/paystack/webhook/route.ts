@@ -6,6 +6,8 @@ import { sendReceipt } from '@/emails/sendReceipt'
 import { recordWebhookOnce } from '@/lib/webhooks/idempotency'
 import { resolveLoyaltyTier } from '@/lib/config/commerce'
 import { pointsForOrder } from '@/lib/loyalty/points'
+import { reversePointsForOrder } from '@/lib/loyalty/service'
+import { qualifyReferral } from '@/lib/referrals/service'
 
 function verify(reqBody: string, signature?: string) {
   const secret = process.env.PAYSTACK_SECRET_KEY || ''
@@ -100,6 +102,9 @@ export async function POST(req: NextRequest) {
       // send receipt (best-effort)
       await sendReceipt(order).catch(() => {})
 
+      // Qualify any pending referral for this customer's first paid order (best-effort, idempotent).
+      await qualifyReferral(order.userId, order.id).catch(() => {})
+
       // Create notification for admin
       await prisma.notification.create({
         data: {
@@ -109,6 +114,20 @@ export async function POST(req: NextRequest) {
           orderId: order.id,
         }
       }).catch(() => {}) // Don't fail if notification creation fails
+    }
+  } else if (evt?.event === 'refund.processed' || evt?.event === 'charge.refunded') {
+    // Reverse loyalty points earned for the refunded order. Idempotent + replay-guarded.
+    const ref = (evt?.data?.transaction?.reference ?? evt?.data?.reference) as string | undefined
+    const eventId = String(evt?.id ?? evt?.data?.id ?? ref ?? '')
+    if (eventId) {
+      const first = await recordWebhookOnce('paystack', eventId, evt.event)
+      if (!first) return NextResponse.json({ ok: true })
+    }
+    if (ref) {
+      const order = await prisma.order.findUnique({ where: { reference: ref }, select: { id: true, userId: true } })
+      if (order) {
+        await reversePointsForOrder(order.userId, order.id).catch(() => {})
+      }
     }
   }
 
