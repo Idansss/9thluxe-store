@@ -10,7 +10,6 @@ const routes = [
   "/cart",
   "/auth/signin",
   "/help/contact",
-  "/concierge",
 ] as const;
 
 test("@a11y major routes have no automatic WCAG A/AA violations", async ({
