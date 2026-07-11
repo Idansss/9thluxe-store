@@ -5,11 +5,12 @@ import { env } from '@/lib/env'
 export type FeatureFlag =
   | 'shopify_commerce' // route commerce reads/cart through Shopify instead of local Postgres
   | 'ai_concierge' // AI Scent Concierge endpoints
-  | 'loyalty_rewards' // points redemption (financial) — default OFF
-  | 'referral_rewards' // referral payouts (financial) — default OFF
-  | 'sample_credits' // sample credit redemption — default OFF until priced
-  | 'whatsapp_marketing' // promotional WhatsApp — requires consent + creds
+  | 'loyalty_rewards' // points redemption (financial): default OFF
+  | 'referral_rewards' // referral payouts (financial): default OFF
+  | 'sample_credits' // sample credit redemption: default OFF until priced
+  | 'whatsapp_marketing' // promotional WhatsApp: requires consent + creds
   | 'agentic_feed' // expose machine-readable product feed for AI shopping channels
+  | 'hero_orbit' // homepage orbital perfume carousel: default OFF until the merchant approves it
 
 const DEFAULTS: Record<FeatureFlag, boolean> = {
   shopify_commerce: false,
@@ -19,6 +20,7 @@ const DEFAULTS: Record<FeatureFlag, boolean> = {
   sample_credits: false,
   whatsapp_marketing: false,
   agentic_feed: false,
+  hero_orbit: false,
 }
 
 function enabledSet(): Set<string> {

@@ -4,127 +4,373 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ------------------------------------------------------------------ */
-/*  Fádé — "The Olfactory Atelier" design system                       */
-/*  Warm ivory · parchment · espresso · walnut · liquid amber · moss   */
+/*  Overlay stacking scale: the single source of truth for z-index.    */
+/*  Never hard-code numeric z-index values in components; always use    */
+/*  z-[var(--z-*)] so every layer stays consistent and documented.      */
+/*                                                                      */
+/*    base      0   in-flow page content                               */
+/*    sticky    20  sticky/floating page chrome (bottom bars, FABs)     */
+/*    nav       30  sticky site header / navigation                     */
+/*    drawer    40  slide-in drawers and sheets                         */
+/*    modal     50  modal dialogs, alert dialogs, image lightboxes      */
+/*    popover   60  dropdowns, selects, comboboxes, menus, popovers.    */
+/*                  Intentionally above modal/drawer so a dropdown       */
+/*                  opened inside a modal or drawer is never clipped.    */
+/*    toast     70  transient toasts / notifications                    */
+/*    critical  80  critical system dialogs                             */
+/* ------------------------------------------------------------------ */
+:root {
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-nav: 30;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-toast: 70;
+  --z-critical: 80;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Fádé: "SILLAGE" design system                                     */
+/*  Night: carbon green-velvet · almond · dried rose                   */
+/*  Day:   almond parchment · ink · plum wine                          */
+/*  Type:  Fraunces (display) · Instrument Sans (body) · Plex Mono     */
 /* ------------------------------------------------------------------ */
 
 :root {
-  /* Light — parchment atelier */
-  --background: #f4efe7;        /* Parchment */
-  --foreground: #18130f;        /* Primary ink */
-  --card: #fffdfc;              /* Warm white surface */
-  --card-foreground: #18130f;
-  --popover: #fffdfc;
-  --popover-foreground: #18130f;
+  color-scheme: light;
+  --background: #f7f1e6;
+  --foreground: #181612;
+  --surface-primary: #fffdf8;
+  --surface-secondary: #efe3cf;
+  --surface-elevated: #ffffff;
+  --surface-inverse: #251b17;
+  --surface-inverse-elevated: #30231e;
+  --surface-inverse-foreground: #f7edde;
+  --card: #fffaf1;
+  --card-foreground: #181612;
+  --popover: #fffdf8;
+  --popover-foreground: #181612;
+  --primary: #4b202c;
+  --primary-foreground: #fff5e8;
+  --secondary: #e5d9c7;
+  --secondary-foreground: #181612;
+  --muted: #eadfce;
+  --muted-foreground: #665d53;
+  --accent: #7b4559;
+  --accent-foreground: #fff8ef;
+  --destructive: #96382a;
+  --destructive-foreground: #fff8ef;
+  --success: #426242;
+  --success-foreground: #fffdf8;
+  --warning: #8a611c;
+  --warning-foreground: #fffdf8;
+  --info: #4d6172;
+  --info-foreground: #fffdf8;
+  --border: #cfc0aa;
+  --border-strong: #9e8c76;
+  --input: #b8a58d;
+  --ring: #7b4559;
+  --nav-background: #fffdf8;
+  --nav-foreground: #1c1915;
+  --announcement-background: #251b17;
+  --announcement-foreground: #f7edde;
+  --hero-background: #f7f1e6;
+  --hero-foreground: #181612;
+  --editorial-accent: #8f5c6f;
+  --champagne: #8d7a63;
+  --overlay: rgb(24 18 15 / 68%);
+  --shadow-soft: 0 12px 36px rgb(45 30 23 / 9%);
+  --shadow-raised: 0 20px 60px rgb(45 30 23 / 14%);
+  --radius: 0.125rem;
 
-  --primary: #2c201a;          /* Deep espresso / walnut — buttons */
-  --primary-foreground: #f6f1e9;
-
-  --secondary: #eae2d4;        /* Soft parchment */
-  --secondary-foreground: #2c201a;
-
-  --muted: #ede6da;
-  --muted-foreground: #6a5d4e; /* Warm readable grey */
-
-  --accent: #a0693a;           /* Liquid amber */
-  --accent-foreground: #fffdfc;
-
-  --destructive: #9b3b2e;
-  --destructive-foreground: #fbf4ec;
-
-  --border: #e2d9ca;
-  --input: #e2d9ca;
-  --ring: #a0693a;
-  --radius: 0.5rem;
-
-  /* Brand tokens */
-  --gold: #a0693a;             /* Amber accent */
-  --amber: #a0693a;
-  --bronze: #8a7052;           /* Muted bronze */
-  --walnut: #3a2922;
-  --espresso: #211813;
-  --moss: #696b55;             /* Soft moss accent */
-  --deep-brown: #3a2922;
-  --deep-green: #696b55;
-
-  /* Charts */
-  --chart-1: #a0693a;
-  --chart-2: #696b55;
-  --chart-3: #8a7052;
-  --chart-4: #3a2922;
-  --chart-5: #c9a063;
-
-  /* Sidebar */
-  --sidebar: #efe8dc;
-  --sidebar-foreground: #18130f;
-  --sidebar-primary: #2c201a;
-  --sidebar-primary-foreground: #f6f1e9;
-  --sidebar-accent: #a0693a;
-  --sidebar-accent-foreground: #fffdfc;
-  --sidebar-border: #e2d9ca;
-  --sidebar-ring: #a0693a;
+  --carbon: #251b17;
+  --velvet: #30231e;
+  --almond: #f7f1e6;
+  --parchment: #efe3cf;
+  --sandal: #8d7a63;
+  --plum: #4b202c;
+  --plum-mid: #7b4559;
+  --rose: #8f5c6f;
+  --gold: #8a6b3f;
+  --amber: #8a6b3f;
+  --bronze: #8d7a63;
+  --walnut: #30231e;
+  --espresso: #251b17;
+  --moss: #526546;
+  --deep-brown: #30231e;
+  --deep-green: #526546;
+  --chart-1: #7b4559;
+  --chart-2: #526546;
+  --chart-3: #8d7a63;
+  --chart-4: #4d6172;
+  --chart-5: #4b202c;
+  --sidebar: #efe3cf;
+  --sidebar-foreground: #181612;
+  --sidebar-primary: #4b202c;
+  --sidebar-primary-foreground: #fff5e8;
+  --sidebar-accent: #ded0bb;
+  --sidebar-accent-foreground: #181612;
+  --sidebar-border: #cfc0aa;
+  --sidebar-ring: #7b4559;
 }
 
-.dark {
-  /* Dark — espresso atelier */
-  --background: #17110d;        /* Deep espresso-black */
-  --foreground: #f1eadf;        /* Warm ivory */
-  --card: #211812;
-  --card-foreground: #f1eadf;
-  --popover: #211812;
-  --popover-foreground: #f1eadf;
+.dark,
+.dark [data-surface="night"] {
+  color-scheme: dark;
+  /* Approved carbon botanical Dark theme. */
+  --background: #111310;
+  --foreground: #efe4d0;
+  --surface-primary: #111310;
+  --surface-secondary: #1a1d17;
+  --surface-elevated: #22261e;
+  --surface-inverse: #efe6d6;
+  --surface-inverse-elevated: #f8f3e9;
+  --surface-inverse-foreground: #1b1a14;
+  --card: #191c16;
+  --card-foreground: #efe4d0;
+  --popover: #191c16;
+  --popover-foreground: #efe4d0;
 
-  --primary: #b98544;          /* Amber CTA in the dark */
-  --primary-foreground: #1a130e;
+  --primary: #e7d4bb; /* almond CTA on night */
+  --primary-foreground: #15120c;
 
-  --secondary: #2a1f18;
-  --secondary-foreground: #f1eadf;
+  --secondary: #22261e; /* velvet raised */
+  --secondary-foreground: #efe4d0;
 
-  --muted: #2a1f18;
-  --muted-foreground: #b3a692;
+  --muted: #1e221b;
+  --muted-foreground: #a99f8a; /* warm stone */
 
-  --accent: #c08a4e;           /* Brighter amber */
-  --accent-foreground: #17110d;
+  --accent: #c09ea9; /* dried rose on night */
+  --accent-foreground: #1a1014;
 
-  --destructive: #c15a49;
-  --destructive-foreground: #f1eadf;
+  --destructive: #cf6a58;
+  --destructive-foreground: #180f0c;
+  --success: #8ea67f;
+  --success-foreground: #10140e;
+  --warning: #c9a877;
+  --warning-foreground: #18120b;
+  --info: #9aafbd;
+  --info-foreground: #101417;
 
-  --border: #332318;
-  --input: #2a1f18;
-  --ring: #c08a4e;
+  --border: #2e3227;
+  --border-strong: #5e6352;
+  --input: #2e3227;
+  --ring: #c09ea9;
+  --nav-background: #111310;
+  --nav-foreground: #efe4d0;
+  --announcement-background: #111310;
+  --announcement-foreground: #c8bda8;
+  --hero-background: #111310;
+  --hero-foreground: #efe4d0;
+  --editorial-accent: #c09ea9;
+  --champagne: #b7aa91;
+  --overlay: rgb(0 0 0 / 80%);
+  --shadow-soft: 0 12px 36px rgb(0 0 0 / 24%);
+  --shadow-raised: 0 24px 70px rgb(0 0 0 / 38%);
+  --radius: 0.125rem;
 
-  --gold: #c08a4e;
-  --amber: #c08a4e;
-  --bronze: #a08965;
-  --walnut: #4a362b;
-  --espresso: #17110d;
-  --moss: #7c7e63;
-  --deep-brown: #4a362b;
-  --deep-green: #7c7e63;
+  /* Brand tokens */
+  --carbon: #111310;
+  --velvet: #1a1d17;
+  --almond: #e7d4bb;
+  --parchment: #efe6d6;
+  --sandal: #8a7b63;
+  --plum: #3e2129;
+  --plum-mid: #6e3b49;
+  --rose: #c09ea9;
 
-  --chart-1: #c08a4e;
-  --chart-2: #7c7e63;
-  --chart-3: #a08965;
-  --chart-4: #d8b98a;
-  --chart-5: #cf9f6a;
+  /* Legacy aliases (older components still reference these) */
+  --gold: #c9a877;
+  --amber: #c9a877;
+  --bronze: #8a7b63;
+  --walnut: #22261e;
+  --espresso: #111310;
+  --moss: #7c8266;
+  --deep-brown: #22261e;
+  --deep-green: #7c8266;
 
-  --sidebar: #120d09;
-  --sidebar-foreground: #f1eadf;
-  --sidebar-primary: #c08a4e;
-  --sidebar-primary-foreground: #17110d;
-  --sidebar-accent: #2a1f18;
-  --sidebar-accent-foreground: #f1eadf;
-  --sidebar-border: #332318;
-  --sidebar-ring: #c08a4e;
+  /* Charts */
+  --chart-1: #c09ea9;
+  --chart-2: #7c8266;
+  --chart-3: #8a7b63;
+  --chart-4: #e7d4bb;
+  --chart-5: #6e3b49;
+
+  /* Sidebar */
+  --sidebar: #0d0f0c;
+  --sidebar-foreground: #efe4d0;
+  --sidebar-primary: #e7d4bb;
+  --sidebar-primary-foreground: #15120c;
+  --sidebar-accent: #22261e;
+  --sidebar-accent-foreground: #efe4d0;
+  --sidebar-border: #2e3227;
+  --sidebar-ring: #c09ea9;
+}
+
+/* Existing night sections follow the selected site theme. */
+[data-surface="night"] {
+  --background: #f7f1e6;
+  --foreground: #181612;
+  --card: #fffaf1;
+  --card-foreground: #181612;
+  --popover: #fffdf8;
+  --popover-foreground: #181612;
+  --primary: #4b202c;
+  --primary-foreground: #fff5e8;
+  --secondary: #e5d9c7;
+  --secondary-foreground: #181612;
+  --muted: #eadfce;
+  --muted-foreground: #665d53;
+  --accent: #7b4559;
+  --accent-foreground: #fff8ef;
+  --destructive: #96382a;
+  --destructive-foreground: #fff8ef;
+  --border: #cfc0aa;
+  --border-strong: #9e8c76;
+  --input: #b8a58d;
+  --ring: #7b4559;
+}
+
+/* In Light theme, former parchment commerce sections become cocoa inverse
+   surfaces. This preserves the approved editorial light/dark rhythm. */
+[data-surface="day"] {
+  color-scheme: dark;
+  --background: #251b17;
+  --foreground: #f7edde;
+  --surface-primary: #251b17;
+  --surface-secondary: #30231e;
+  --surface-elevated: #3a2a24;
+  --surface-inverse: #f7f1e6;
+  --surface-inverse-elevated: #fffdf8;
+  --surface-inverse-foreground: #181612;
+  --card: #30231e;
+  --card-foreground: #f7edde;
+  --popover: #30231e;
+  --popover-foreground: #f7edde;
+  --primary: #6e3b49;
+  --primary-foreground: #fff5e8;
+  --secondary: #3a2a24;
+  --secondary-foreground: #f7edde;
+  --muted: #352721;
+  --muted-foreground: #cbbca9;
+  --accent: #d0a4b4;
+  --accent-foreground: #251b17;
+  --destructive: #e07b68;
+  --destructive-foreground: #25100c;
+  --border: #746252;
+  --border-strong: #a38d76;
+  --input: #8d7a63;
+  --ring: #d0a4b4;
+  --gold: #d0b280;
+  --amber: #d0b280;
+  --bronze: #b1997c;
+  --walnut: #3a2a24;
+  --espresso: #251b17;
+  --moss: #a9bc92;
+  --deep-brown: #3a2a24;
+  --deep-green: #a9bc92;
+  --sidebar: #30231e;
+  --sidebar-foreground: #f7edde;
+  --sidebar-primary: #6e3b49;
+  --sidebar-primary-foreground: #fff5e8;
+  --sidebar-accent: #3a2a24;
+  --sidebar-accent-foreground: #f7edde;
+  --sidebar-border: #746252;
+  --sidebar-ring: #d0a4b4;
+}
+
+/* In Dark theme, the same inverse role preserves the approved parchment. */
+.dark [data-surface="day"] {
+  color-scheme: light;
+  --background: #efe6d6;
+  --foreground: #1b1a14;
+  --surface-primary: #efe6d6;
+  --surface-secondary: #e8ddc9;
+  --surface-elevated: #f8f3e9;
+  --surface-inverse: #111310;
+  --surface-inverse-elevated: #191c16;
+  --surface-inverse-foreground: #efe4d0;
+  --card: #f8f3e9;
+  --card-foreground: #1b1a14;
+  --popover: #f8f3e9;
+  --popover-foreground: #1b1a14;
+
+  --primary: #3e2129; /* plum wine CTA on day */
+  --primary-foreground: #f4e9da;
+
+  --secondary: #e5d9c3;
+  --secondary-foreground: #2a1e15;
+
+  --muted: #e8ddc9;
+  --muted-foreground: #6c6353;
+
+  --accent: #6e3b49; /* plum accent text/links */
+  --accent-foreground: #f8f3e9;
+
+  --destructive: #96382a;
+  --destructive-foreground: #f8f3e9;
+
+  --border: #d9cdb8;
+  --border-strong: #a89578;
+  --input: #d9cdb8;
+  --ring: #6e3b49;
+
+  --gold: #8a6b3f;
+  --amber: #8a6b3f;
+  --bronze: #8a7b63;
+  --walnut: #3a2922;
+  --espresso: #1b1a14;
+  --moss: #626749;
+  --deep-brown: #3a2922;
+  --deep-green: #626749;
+
+  --sidebar: #e8ddc9;
+  --sidebar-foreground: #1b1a14;
+  --sidebar-primary: #3e2129;
+  --sidebar-primary-foreground: #f4e9da;
+  --sidebar-accent: #6e3b49;
+  --sidebar-accent-foreground: #f8f3e9;
+  --sidebar-border: #d9cdb8;
+  --sidebar-ring: #6e3b49;
+}
+
+/* Footer and announcement remain restrained inverse anchors in both themes. */
+[data-surface="fixed-dark"] {
+  color-scheme: dark;
+  --background: #111310;
+  --foreground: #efe4d0;
+  --card: #191c16;
+  --card-foreground: #efe4d0;
+  --popover: #191c16;
+  --popover-foreground: #efe4d0;
+  --primary: #e7d4bb;
+  --primary-foreground: #15120c;
+  --secondary: #22261e;
+  --secondary-foreground: #efe4d0;
+  --muted: #1e221b;
+  --muted-foreground: #a99f8a;
+  --accent: #c09ea9;
+  --accent-foreground: #1a1014;
+  --border: #2e3227;
+  --border-strong: #5e6352;
+  --input: #5e6352;
+  --ring: #c09ea9;
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
-  --font-mono: ui-monospace, "Geist Mono", monospace;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "Geist Mono", monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-inverse-elevated: var(--surface-inverse-elevated);
+  --color-surface-inverse-foreground: var(--surface-inverse-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -139,10 +385,28 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Sillage brand colors */
+  --color-carbon: var(--carbon);
+  --color-velvet: var(--velvet);
+  --color-almond: var(--almond);
+  --color-parchment: var(--parchment);
+  --color-sandal: var(--sandal);
+  --color-plum: var(--plum);
+  --color-plum-mid: var(--plum-mid);
+  --color-rose: var(--rose);
+
+  /* Legacy aliases */
   --color-gold: var(--gold);
   --color-amber: var(--amber);
   --color-bronze: var(--bronze);
@@ -158,10 +422,10 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -171,6 +435,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Motion tokens */
+  --ease-sillage: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
@@ -178,90 +445,525 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "liga", "kern";
   }
 
-  /* Editorial serif headlines */
-  h1, .h1 {
-    @apply font-serif text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight;
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
-  h2, .h2 {
-    @apply font-serif text-3xl md:text-4xl font-semibold tracking-tight;
+
+  /* Fraunces display headings: light, close leading, quiet confidence */
+  h1,
+  .h1 {
+    @apply font-serif text-4xl md:text-6xl lg:text-7xl font-light tracking-[-0.01em];
+    line-height: 1.02;
   }
-  h3, .h3 {
-    @apply font-serif text-2xl md:text-3xl font-medium;
+  h2,
+  .h2 {
+    @apply font-serif text-3xl md:text-5xl font-light tracking-[-0.01em];
+    line-height: 1.08;
   }
-  h4, .h4 {
-    @apply font-serif text-xl md:text-2xl font-medium;
+  h3,
+  .h3 {
+    @apply font-serif text-2xl md:text-3xl font-normal;
+    line-height: 1.15;
   }
-  h5, .h5 {
+  h4,
+  .h4 {
+    @apply font-serif text-xl md:text-2xl font-normal;
+  }
+  h5,
+  .h5 {
     @apply font-sans text-lg font-medium;
   }
-  h6, .h6 {
+  h6,
+  .h6 {
     @apply font-sans text-base font-medium;
   }
 }
 
-/* --- Atelier utilities -------------------------------------------- */
-
-/* Small-caps editorial eyebrow label */
-.eyebrow {
-  @apply inline-block font-sans text-xs font-semibold uppercase tracking-[0.2em] text-accent;
+@keyframes sillage-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
-/* Fine paper grain — extremely subtle, applied to select sections */
-.paper-texture {
-  background-image: radial-gradient(
-    rgba(24, 19, 15, 0.025) 0.5px,
-    transparent 0.5px
+.skeleton-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--muted) 100%, transparent) 0%,
+    color-mix(in oklab, var(--border) 70%, transparent) 45%,
+    color-mix(in oklab, var(--muted) 100%, transparent) 90%
   );
-  background-size: 4px 4px;
-}
-
-/* Warm amber ambient glow for hero/pedestals */
-.amber-glow {
-  background: radial-gradient(
-    60% 60% at 50% 40%,
-    color-mix(in oklab, var(--amber) 26%, transparent) 0%,
-    transparent 70%
-  );
-}
-
-/* Slow ambient float for hero botanicals/particles */
-@keyframes atelier-float {
-  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.5; }
-  50% { transform: translateY(-14px) translateX(6px); opacity: 0.8; }
-}
-.animate-atelier-float {
-  animation: atelier-float 9s ease-in-out infinite;
+  background-size: 200% 100%;
+  animation: sillage-shimmer 2.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-atelier-float { animation: none; }
-  html { scroll-behavior: auto; }
+  .skeleton-shimmer {
+    animation: none;
+    background-image: none;
+    background-color: var(--muted);
+  }
 }
 
-/* Smooth theme transitions */
-html {
-  transition: background-color 0.3s ease, color 0.3s ease;
+/* Touch-sized layouts must never depend on an entrance animation to expose
+   primary content. WebKit can delay the client motion capability check long
+   enough for a blank hero to be captured or perceived. */
+@media (max-width: 1023px), (hover: none), (pointer: coarse) {
+  [data-sillage-motion] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* Hide native number input spinners (replaced by themed NumberField controls) */
+.number-field-input::-webkit-inner-spin-button,
+.number-field-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.number-field-input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* --- Sillage utilities --------------------------------------------- */
+
+/* Mono eyebrow: the data voice of the brand */
+.eyebrow {
+  @apply inline-block font-mono text-[11px] font-medium uppercase tracking-[0.32em] text-accent;
+}
+
+/* Mono data text (prices, sizes, counts) */
+.data-text {
+  @apply font-mono text-xs tracking-[0.08em];
+}
+
+/* Film grain: SVG turbulence, fixed opacity, night surfaces */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+}
+
+/* The Veil: drifting vapor light, layered radial gradients */
+.veil {
+  position: relative;
+  overflow: hidden;
+}
+.veil::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      42% 38% at 28% 32%,
+      color-mix(in oklab, var(--rose) 12%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 44% at 74% 60%,
+      color-mix(in oklab, var(--almond) 8%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      36% 40% at 52% 88%,
+      color-mix(in oklab, var(--moss) 10%, transparent) 0%,
+      transparent 70%
+    );
+  animation: veil-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes veil-drift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, 2%, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(-1%, 3%, 0) scale(1.02);
+  }
+}
+
+/* Soft pedestal light behind staged bottles */
+.pedestal-light {
+  background: radial-gradient(
+    58% 52% at 50% 42%,
+    color-mix(in oklab, var(--almond) 20%, transparent) 0%,
+    color-mix(in oklab, var(--rose) 7%, transparent) 45%,
+    transparent 72%
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Homepage hero: wet-stone pedestal + shallow reflective water        */
+/* ------------------------------------------------------------------ */
+
+/* Dark circular wet-stone pedestal the bottle rests on. */
+.hero-pedestal {
+  background:
+    radial-gradient(
+      70% 60% at 50% 34%,
+      color-mix(in oklab, var(--almond) 10%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(60% 80% at 50% 60%, #1a1c17 0%, #0c0d0a 78%, #070806 100%);
+  box-shadow:
+    inset 0 6px 18px rgba(0, 0, 0, 0.55),
+    inset 0 -8px 22px rgba(0, 0, 0, 0.7);
+}
+
+/* Shallow reflective water surface surrounding the pedestal. */
+.hero-water {
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--almond) 7%, transparent) 0%,
+      transparent 55%
+    ),
+    linear-gradient(180deg, #0d0f0b 0%, #090a07 100%);
+}
+
+/* Faint concentric ripple ring on the water. */
+.hero-water-ring {
+  border: 1px solid color-mix(in oklab, var(--almond) 16%, transparent);
+}
+
+.hero-contact-shadow {
+  background: rgb(0 0 0 / 60%);
+}
+
+/* The light hero is a warm stone environment, not an inverted dark scene. */
+.light .hero-pedestal {
+  background:
+    radial-gradient(
+      70% 60% at 50% 34%,
+      rgb(255 253 248 / 42%) 0%,
+      transparent 70%
+    ),
+    radial-gradient(60% 80% at 50% 60%, #b9aa96 0%, #786b5d 78%, #544940 100%);
+  box-shadow:
+    inset 0 6px 18px rgb(255 253 248 / 30%),
+    inset 0 -8px 22px rgb(45 30 23 / 34%),
+    0 18px 34px rgb(45 30 23 / 16%);
+}
+
+.light .hero-water {
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      rgb(255 253 248 / 55%) 0%,
+      transparent 55%
+    ),
+    linear-gradient(180deg, #e9decb 0%, #cbbba6 100%);
+  box-shadow: 0 18px 48px rgb(45 30 23 / 10%);
+}
+
+.light .hero-water-ring {
+  border-color: rgb(77 56 44 / 28%);
+}
+
+.light .hero-contact-shadow {
+  background: rgb(45 30 23 / 28%);
+}
+
+/* Narrow highlight that travels across the glass during the arrival phase. */
+@keyframes hero-glass-sweep {
+  0% {
+    transform: translateX(-140%) skewX(-12deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.5;
+  }
+  30%,
+  100% {
+    transform: translateX(240%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+.hero-glass-sweep {
+  animation: hero-glass-sweep 11s ease-in-out infinite;
+}
+
+/* Slow pedestal rotation sweep (10-15deg), applied to the decorative stage layer. */
+@keyframes hero-pedestal-rotate {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+.hero-pedestal-rotate {
+  animation: hero-pedestal-rotate 22s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/* Homepage orbital carousel (Stage 2, behind the hero_orbit flag)    */
+/* ------------------------------------------------------------------ */
+
+/* Product info panel swap on rotation */
+@keyframes orbit-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.orbit-fade-up {
+  animation: orbit-fade-up 480ms cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+/* Simplified-mode (mobile) bottle crossfade */
+@keyframes orbit-simple-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.orbit-simple-enter {
+  animation: orbit-simple-enter 560ms cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+/* Ingredient visuals: gentle staggered descent onto the stage, then a slow float.
+   The enter keyframes own `transform` (including the centering), the float loop uses the
+   separate `translate` property so the two compose without fighting. */
+@keyframes orbit-ingredient-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 16px)) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+.orbit-ingredient {
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: orbit-ingredient-enter 700ms cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+@keyframes orbit-ingredient-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -7px;
+  }
+}
+.orbit-ingredient-art {
+  animation: orbit-ingredient-float 8s ease-in-out infinite;
+}
+
+/* Scent annotation: fade-in card, drawn connector, restrained typewriter on the name only
+   (pure CSS; no per-character React state). */
+@keyframes orbit-annotation-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.orbit-annotation {
+  animation: orbit-annotation-in 400ms ease-out both;
+}
+.orbit-annotation-body {
+  opacity: 0;
+  animation: orbit-annotation-in 500ms ease-out 1150ms both;
+}
+@keyframes orbit-typewriter {
+  from {
+    max-width: 0;
+  }
+  to {
+    max-width: 100%;
+  }
+}
+.orbit-typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: orbit-typewriter 900ms steps(18, end) 250ms both;
+}
+@keyframes orbit-connector-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.orbit-connector {
+  stroke: color-mix(in oklab, var(--champagne) 80%, var(--foreground) 20%);
+  stroke-width: 1px;
+  stroke-dasharray: 140;
+  stroke-dashoffset: 140;
+  animation: orbit-connector-draw 700ms ease-out 150ms both;
+}
+
+/* Hairline rule with center fade: editorial divider */
+.rule-fade {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border) 18%,
+    var(--border) 82%,
+    transparent
+  );
+}
+
+/* Scent spectrum bar track */
+.scent-bar {
+  @apply relative h-px w-full overflow-visible;
+  background: color-mix(in oklab, var(--border) 80%, transparent);
+}
+.scent-bar > span {
+  @apply absolute left-0 top-1/2 block h-[3px] -translate-y-1/2;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    color-mix(in oklab, var(--accent) 30%, transparent)
+  );
+}
+
+/* Slow ambient float (particles, botanicals) */
+@keyframes sillage-float {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-16px) translateX(8px);
+    opacity: 0.8;
+  }
+}
+.animate-sillage-float {
+  animation: sillage-float 11s ease-in-out infinite;
+}
+
+/* Marquee for the atelier ticker */
+@keyframes sillage-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-sillage-marquee {
+  animation: sillage-marquee 36s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  [data-sillage-motion] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  .veil::before,
+  .animate-sillage-float,
+  .animate-sillage-marquee,
+  .hero-glass-sweep,
+  .hero-pedestal-rotate {
+    animation: none;
+  }
+  /* Orbit: jump every entrance to its final visible frame (no delay, no motion, no content loss)
+     and stop the decorative float loop entirely. */
+  .orbit-fade-up,
+  .orbit-simple-enter,
+  .orbit-ingredient,
+  .orbit-annotation,
+  .orbit-annotation-body,
+  .orbit-typewriter {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+  .orbit-ingredient-art,
+  .orbit-connector {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--muted); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
 
 /* Accordion animations */
 @keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
 }
 @keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }
-.animate-accordion-down { animation: accordion-down 0.2s ease-out; }
-.animate-accordion-up { animation: accordion-up 0.2s ease-out; }
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
