@@ -1,0 +1,53 @@
+name: Continuation source audit
+
+on:
+  push:
+    branches:
+      - agent/mobile-verification-harness
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Repository orientation
+        shell: bash
+        run: |
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "BRANCH=$(git branch --show-current)"
+          git status --short --branch
+          echo "--- HANDOFF AND TODO FILES ---"
+          find . -type f \
+            \( -iname '*todo*' -o -iname '*handoff*' -o -iname '*contract*' \) \
+            -not -path './node_modules/*' \
+            -not -path './.git/*' \
+            | sort
+
+      - name: Visible em dash candidates
+        shell: bash
+        run: |
+          echo "--- EM DASH CANDIDATES IN RENDERED SOURCE ---"
+          grep -RIn --include='*.tsx' --include='*.ts' --include='*.jsx' --include='*.js' \
+            --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=FRONTEND \
+            $'—' app components lib 2>/dev/null || true
+
+      - name: Native select candidates
+        shell: bash
+        run: |
+          echo "--- NATIVE SELECT CANDIDATES ---"
+          grep -RIn --include='*.tsx' --include='*.jsx' \
+            --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=FRONTEND \
+            '<select\|</select>' app components 2>/dev/null || true
+
+      - name: Unrelated catalogue wording candidates
+        shell: bash
+        run: |
+          echo "--- NON PERFUME CATALOGUE WORDING ---"
+          grep -RInEi --include='*.tsx' --include='*.ts' --include='*.jsx' --include='*.js' \
+            --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=FRONTEND \
+            'watches|wristwatches|eyeglasses|sunglasses' app components lib 2>/dev/null || true
