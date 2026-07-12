@@ -8,7 +8,7 @@ import type { HeroFeaturedProduct } from "@/lib/hero/types";
  */
 export function HeroStage({ product }: { product: HeroFeaturedProduct }) {
   return (
-    <div className="relative mx-auto aspect-[4/5] w-full max-w-[420px]">
+    <div className="relative mx-auto aspect-[4/5] w-full max-w-[min(420px,46svh)]">
       {/* Ambient pedestal light */}
       <div aria-hidden className="pedestal-light absolute -inset-10" />
 

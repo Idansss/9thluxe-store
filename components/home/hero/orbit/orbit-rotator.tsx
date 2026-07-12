@@ -249,7 +249,7 @@ export function OrbitRotator({
   return (
     <div
       ref={regionRef}
-      className="relative mx-auto w-full max-w-[420px]"
+      className="relative mx-auto w-full max-w-[min(420px,46svh)]"
       onPointerEnter={pauseForInteraction}
       onPointerLeave={resumeAfterDelay}
       onFocusCapture={pauseForInteraction}

@@ -34,8 +34,8 @@ export function HeroOrbitSection({ orbit }: { orbit: OrbitData }) {
         </p>
       </div>
 
-      <div className="container relative z-10 mx-auto flex flex-1 items-center px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <div className="grid w-full items-center gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">
+      <div className="container relative z-10 mx-auto flex items-center px-4 py-6 sm:px-6 lg:items-start lg:px-8 lg:py-10">
+        <div className="grid w-full items-center gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-8">
           {/* Copy (static, server-rendered; identical to the approved Stage 1 copy) */}
           <div className="order-2 max-w-xl lg:order-1">
             <p className="eyebrow mb-6">Fádé · Lagos · Curated Perfumery</p>
