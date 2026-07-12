@@ -1,20 +1,37 @@
 // lib/hero/orbit-config.ts
-// Curated slide configuration for the homepage orbital carousel (Stage 2). This file codifies the
-// research proposal in docs/HERO_ORBIT_RESEARCH_PROPOSAL.md: every slide references a REAL published
-// catalogue product and a merchant-owned bottle asset. Slides never invent availability or data;
-// ineligible entries stay DRAFT/disabled instead of being faked.
+// Curated slide configuration for the homepage orbital carousel (Stage 2).
+//
+// A slide is one of two kinds:
+//   1. PRODUCT slide - `display` omitted. Ties to a REAL published catalogue product (verified live
+//      by the selector) and is fully purchasable (Explore + Shop actions).
+//   2. SHOWCASE slide - `display` present. A non-purchasable editorial piece driven entirely by this
+//      config: a recognisable fragrance the store presents as part of the site's world but does NOT
+//      sell through checkout. It renders with NO buy action, needs no catalogue product, price or
+//      stock, and never implies availability. Bottle image + notes are real; nothing is fabricated.
 //
 // Two gates must both be open before anything renders publicly:
-//   1. the `hero_orbit` feature flag (default OFF) - flipping it on in production is the merchant's
-//      explicit sign-off on this configuration, exactly like `isFeatured` gates the Stage 1 hero;
-//   2. per-slide `approvalStatus === "APPROVED" && enabled` below.
+//   1. the `hero_orbit` feature flag (default OFF) - flipping it on is the merchant's sign-off;
+//   2. per-slide `approvalStatus === "APPROVED" && enabled`.
 
 export type PedestalStyle = "STONE" | "METAL" | "GLASS" | "WATER"
 export type SlideApprovalStatus = "DRAFT" | "APPROVED" | "REJECTED"
 
+/** Editorial display data for a SHOWCASE slide (not for sale). All fields are real and approved. */
+export interface OrbitSlideDisplay {
+  brand: string
+  name: string
+  /** e.g. WOODY | FRESH | SPICY - shown as a small family label, never a purchase claim. */
+  fragranceFamily: string
+  concentration: string | null
+  /** Comma-separated note names; only those in the approved ingredient library become visuals. */
+  notesTop: string
+  notesHeart: string
+  notesBase: string
+}
+
 export interface HomepagePerfumeSlide {
   id: string
-  /** Ties the slide to the real catalogue product; the selector re-verifies it is PUBLISHED. */
+  /** Stable slug. For PRODUCT slides the selector re-verifies a PUBLISHED product with this slug. */
   productSlug: string
   displayOrder: number
   /**
@@ -27,11 +44,13 @@ export interface HomepagePerfumeSlide {
   motionProfile: "calm-orbit"
   approvalStatus: SlideApprovalStatus
   enabled: boolean
+  /** Present => SHOWCASE slide (not purchasable, config-driven). Absent => real PRODUCT slide. */
+  display?: OrbitSlideDisplay
 }
 
 export const ORBIT_SLIDES: HomepagePerfumeSlide[] = [
   {
-    // House signature oriental (oud/amber/vanilla): proposed front/default slide.
+    // House signature oriental (oud/amber/vanilla): real, purchasable, front/default slide.
     id: "slide_nocturne",
     productSlug: "nocturne-eau-de-parfum",
     displayOrder: 1,
@@ -43,7 +62,7 @@ export const ORBIT_SLIDES: HomepagePerfumeSlide[] = [
     enabled: true,
   },
   {
-    // Floral chapter (pink pepper/rose/patchouli).
+    // Floral chapter (pink pepper/rose/patchouli): real, purchasable.
     id: "slide_vesper_velvet",
     productSlug: "vesper-velvet-eau-de-parfum",
     displayOrder: 2,
@@ -69,11 +88,10 @@ export const ORBIT_SLIDES: HomepagePerfumeSlide[] = [
     enabled: false,
   },
 
-  // ---- Expansion round (see HERO_ORBIT_RESEARCH_PROPOSAL.md, "Expansion round") ----
-  // Real fragrances the merchant carries. Bottle images were supplied by the merchant and
-  // background-removed to transparent WebP; slides are APPROVED. They only render once their
-  // catalogue product is PUBLISHED (buildOrbitSlide gates on publishStatus), so publishing each
-  // product in admin - with a real price - is the final go-live switch per slide.
+  // ---- Showcase round (see HERO_ORBIT_RESEARCH_PROPOSAL.md, "Expansion round") ----
+  // Recognisable fragrances shown as part of the site's world, NOT sold through checkout. Merchant
+  // supplied the bottle images (background-removed to transparent WebP); notes verified against
+  // official/public sources. No price, stock or catalogue product - purely presentational.
   {
     id: "slide_tf_oud_wood",
     productSlug: "tom-ford-oud-wood",
@@ -84,6 +102,15 @@ export const ORBIT_SLIDES: HomepagePerfumeSlide[] = [
     motionProfile: "calm-orbit",
     approvalStatus: "APPROVED",
     enabled: true,
+    display: {
+      brand: "Tom Ford",
+      name: "Oud Wood Eau de Parfum",
+      fragranceFamily: "WOODY",
+      concentration: "EDP",
+      notesTop: "rosewood, cardamom",
+      notesHeart: "oud, sandalwood, vetiver",
+      notesBase: "tonka bean, vanilla, amber",
+    },
   },
   {
     id: "slide_creed_aventus",
@@ -95,6 +122,15 @@ export const ORBIT_SLIDES: HomepagePerfumeSlide[] = [
     motionProfile: "calm-orbit",
     approvalStatus: "APPROVED",
     enabled: true,
+    display: {
+      brand: "Creed",
+      name: "Aventus Eau de Parfum",
+      fragranceFamily: "FRESH",
+      concentration: "EDP",
+      notesTop: "bergamot, blackcurrant, apple, pineapple",
+      notesHeart: "birch, patchouli, jasmine",
+      notesBase: "musk, oakmoss, ambergris, vanilla",
+    },
   },
   {
     id: "slide_dior_sauvage_elixir",
@@ -106,5 +142,14 @@ export const ORBIT_SLIDES: HomepagePerfumeSlide[] = [
     motionProfile: "calm-orbit",
     approvalStatus: "APPROVED",
     enabled: true,
+    display: {
+      brand: "Dior",
+      name: "Sauvage Elixir",
+      fragranceFamily: "SPICY",
+      concentration: "Elixir",
+      notesTop: "grapefruit, cinnamon, nutmeg, cardamom",
+      notesHeart: "lavender",
+      notesBase: "licorice, sandalwood, amber, patchouli, vetiver",
+    },
   },
 ]
