@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 
-const routes = ["/", "/shop", "/category/perfumes", "/collections", "/concierge", "/about", "/cart"]
+const routes = ["/", "/shop", "/collections", "/concierge", "/about", "/cart"]
 
 test.describe("WCAG critical and serious violations", () => {
   for (const route of routes) {

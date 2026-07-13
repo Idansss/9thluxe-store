@@ -13,11 +13,26 @@ jobs:
   playwright:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fade_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d fade_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: e2e
     env:
-      E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://9thluxe-store-two.vercel.app' }}
+      E2E_BASE_URL: http://127.0.0.1:3000
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/fade_e2e
 
     steps:
       - name: Checkout
@@ -33,11 +48,45 @@ jobs:
       - name: Install test dependencies
         run: npm ci
 
+      - name: Install storefront dependencies
+        working-directory: .
+        run: npm ci
+
+      - name: Apply database migrations
+        working-directory: .
+        run: npx prisma migrate deploy
+
+      - name: Seed storefront data
+        working-directory: .
+        run: npm run seed
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Build storefront
+        working-directory: .
+        run: npm run build
+
+      - name: Start storefront
+        working-directory: .
+        run: |
+          npm run start > /tmp/storefront.log 2>&1 &
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/storefront.log
+          exit 1
+
       - name: Run storefront verification
         run: npm test
+
+      - name: Print storefront logs on failure
+        if: failure()
+        working-directory: .
+        run: cat /tmp/storefront.log || true
 
       - name: Upload Playwright report
         if: always()

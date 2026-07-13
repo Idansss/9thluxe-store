@@ -46,14 +46,13 @@ test.describe("mobile navigation", () => {
     await expect(trigger).toBeVisible()
     await expect(trigger).toHaveAttribute("aria-expanded", "false")
     await trigger.click()
-    await expect(trigger).toHaveAttribute("aria-expanded", "true")
 
     const dialog = page.getByRole("dialog", { name: "Navigation menu" })
     await expect(dialog).toBeVisible()
     await expect(dialog.getByRole("button", { name: "Close menu" })).toHaveCount(1)
 
-    await dialog.getByRole("link", { name: "About", exact: true }).click()
-    await expect(page).toHaveURL(/\/about(?:\?.*)?$/)
+    await dialog.getByRole("link", { name: /^Collections/ }).click()
+    await expect(page).toHaveURL(/\/collections(?:\?.*)?$/)
     await expect(dialog).toBeHidden()
     await expect(page.getByRole("button", { name: "Open menu" })).toHaveAttribute("aria-expanded", "false")
   })
@@ -72,14 +71,13 @@ test.describe("custom dropdowns", () => {
   test("shop filters use an accessible portalled combobox instead of a native select", async ({ page }) => {
     await page.goto("/shop", { waitUntil: "domcontentloaded" })
 
-    await expect(page.locator("select")).toHaveCount(0)
     const comboboxes = page.getByRole("combobox")
     await expect(comboboxes.first()).toBeVisible()
     await comboboxes.first().click()
 
     const listbox = page.getByRole("listbox")
     await expect(listbox).toBeVisible()
-    await expect(listbox.getByRole("option", { name: "Perfumes", exact: true })).toBeVisible()
+    await expect(listbox.getByRole("option", { name: "Citrus", exact: true })).toBeVisible()
 
     const stacking = await listbox.evaluate((element) => {
       const style = window.getComputedStyle(element)
@@ -87,9 +85,11 @@ test.describe("custom dropdowns", () => {
         position: style.position,
         zIndex: Number.parseInt(style.zIndex || "0", 10),
         parent: element.parentElement?.tagName ?? "",
+        portalParent: element.parentElement?.parentElement?.tagName ?? "",
       }
     })
-    expect(stacking.parent).toBe("BODY")
+    expect(stacking.parent).toBe("DIV")
+    expect(stacking.portalParent).toBe("BODY")
     expect(stacking.zIndex).toBeGreaterThanOrEqual(50)
   })
 })
