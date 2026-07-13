@@ -1,8 +1,6 @@
 import { MainLayout } from "@/components/layout/main-layout"
 
-import { HeroSection } from "@/components/home/hero/hero-section"
-
-import { HeroOrbitSection } from "@/components/home/hero/orbit/hero-orbit-section"
+import { EditorialHeroSection } from "@/components/home/hero/editorial/editorial-hero-section"
 
 import { FeaturedProductsSection } from "@/components/home/featured-products-section"
 
@@ -13,21 +11,10 @@ import { BrandStorySection } from "@/components/home/brand-story-section"
 import { ConciergeInvitation } from "@/components/home/concierge-invitation"
 
 import { prisma } from "@/lib/prisma"
-import { selectHeroFeaturedProduct } from "@/lib/hero/select"
-import { selectHeroOrbit } from "@/lib/hero/orbit"
-import { isFeatureEnabled } from "@/lib/config/feature-flags"
 
 export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
-  // Stage 2 orbital showcase: only behind the hero_orbit flag AND with >=2 approved slides.
-  // Anything less falls straight back to the approved Stage 1 hero below.
-  const orbitData = isFeatureEnabled("hero_orbit") ? await selectHeroOrbit() : null
-
-  // Merchant-approved hero fragrance (published + featured + owned image), or null for the neutral
-  // placeholder. Never fabricates a bottle or perfume information.
-  const heroData = orbitData ? null : await selectHeroFeaturedProduct()
-
   // Fetch featured products from database (best-effort; allow the page to render even if DB isn't ready).
   let dbProducts: Awaited<ReturnType<typeof prisma.product.findMany>> = []
   try {
@@ -91,7 +78,7 @@ export default async function HomePage() {
 
     <MainLayout>
 
-      {orbitData ? <HeroOrbitSection orbit={orbitData} /> : <HeroSection heroData={heroData} />}
+      <EditorialHeroSection />
 
       <FeaturedProductsSection products={featuredProducts} />
 
