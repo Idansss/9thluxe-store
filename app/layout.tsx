@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { CartHydrator } from "@/components/cart/cart-hydrator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { NavigationProgress } from "@/components/loading/navigation-progress";
 import { Suspense } from "react";
 
 const fraunces = Fraunces({
@@ -129,6 +130,7 @@ export default function RootLayout({
       <body className="font-sans">
         <ThemeProvider>
           <Suspense fallback={null}>
+            <NavigationProgress />
             <ScrollToTop />
           </Suspense>
           <CartHydrator />

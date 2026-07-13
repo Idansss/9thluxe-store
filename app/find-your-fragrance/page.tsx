@@ -61,7 +61,7 @@ const CLIMATES = [
 ]
 
 const INTENSITY = [
-  { value: "skin", label: "Skin scent — close & intimate" },
+  { value: "skin", label: "Skin scent - close & intimate" },
   { value: "light", label: "Light & fresh" },
   { value: "medium", label: "Moderate projection" },
   { value: "bold", label: "Bold & long-lasting" },
@@ -226,7 +226,7 @@ export default function FindYourFragrancePage() {
               <QuestionBlock
                 index={3}
                 title="Which fragrance family feels right?"
-                hint="Optional — skip if you are unsure."
+                hint="Optional: skip if you are unsure."
               >
                 {FAMILIES.map((opt) => (
                   <Chip

@@ -1046,3 +1046,73 @@
   .drop-ingredient { transform: rotate(var(--item-rotate)); }
   .drop-impact { display: none; }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Fádé route loading: progress line, delayed mark, soft veil         */
+/* ------------------------------------------------------------------ */
+
+.fade-loading-veil {
+  opacity: 0;
+  background: color-mix(in oklab, var(--background) 72%, transparent);
+  animation: fade-loading-veil-in 0.35s ease 0.15s forwards;
+}
+
+.fade-loading-mark {
+  opacity: 0;
+  transform: translateY(4px) scale(0.98);
+  animation: fade-loading-mark-in 0.55s var(--ease-sillage, cubic-bezier(0.16, 1, 0.3, 1)) 0.55s forwards;
+}
+
+.fade-loading-breathe {
+  animation: fade-loading-breathe 2.8s ease-in-out infinite;
+}
+
+.navigation-progress-bar {
+  box-shadow: 0 0 10px color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+@keyframes fade-loading-veil-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-loading-mark-in {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-loading-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-loading-veil,
+  .fade-loading-mark {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .fade-loading-breathe {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .navigation-progress-bar {
+    box-shadow: none;
+    transition: none;
+  }
+}
+

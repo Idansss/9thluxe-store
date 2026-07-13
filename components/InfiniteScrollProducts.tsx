@@ -3,7 +3,7 @@
 import type { Product } from '@prisma/client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ProductCard } from '@/components/ui/product-card'
-import { ProductGridSkeleton } from '@/components/ui/product-card-skeleton'
+import { LocalLoading } from '@/components/loading/route-loading'
 import { mapPrismaProductToCard } from '@/lib/queries/products'
 
 interface InfiniteScrollProductsProps {
@@ -87,7 +87,7 @@ export function InfiniteScrollProducts({
 
       {loading && (
         <div className="mt-8">
-          <ProductGridSkeleton count={3} />
+          <LocalLoading label="Refining the selection" />
         </div>
       )}
 
