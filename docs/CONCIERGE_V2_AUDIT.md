@@ -1,16 +1,16 @@
 # Concierge V2 verified audit
 
-Audit refreshed: 2026-07-12
+Audit refreshed: 2026-07-13
 
-Branch: `feat/concierge-v2` at `8a2866c` plus the current uncommitted repair
+Branch: `feat/concierge-v2`, including production-hardening commit `01518e1`
 
 Runtime: Next.js 16.0.7, React 19.2, Prisma 6.19.2, NextAuth 5 beta
 
 ## Repository state
 
-- The branch tracks `origin/feat/concierge-v2`. Its head is a WIP Concierge V2 commit and must not be merged as production-ready.
-- Before this repair, the only untracked file was `tests/concierge/answer-differentiation.test.ts`. It is preserved and now participates in validation.
-- The only open pull request is draft PR 4, `Install Vercel Web Analytics`.
+- The branch tracks `origin/feat/concierge-v2`; the implementation and hardening commits are pushed. The configured database migration and local validation gates are complete, while preview and real-provider checks remain rollout gates.
+- `tests/concierge/answer-differentiation.test.ts`, originally untracked during investigation, is committed and participates in validation.
+- No pull request currently targets this branch. Draft PR 4, `Install Vercel Web Analytics`, targets `main` from an unrelated branch.
 - Unfinished branches include `upgrade/backend-claude`, `upgrade/frontend-atelier`, `upgrade/frontend-sol`, and `upgrade/pdp-discovery-sol`. The continuation and mobile-verification branches have already been merged into the ancestry of this branch.
 - Existing backend, PDP, Scent Intelligence, continuation, hero, and Concierge handoff/TODO documents were inspected.
 - The attachment directory contains only `pasted-text.txt`. No concierge screenshot was attached. The existing WIP audit used fresh local desktop/mobile captures instead.

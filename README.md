@@ -13,6 +13,7 @@ Fádé Essence is a complete e-commerce solution featuring:
 - **Inventory management** with low stock alerts
 - **Order tracking** and status management
 - **Newsletter campaigns** with rich text editor
+- **Perfume Intelligence concierge** with multi-turn guidance, grounded catalogue recommendations, optional cited web research, and saved conversations
 - **SEO optimization** with dynamic sitemaps and metadata
 
 ## ✨ Key Features
@@ -54,6 +55,7 @@ Fádé Essence is a complete e-commerce solution featuring:
 - **Social Media Integration**: Links to Instagram, X (Twitter), WhatsApp, TikTok, and Facebook
 - **Responsive Design**: Fully responsive across all devices
 - **Dark Mode**: Theme toggle for light/dark mode
+- **Perfume Intelligence Concierge**: Ask perfume-knowledge, comparison, layering, climate, occasion, and catalogue questions in a responsive multi-turn workspace
 
 ### 👨‍💼 Admin Features
 
@@ -109,6 +111,7 @@ Fádé Essence is a complete e-commerce solution featuring:
 - **Dashboard Stats**: Overview of products, orders, and revenue
 - **Product Statistics**: Total products, active products, low stock items
 - **Order Analytics**: Order status breakdown and trends
+- **Concierge Observability**: Review provider status, spend, latency, error/cache rates, intents, limits, and feedback
 
 ### 🔐 Security Features
 
@@ -165,6 +168,7 @@ Fádé Essence is a complete e-commerce solution featuring:
 - **Paystack**: Payment processing
 - **Resend**: Email delivery service
 - **Vercel Analytics**: Web analytics
+- **OpenAI, Anthropic, Google Gemini, or xAI**: Configurable Concierge V2 generation and hosted research providers
 
 ### Development Tools
 - **ESLint**: Code linting
@@ -322,6 +326,11 @@ Fádé Essence is a complete e-commerce solution featuring:
 | `RESEND_API_KEY` | Resend API key | `re_...` |
 | `NEWSLETTER_FROM_EMAIL` | Email sender address | `noreply@yourdomain.com` |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL | `https://yourdomain.com` |
+| `AI_PROVIDER` | Concierge provider (`mock` is for development/test) | `openai` |
+| `AI_PROVIDER_PRIORITY` | Ordered Concierge V2 provider fallback list | `openai,anthropic,gemini,xai` |
+| `FEATURE_FLAGS` | Comma-separated feature switches; add `concierge_v2` to enable V2 | `concierge_v2` |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Durable authenticated per-minute limits in production | Upstash credentials |
+| `CONCIERGE_*` | Guest/auth limits, tool/search caps, token cap, spend gates, and catalogue-only mode | See `.env.example` |
 
 ## 📊 Database Schema
 
@@ -355,6 +364,11 @@ Fádé Essence is a complete e-commerce solution featuring:
 - `GET /api/search?q=query` - Search products
 - `POST /api/newsletter/subscribe` - Subscribe to newsletter
 - `POST /api/contact` - Submit contact form
+- `POST /api/v2/concierge/chat` - Stream a grounded Concierge V2 turn
+- `GET /api/v2/concierge/allowance` - Read the current guest/authenticated allowance
+- `GET|POST /api/v2/concierge/conversations` - List or create owned conversations
+- `GET|PATCH|DELETE /api/v2/concierge/conversations/[id]` - Read, rename, or archive an owned conversation
+- `POST /api/v2/concierge/messages/[id]/feedback` - Record assistant-response feedback
 
 ### Authenticated APIs
 
@@ -402,6 +416,16 @@ The project uses a comprehensive set of reusable UI components built with Radix 
 - **Table**: Data tables
 
 ## 🧪 Testing
+
+Run the automated local gates with:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npx playwright test tests/e2e/concierge-v2.spec.ts
+```
 
 ### Manual Testing Checklist
 
@@ -459,6 +483,16 @@ The application can be deployed to any platform supporting Next.js:
 - **DigitalOcean**: App Platform
 
 ## 📝 Development
+
+### Concierge V2 documentation
+
+- [Architecture](docs/CONCIERGE_V2_ARCHITECTURE.md)
+- [Provider matrix](docs/CONCIERGE_V2_PROVIDER_MATRIX.md)
+- [Entitlements and limits](docs/CONCIERGE_V2_RATE_LIMITS.md)
+- [Security boundaries](docs/CONCIERGE_V2_SECURITY.md)
+- [Evaluation and preview test script](docs/CONCIERGE_V2_EVALUATION.md)
+- [Deployment handoff and rollback](docs/CONCIERGE_V2_HANDOFF.md)
+- [Live checklist](docs/CONCIERGE_V2_TODO.md)
 
 ### Available Scripts
 
