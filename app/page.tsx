@@ -10,6 +10,8 @@ import { BrandStorySection } from "@/components/home/brand-story-section"
 
 import { ConciergeInvitation } from "@/components/home/concierge-invitation"
 
+import { isFeatureEnabled } from "@/lib/config/feature-flags"
+
 import { prisma } from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
@@ -78,7 +80,7 @@ export default async function HomePage() {
 
     <MainLayout>
 
-      <PermanentHeroSection />
+      <PermanentHeroSection cinematic={isFeatureEnabled("hero_cinematic")} />
 
       <FeaturedProductsSection products={featuredProducts} />
 
