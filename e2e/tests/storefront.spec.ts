@@ -85,9 +85,11 @@ test.describe("custom dropdowns", () => {
         position: style.position,
         zIndex: Number.parseInt(style.zIndex || "0", 10),
         parent: element.parentElement?.tagName ?? "",
+        portalParent: element.parentElement?.parentElement?.tagName ?? "",
       }
     })
-    expect(stacking.parent).toBe("BODY")
+    expect(stacking.parent).toBe("DIV")
+    expect(stacking.portalParent).toBe("BODY")
     expect(stacking.zIndex).toBeGreaterThanOrEqual(50)
   })
 })
