@@ -10,10 +10,6 @@ const CTA_BASE = "inline-flex h-13 items-center justify-center gap-2 rounded-non
 export function EditorialHeroSection() {
   return (
     <section data-surface="night" className="veil grain relative flex flex-col overflow-hidden bg-background text-foreground">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none overflow-hidden">
-        <p className="whitespace-nowrap text-center font-serif text-[26vw] font-light italic leading-none tracking-tight text-foreground/[0.035] lg:text-[19rem]">sillage</p>
-      </div>
-
       <div className="container relative z-10 mx-auto flex items-center px-4 py-8 sm:px-6 lg:min-h-[46rem] lg:px-8 lg:py-10">
         <div className="grid w-full items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:gap-12">
           <div className="order-2 max-w-xl lg:order-1">

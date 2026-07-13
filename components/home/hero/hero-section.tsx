@@ -27,16 +27,6 @@ export function HeroSection({ heroData }: { heroData: HeroData | null }) {
       data-surface="night"
       className="veil grain relative flex flex-col overflow-hidden bg-background text-foreground"
     >
-      {/* Oversized whisper word behind the stage */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none overflow-hidden"
-      >
-        <p className="whitespace-nowrap text-center font-serif italic text-[26vw] font-light leading-none tracking-tight text-foreground/[0.035] lg:text-[19rem]">
-          sillage
-        </p>
-      </div>
-
       <div className="container relative z-10 mx-auto flex items-center px-4 py-6 sm:px-6 lg:items-start lg:px-8 lg:py-10">
         <div className="grid w-full items-center gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-8">
           {/* Copy */}
