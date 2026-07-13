@@ -17,7 +17,7 @@ jobs:
       run:
         working-directory: e2e
     env:
-      E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://9thluxe-store-two.vercel.app' }}
+      E2E_BASE_URL: http://127.0.0.1:3000
 
     steps:
       - name: Checkout
@@ -33,8 +33,29 @@ jobs:
       - name: Install test dependencies
         run: npm ci
 
+      - name: Install storefront dependencies
+        working-directory: .
+        run: npm ci
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+
+      - name: Build storefront
+        working-directory: .
+        run: npm run build
+
+      - name: Start storefront
+        working-directory: .
+        run: |
+          npm run start > /tmp/storefront.log 2>&1 &
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/storefront.log
+          exit 1
 
       - name: Run storefront verification
         run: npm test
