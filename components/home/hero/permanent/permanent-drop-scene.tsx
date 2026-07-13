@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 const AVENTUS_INGREDIENTS = [
   ["/hero/drop/pineapple.png", "drop-pineapple"],
@@ -32,12 +33,30 @@ function IngredientGroup({ ingredients }: { ingredients: readonly Ingredient[] }
   )
 }
 
-export function PermanentDropScene({ priority = true }: { priority?: boolean }) {
+type PermanentDropSceneProps = {
+  priority?: boolean
+  className?: string
+  decorative?: boolean
+}
+
+export function PermanentDropScene({
+  priority = true,
+  className,
+  decorative = false,
+}: PermanentDropSceneProps) {
   return (
     <div
-      className="permanent-drop-scene relative mx-auto h-[430px] w-full max-w-[610px] sm:h-[520px]"
-      role="img"
-      aria-label="Creed Aventus with pineapple, apple and blackcurrant, beside Tom Ford Oud Wood with sandalwood, cardamom and tonka bean"
+      className={cn(
+        "permanent-drop-scene relative mx-auto h-[430px] w-full max-w-[610px] sm:h-[520px]",
+        className,
+      )}
+      role={decorative ? undefined : "img"}
+      aria-hidden={decorative || undefined}
+      aria-label={
+        decorative
+          ? undefined
+          : "Creed Aventus with pineapple, apple and blackcurrant, beside Tom Ford Oud Wood with sandalwood, cardamom and tonka bean"
+      }
     >
       <div className="drop-ambient" aria-hidden />
 

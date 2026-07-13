@@ -1,14 +1,22 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { ApprovedFusionHeroFragrance } from "@/lib/hero/fusion-config"
 import { CinematicHeroScene } from "./cinematic-hero-scene"
+import { FusionHeroSequence } from "./fusion-hero-sequence"
 import { PermanentDropScene } from "./permanent-drop-scene"
 
 const FAMILIES = ["Citrus", "Woody", "Floral", "Amber", "Fresh", "Spicy"]
 const CTA =
   "inline-flex h-13 items-center justify-center gap-2 rounded-none px-8 font-mono text-[12px] uppercase tracking-[0.2em] transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 
-export function PermanentHeroSection({ cinematic = false }: { cinematic?: boolean }) {
+export function PermanentHeroSection({
+  cinematic = false,
+  fusion = null,
+}: {
+  cinematic?: boolean
+  fusion?: ApprovedFusionHeroFragrance | null
+}) {
   return (
     <section
       data-surface="night"
@@ -48,7 +56,9 @@ export function PermanentHeroSection({ cinematic = false }: { cinematic?: boolea
             </div>
           </div>
           <div className="order-1 lg:order-2">
-            {cinematic ? (
+            {fusion ? (
+              <FusionHeroSequence fragrance={fusion} />
+            ) : cinematic ? (
               <div className="cinematic-hero-presentation relative mx-auto h-[430px] w-full max-w-[610px] sm:h-[520px]">
                 <CinematicHeroScene />
                 <PermanentDropScene priority={false} />

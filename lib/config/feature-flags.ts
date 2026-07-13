@@ -13,6 +13,7 @@ export type FeatureFlag =
   | 'agentic_feed' // expose machine-readable product feed for AI shopping channels
   | 'hero_orbit' // homepage orbital perfume carousel: default OFF until the merchant approves it
   | 'hero_cinematic' // one-time landing and spray hero: default OFF pending showcase asset approval
+  | 'hero_fusion' // approved fusion fragrance sequence: default OFF pending fragrance and asset approval
 
 const DEFAULTS: Record<FeatureFlag, boolean> = {
   shopify_commerce: false,
@@ -25,6 +26,7 @@ const DEFAULTS: Record<FeatureFlag, boolean> = {
   agentic_feed: false,
   hero_orbit: false,
   hero_cinematic: false,
+  hero_fusion: false,
 }
 
 function enabledSet(): Set<string> {

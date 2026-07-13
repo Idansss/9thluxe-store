@@ -12,11 +12,17 @@ import { ConciergeInvitation } from "@/components/home/concierge-invitation"
 
 import { isFeatureEnabled } from "@/lib/config/feature-flags"
 
+import { getApprovedFusionHeroFragrance } from "@/lib/hero/fusion-config"
+
 import { prisma } from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
+  const fusionFragrance = isFeatureEnabled("hero_fusion")
+    ? getApprovedFusionHeroFragrance()
+    : null
+
   // Fetch featured products from database (best-effort; allow the page to render even if DB isn't ready).
   let dbProducts: Awaited<ReturnType<typeof prisma.product.findMany>> = []
   try {
@@ -80,7 +86,10 @@ export default async function HomePage() {
 
     <MainLayout>
 
-      <PermanentHeroSection cinematic={isFeatureEnabled("hero_cinematic")} />
+      <PermanentHeroSection
+        cinematic={isFeatureEnabled("hero_cinematic")}
+        fusion={fusionFragrance}
+      />
 
       <FeaturedProductsSection products={featuredProducts} />
 

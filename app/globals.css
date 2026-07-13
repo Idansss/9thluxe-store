@@ -1295,6 +1295,341 @@
   }
 }
 
+/* Approval-gated fusion sequence. The current two-bottle composition remains
+   intact as the opening scene. A 14.4s non-looping timeline then withdraws
+   each owned zone independently and forms the final FÁDÈ mark. */
+.fusion-hero-sequence {
+  isolation: isolate;
+  overflow: hidden;
+}
+.fusion-hero-sequence[data-fusion-state="paused"] *,
+.fusion-hero-sequence[data-fusion-state="paused"] *::before,
+.fusion-hero-sequence[data-fusion-state="paused"] *::after {
+  animation-play-state: paused !important;
+}
+.fusion-source-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  animation: fusion-source-fade 14.4s linear both;
+}
+.fusion-source-scene .drop-caption {
+  animation: fusion-source-caption 14.4s ease both;
+}
+.fusion-source-scene .drop-perfume-zone-left {
+  animation: fusion-source-left-withdraw 14.4s cubic-bezier(.4,0,.2,1) both;
+}
+.fusion-source-scene .drop-perfume-zone-right {
+  animation: fusion-source-right-withdraw 14.4s cubic-bezier(.4,0,.2,1) both;
+}
+.fusion-source-scene .drop-perfume-zone-left .drop-ingredient-zone {
+  animation: fusion-ingredients-left-gather 14.4s cubic-bezier(.4,0,.2,1) both;
+}
+.fusion-source-scene .drop-perfume-zone-right .drop-ingredient-zone {
+  animation: fusion-ingredients-right-gather 14.4s cubic-bezier(.4,0,.2,1) both;
+}
+.fusion-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  isolation: isolate;
+}
+.fusion-ambient {
+  position: absolute;
+  inset: 7% 8% 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--champagne) 18%, transparent), transparent 42%),
+    radial-gradient(circle at 50% 72%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 58%);
+  filter: blur(24px);
+  opacity: 0;
+  animation: fusion-ambient-cycle 14.4s ease both;
+}
+.fusion-ground {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 61px;
+  height: 42px;
+  border: 1px solid color-mix(in srgb, var(--champagne) 25%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--champagne) 18%, transparent), color-mix(in srgb, var(--background) 90%, black));
+  box-shadow: 0 28px 48px rgba(0,0,0,.46), inset 0 2px 5px rgba(255,255,255,.06);
+  opacity: 0;
+  animation: fusion-ground-cycle 14.4s ease both;
+}
+.fusion-impact-ring {
+  position: absolute;
+  z-index: 20;
+  left: 31%;
+  bottom: 69px;
+  width: 38%;
+  height: 19px;
+  border: 1px solid color-mix(in srgb, var(--champagne) 62%, transparent);
+  border-radius: 50%;
+  opacity: 0;
+  animation: fusion-impact-ring 14.4s ease-out both;
+}
+.fusion-impact-ring-two {
+  animation-delay: .12s;
+}
+.fusion-brand {
+  position: absolute;
+  z-index: 24;
+  top: 8%;
+  left: 50%;
+  display: flex;
+  transform: translateX(-50%);
+  gap: clamp(.3rem, 1.35vw, .8rem);
+  color: var(--foreground);
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(4rem, 8.6vw, 6.6rem);
+  font-weight: 500;
+  letter-spacing: .09em;
+  line-height: 1;
+  text-shadow: 0 0 34px color-mix(in srgb, var(--champagne) 28%, transparent);
+}
+.fusion-brand span {
+  opacity: 0;
+  transform: translate3d(0,9px,0) scale(.92);
+  animation: fusion-letter-form 1s cubic-bezier(.16,1,.3,1) both;
+  animation-delay: calc(7.65s + var(--fusion-index) * .9s);
+}
+.fusion-mist {
+  position: absolute;
+  inset: 0;
+  z-index: 36;
+  pointer-events: none;
+}
+.fusion-mist-path {
+  position: absolute;
+  top: calc(23% + var(--fusion-index) * 1.25%);
+  left: 32%;
+  width: 37%;
+  height: 13%;
+  overflow: visible;
+  opacity: 0;
+  transform: rotate(calc(-17deg + var(--fusion-index) * 3deg));
+  transform-origin: 100% 50%;
+  fill: none;
+  stroke: color-mix(in srgb, var(--champagne) 76%, white);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-dasharray: 190;
+  stroke-dashoffset: 190;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--champagne) 42%, transparent));
+  animation: fusion-mist-pulse .82s cubic-bezier(.16,.78,.27,1) both;
+  animation-delay: calc(7.25s + var(--fusion-index) * .9s);
+}
+.fusion-mist-thread {
+  opacity: .35;
+  stroke-width: .65;
+}
+.fusion-bottle {
+  position: absolute;
+  z-index: 30;
+  left: 50%;
+  bottom: 73px;
+  width: min(50%, 305px);
+  height: 72%;
+  transform-origin: 50% 100%;
+  opacity: 0;
+  animation: fusion-bottle-cycle 14.4s cubic-bezier(.2,.8,.2,1) both;
+}
+.fusion-bottle-body {
+  position: absolute;
+  inset: 0;
+}
+.fusion-bottle-cap {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 50%;
+  width: 46%;
+  height: 22%;
+  transform: translateX(-50%);
+  transform-origin: 50% 80%;
+  --fusion-cap-rotate: 0deg;
+  animation: fusion-cap-cycle 14.4s cubic-bezier(.16,1,.3,1) both;
+}
+.fusion-bottle-cap[data-cap-motion="twist_lift"] {
+  --fusion-cap-rotate: 9deg;
+}
+.fusion-atomizer {
+  position: absolute;
+  z-index: 4;
+  top: 16.4%;
+  left: 50%;
+  width: 21%;
+  height: 4.2%;
+  transform: translateX(-50%);
+  border: 1px solid color-mix(in srgb, var(--champagne) 48%, transparent);
+  border-radius: 2px 2px 5px 5px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--champagne) 64%, black), #141310 70%);
+  box-shadow: inset 0 1px rgba(255,255,255,.2);
+  opacity: 0;
+  animation: fusion-atomizer-reveal 14.4s ease both;
+}
+.fusion-atomizer-nozzle {
+  position: absolute;
+  top: 29%;
+  right: -11%;
+  width: 18%;
+  height: 27%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--champagne) 72%, #15130f);
+}
+.fusion-atomizer-press {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: inherit;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  animation: fusion-atomizer-press .36s ease-in-out both;
+  animation-delay: calc(7.2s + var(--fusion-index) * .9s);
+}
+.fusion-profile-label {
+  position: absolute;
+  z-index: 42;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  opacity: 0;
+  animation: fusion-profile-label-in 14.4s ease both;
+}
+
+@keyframes fusion-source-fade {
+  0%, 30% { opacity: 1; visibility: visible; }
+  35%, 100% { opacity: 0; visibility: hidden; }
+}
+@keyframes fusion-source-caption {
+  0%, 8% { opacity: 0; transform: translateY(8px); }
+  12%, 18% { opacity: 1; transform: translateY(0); }
+  23%, 100% { opacity: 0; transform: translateY(-5px); }
+}
+@keyframes fusion-source-left-withdraw {
+  0%, 23% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+  34%, 100% { opacity: 0; transform: translate3d(-22%,-2%,0) scale(.82); }
+}
+@keyframes fusion-source-right-withdraw {
+  0%, 23% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+  34%, 100% { opacity: 0; transform: translate3d(22%,-2%,0) scale(.82); }
+}
+@keyframes fusion-ingredients-left-gather {
+  0%, 18% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+  27%, 100% { opacity: 0; transform: translate3d(24%,-9%,0) scale(.38); }
+}
+@keyframes fusion-ingredients-right-gather {
+  0%, 18% { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+  27%, 100% { opacity: 0; transform: translate3d(-24%,-9%,0) scale(.38); }
+}
+@keyframes fusion-ambient-cycle {
+  0%, 29% { opacity: 0; }
+  39%, 100% { opacity: 1; }
+}
+@keyframes fusion-ground-cycle {
+  0%, 29% { opacity: 0; }
+  38%, 88% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+@keyframes fusion-impact-ring {
+  0%, 36% { opacity: 0; transform: scale(.2); }
+  38% { opacity: .72; }
+  45%, 100% { opacity: 0; transform: scale(1.9); }
+}
+@keyframes fusion-bottle-cycle {
+  0%, 29% { opacity: 0; transform: translate3d(-50%,-122%,0) rotate(-2deg) scale(.94); }
+  31% { opacity: 1; }
+  37% { opacity: 1; transform: translate3d(-50%,9px,0) rotate(0) scaleY(.965); }
+  40% { transform: translate3d(-50%,-14px,0) scaleY(1.008); }
+  42%, 84% { opacity: 1; transform: translate3d(-50%,0,0) scale(1); }
+  94%, 100% { opacity: 0; transform: translate3d(-50%,26%,0) scale(.97); }
+}
+@keyframes fusion-cap-cycle {
+  0%, 42% { opacity: 1; transform: translate3d(-50%,0,0) rotate(0); }
+  49%, 84% { opacity: 1; transform: translate3d(-46%,-58%,0) rotate(var(--fusion-cap-rotate)); }
+  94%, 100% { opacity: 0; transform: translate3d(-46%,-52%,0) rotate(var(--fusion-cap-rotate)); }
+}
+@keyframes fusion-atomizer-reveal {
+  0%, 43% { opacity: 0; }
+  48%, 84% { opacity: 1; }
+  94%, 100% { opacity: 0; }
+}
+@keyframes fusion-atomizer-press {
+  0%, 100% { opacity: 0; transform: translateY(0) scaleY(1); }
+  18% { opacity: 1; }
+  52% { opacity: 1; transform: translateY(18%) scaleY(.76); }
+  78% { opacity: .5; transform: translateY(0) scaleY(1); }
+}
+@keyframes fusion-mist-pulse {
+  0% { opacity: 0; stroke-dashoffset: 190; transform: rotate(calc(-17deg + var(--fusion-index) * 3deg)) scaleX(.12); }
+  24% { opacity: .86; }
+  72% { opacity: .46; }
+  100% { opacity: 0; stroke-dashoffset: 0; transform: rotate(calc(-17deg + var(--fusion-index) * 3deg)) scaleX(1); }
+}
+@keyframes fusion-letter-form {
+  0% { opacity: 0; transform: translate3d(0,9px,0) scale(.92); filter: blur(5px); }
+  62% { opacity: .72; filter: blur(1.5px); }
+  100% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
+}
+@keyframes fusion-profile-label-in {
+  0%, 86% { opacity: 0; }
+  94%, 100% { opacity: 1; }
+}
+
+@media (max-width: 639px) {
+  .fusion-ground { left: 12%; right: 12%; bottom: 59px; }
+  .fusion-impact-ring { bottom: 66px; }
+  .fusion-impact-ring-two { display: none; }
+  .fusion-brand { top: 9%; font-size: clamp(3.35rem, 19vw, 4.8rem); gap: .26rem; }
+  .fusion-bottle { bottom: 70px; width: min(54%, 235px); height: 68%; }
+  .fusion-mist-path { left: 29%; width: 43%; filter: none; }
+  .fusion-mist-thread { display: none; }
+  .fusion-profile-label { font-size: 8px; letter-spacing: .14em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fusion-source-scene,
+  .fusion-impact-ring,
+  .fusion-mist,
+  .fusion-atomizer {
+    display: none;
+  }
+  .fusion-ambient,
+  .fusion-ground,
+  .fusion-bottle,
+  .fusion-bottle-cap,
+  .fusion-brand span,
+  .fusion-profile-label {
+    animation: none !important;
+  }
+  .fusion-ambient,
+  .fusion-ground,
+  .fusion-profile-label,
+  .fusion-brand span {
+    opacity: 1;
+  }
+  .fusion-bottle {
+    opacity: 1;
+    transform: translateX(-50%) scale(.94);
+  }
+  .fusion-bottle-cap {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+  .fusion-brand span {
+    transform: none;
+    filter: none;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Fádé route loading: progress line, delayed mark, soft veil         */
 /* ------------------------------------------------------------------ */
