@@ -51,8 +51,8 @@ test.describe("mobile navigation", () => {
     await expect(dialog).toBeVisible()
     await expect(dialog.getByRole("button", { name: "Close menu" })).toHaveCount(1)
 
-    await dialog.getByRole("link", { name: "About", exact: true }).click()
-    await expect(page).toHaveURL(/\/about(?:\?.*)?$/)
+    await dialog.getByRole("link", { name: "Collections", exact: true }).click()
+    await expect(page).toHaveURL(/\/collections(?:\?.*)?$/)
     await expect(dialog).toBeHidden()
     await expect(page.getByRole("button", { name: "Open menu" })).toHaveAttribute("aria-expanded", "false")
   })
@@ -78,7 +78,7 @@ test.describe("custom dropdowns", () => {
 
     const listbox = page.getByRole("listbox")
     await expect(listbox).toBeVisible()
-    await expect(listbox.getByRole("option", { name: "Perfumes", exact: true })).toBeVisible()
+    await expect(listbox.getByRole("option", { name: "Citrus", exact: true })).toBeVisible()
 
     const stacking = await listbox.evaluate((element) => {
       const style = window.getComputedStyle(element)

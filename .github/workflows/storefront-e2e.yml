@@ -56,6 +56,10 @@ jobs:
         working-directory: .
         run: npx prisma migrate deploy
 
+      - name: Seed storefront data
+        working-directory: .
+        run: npm run seed
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
@@ -78,6 +82,11 @@ jobs:
 
       - name: Run storefront verification
         run: npm test
+
+      - name: Print storefront logs on failure
+        if: failure()
+        working-directory: .
+        run: cat /tmp/storefront.log || true
 
       - name: Upload Playwright report
         if: always()
