@@ -33,6 +33,8 @@ export interface OrderPayload {
 interface PaymentFormProps {
   onBack: () => void;
   onComplete: () => void;
+  /** Called once a PENDING order exists so checkout won't redirect to /cart when the bag is cleared. */
+  onOrderCreated?: () => void;
   total: number;
   orderPayload: OrderPayload;
 }
@@ -70,6 +72,7 @@ function CopyButton({ text }: { text: string }) {
 export function PaymentForm({
   onBack,
   onComplete: _onComplete,
+  onOrderCreated,
   total,
   orderPayload,
 }: PaymentFormProps) {
@@ -80,6 +83,7 @@ export function PaymentForm({
   >("CARD");
   const [bankTransferOrder, setBankTransferOrder] = React.useState<{
     orderId: string;
+    totalNGN: number;
   } | null>(null);
 
   const buildPayload = () => {
@@ -145,8 +149,11 @@ export function PaymentForm({
       if (!orderId) throw new Error("No order ID returned");
 
       if (paymentMethod === "BANK_TRANSFER") {
-        // Show bank details instead of redirecting to Paystack
-        setBankTransferOrder({ orderId });
+        // Snapshot total + mark checkout complete before clearing the cart,
+        // otherwise CheckoutContent sees an empty bag and redirects to /cart.
+        setBankTransferOrder({ orderId, totalNGN: total });
+        onOrderCreated?.();
+        setIsProcessing(false);
         return;
       }
 
@@ -206,7 +213,7 @@ export function PaymentForm({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Amount</span>
                 <span className="font-bold text-lg text-primary">
-                  {formatPrice(total)}
+                  {formatPrice(bankTransferOrder.totalNGN)}
                 </span>
               </div>
               <div className="border-t border-border pt-3 space-y-2">

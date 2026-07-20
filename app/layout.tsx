@@ -72,6 +72,10 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: defaultTitle, template: `%s | ${siteName}` },
     description,
     keywords: ["luxury perfumes", "fragrances", "Fádé", "premium perfume", "Nigeria"],
+    icons: {
+      icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+      apple: [{ url: "/apple-icon" }],
+    },
     manifest: "/manifest.webmanifest",
     appleWebApp: {
       capable: true,
