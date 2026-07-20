@@ -1,5 +1,6 @@
 // emails/sendReceipt.ts
 import { Resend } from "resend"
+import { resolveEmailTemplate } from "@/lib/email-templates/service"
 
 type OrderLike = {
   id: string
@@ -105,12 +106,13 @@ export async function sendReceipt(order: OrderLike) {
     </html>
   `
 
+  const resolved = await resolveEmailTemplate("order_receipt", { customerName: order.user.name || "Customer", orderRef, total: `₦${order.totalNGN.toLocaleString()}` }, `Order Confirmation - Order #${orderRef}`, html)
   try {
     await resend.emails.send({
       from: process.env.NEWSLETTER_FROM_EMAIL || "Fádé Essence <onboarding@resend.dev>",
       to: order.user.email,
-      subject: `Order Confirmation - Order #${orderRef}`,
-      html,
+      subject: resolved.subject,
+      html: resolved.html,
     })
     console.log("[EMAIL] Receipt sent:", order.user.email)
   } catch (error) {
