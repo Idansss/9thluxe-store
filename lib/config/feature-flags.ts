@@ -49,3 +49,21 @@ export function allFlags(): Record<FeatureFlag, boolean> {
     (Object.keys(DEFAULTS) as FeatureFlag[]).map((f) => [f, isFeatureEnabled(f)]),
   ) as Record<FeatureFlag, boolean>
 }
+
+/** Every known flag key, in declaration order. */
+export function flagKeys(): FeatureFlag[] {
+  return Object.keys(DEFAULTS) as FeatureFlag[]
+}
+
+/** The built-in default (ignoring env overrides) for a flag. */
+export function flagDefault(flag: FeatureFlag): boolean {
+  return DEFAULTS[flag]
+}
+
+/** Where a flag's effective value comes from: an env override or the built-in default. */
+export function flagSource(flag: FeatureFlag): 'enabled-by-env' | 'disabled-by-env' | 'default' {
+  const set = enabledSet()
+  if (set.has(flag)) return 'enabled-by-env'
+  if (set.has(`!${flag}`)) return 'disabled-by-env'
+  return 'default'
+}

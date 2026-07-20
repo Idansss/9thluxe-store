@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Package, ShoppingCart, Tags, Folder, ChevronLeft, Menu, LogOut, Mail, Warehouse, Bot } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Tags, Folder, ChevronLeft, Menu, LogOut, Mail, Warehouse, Bot, BookOpen, Users, Settings, Navigation as NavigationIcon, Home, ImageIcon, Shield, Flag, ScrollText, MessageSquare, FileText, Inbox, Megaphone, Route } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -11,19 +11,35 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { signOutAction } from "@/app/auth/signout/actions"
 
 const navItems = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Products", href: "/admin/products", icon: Package },
-  { name: "Categories", href: "/admin/categories", icon: Tags },
-  { name: "Collections", href: "/admin/collections", icon: Folder },
-  { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
-  { name: "Inventory", href: "/admin/inventory", icon: Warehouse },
-  { name: "Newsletter", href: "/admin/newsletter", icon: Mail },
-  { name: "Concierge V2", href: "/admin/concierge", icon: Bot },
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard, capability: "dashboard:view" },
+  { name: "Homepage", href: "/admin/homepage", icon: Home, capability: "content:manage" },
+  { name: "Products", href: "/admin/products", icon: Package, capability: "products:manage" },
+  { name: "Categories", href: "/admin/categories", icon: Tags, capability: "products:manage" },
+  { name: "Collections", href: "/admin/collections", icon: Folder, capability: "products:manage" },
+  { name: "Journal", href: "/admin/stories", icon: BookOpen, capability: "content:manage" },
+  { name: "Pages", href: "/admin/pages", icon: FileText, capability: "content:manage" },
+  { name: "Media", href: "/admin/media", icon: ImageIcon, capability: "content:manage" },
+  { name: "Reviews", href: "/admin/reviews", icon: MessageSquare, capability: "content:manage" },
+  { name: "Orders", href: "/admin/orders", icon: ShoppingCart, capability: "orders:manage" },
+  { name: "Inventory", href: "/admin/inventory", icon: Warehouse, capability: "products:manage" },
+  { name: "Customers", href: "/admin/customers", icon: Users, capability: "customers:view" },
+  { name: "Enquiries", href: "/admin/enquiries", icon: Inbox, capability: "support:manage" },
+  { name: "Newsletter", href: "/admin/newsletter", icon: Mail, capability: "marketing:manage" },
+  { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, capability: "marketing:manage" },
+  { name: "Concierge V2", href: "/admin/concierge", icon: Bot, capability: "content:manage" },
+  { name: "Navigation", href: "/admin/navigation", icon: NavigationIcon, capability: "settings:manage" },
+  { name: "Settings", href: "/admin/settings", icon: Settings, capability: "settings:manage" },
+  { name: "Redirects", href: "/admin/redirects", icon: Route, capability: "settings:manage" },
+  { name: "Email templates", href: "/admin/email-templates", icon: Mail, capability: "settings:manage" },
+  { name: "Feature flags", href: "/admin/feature-flags", icon: Flag, capability: "settings:manage" },
+  { name: "Audit log", href: "/admin/audit", icon: ScrollText, capability: "audit:view" },
+  { name: "Users & roles", href: "/admin/users", icon: Shield, capability: "users:manage" },
 ]
 
-function SidebarContent() {
+function SidebarContent({ capabilities }: { capabilities: string[] }) {
   const pathname = usePathname()
   const [isSigningOut, startSignOutTransition] = React.useTransition()
+  const visibleItems = navItems.filter((item) => capabilities.includes(item.capability))
 
   return (
     <div className="flex flex-col h-full">
@@ -37,7 +53,7 @@ function SidebarContent() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href))
           return (
             <Link
@@ -85,14 +101,14 @@ function SidebarContent() {
   )
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ capabilities = [] }: { capabilities?: string[] }) {
   const [open, setOpen] = React.useState(false)
 
   return (
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 border-r border-border bg-card flex-col">
-        <SidebarContent />
+        <SidebarContent capabilities={capabilities} />
       </aside>
 
       {/* Mobile Sidebar */}
@@ -104,7 +120,7 @@ export function AdminSidebar() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
-          <SidebarContent />
+          <SidebarContent capabilities={capabilities} />
         </SheetContent>
       </Sheet>
     </>

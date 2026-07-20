@@ -3,6 +3,7 @@ import { Resend } from "resend"
 import { rateLimit } from "@/lib/middleware/rate-limit"
 import { emailSchema, nameSchema, validateAndSanitize } from "@/lib/middleware/validate-input"
 import { z } from "zod"
+import { createContactSubmission } from "@/lib/forms/submissions"
 
 const contactSchema = z.object({
   name: nameSchema,
@@ -18,6 +19,11 @@ function getClientId(req: NextRequest): string {
 const STORE_EMAIL = "fadeessencee@gmail.com"
 const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || "Fádé Essence <onboarding@resend.dev>"
 
+function escapeHtml(value: string): string {
+  const entities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }
+  return value.replace(/[&<>"']/g, (char) => entities[char])
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!rateLimit(getClientId(req), 5, 60 * 1000)) {
@@ -31,6 +37,24 @@ export async function POST(req: NextRequest) {
     }
     const { name, email, subject, message } = validated.data
 
+    // Keep the existing email flow operational during the staged migration rollout. Once the
+    // FormSubmission migration is applied, every valid contact request is durably captured here.
+    try {
+      await createContactSubmission({ name, email, subject, message })
+    } catch (error) {
+      console.error("[CONTACT] Failed to persist submission:", error)
+      // P2021 means the additive table has not been approved/applied yet; preserve the existing
+      // email-only service during that rollout window. Other DB failures must not claim success.
+      if ((error as { code?: string }).code !== "P2021") {
+        return NextResponse.json({ error: "We could not save your message. Please try again." }, { status: 503 })
+      }
+    }
+
+    const safeName = escapeHtml(name)
+    const safeEmail = escapeHtml(email)
+    const safeSubject = escapeHtml(subject)
+    const safeMessage = escapeHtml(message)
+
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -43,10 +67,10 @@ export async function POST(req: NextRequest) {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #2f3e33;">New Contact Form Submission</h2>
-            <p><strong>From:</strong> ${name} &lt;${email}&gt;</p>
-            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>From:</strong> ${safeName} &lt;${safeEmail}&gt;</p>
+            <p><strong>Subject:</strong> ${safeSubject}</p>
             <hr style="border: 1px solid #eee; margin: 20px 0;">
-            <p style="white-space: pre-wrap;">${message}</p>
+            <p style="white-space: pre-wrap;">${safeMessage}</p>
           </div>
         `,
       }).catch((err) => console.error("[CONTACT] Failed to send store notification:", err))
@@ -62,11 +86,11 @@ export async function POST(req: NextRequest) {
               <h1 style="margin: 0; font-family: serif;">Fádé Essence</h1>
             </div>
             <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-              <h2 style="color: #2f3e33; margin-top: 0;">Thank you for reaching out, ${name}!</h2>
+              <h2 style="color: #2f3e33; margin-top: 0;">Thank you for reaching out, ${safeName}!</h2>
               <p>We've received your message and will get back to you within 24–48 hours.</p>
               <p><strong>Your message:</strong></p>
               <blockquote style="border-left: 3px solid #2f3e33; margin: 0; padding: 10px 20px; background: white; border-radius: 0 4px 4px 0;">
-                <p style="white-space: pre-wrap; color: #555;">${message}</p>
+                <p style="white-space: pre-wrap; color: #555;">${safeMessage}</p>
               </blockquote>
               <p style="margin-top: 20px; color: #666; font-size: 14px;">
                 If you need urgent assistance, you can also reach us at ${STORE_EMAIL} or +234 8160591348.
