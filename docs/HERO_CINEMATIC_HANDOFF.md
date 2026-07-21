@@ -1,4 +1,4 @@
-# FÁDÈ homepage hero composition and cinematic prototype handoff
+# FÁDÉ homepage hero composition and cinematic prototype handoff
 
 Date: 2026-07-13
 
@@ -24,7 +24,7 @@ The optional sequence is CSS-only and runs once:
 1. Tom Ford Oud Wood descends and lands on a restrained pedestal ripple.
 2. The top cap lifts and reveals a small atomizer.
 3. Four staggered fragrance-mist bursts play.
-4. Each burst reveals one letter of `FÁDÈ`.
+4. Each burst reveals one letter of `FÁDÉ`.
 5. The bottle sinks and dissolves while the complete brand mark holds.
 6. The finished brand mark remains as the final state.
 
@@ -52,7 +52,7 @@ With `prefers-reduced-motion: reduce`:
 - spray bursts do not play;
 - the corrected two-perfume scene is shown without animation;
 - both ingredient groups remain visible and separated;
-- a static `FÁDÈ` mark remains visible;
+- a static `FÁDÉ` mark remains visible;
 - all hero commerce actions remain available.
 
 If the cinematic flag is disabled, every user receives the corrected permanent scene directly.
@@ -72,7 +72,7 @@ If any of these approvals are withheld, keep the flag off. The corrected permane
 Added coverage:
 
 - `tests/e2e/permanent-hero-presentation.spec.ts` checks 320px, 360px, 390px and 430px ingredient separation, center gutter, labels, bottle visibility, reduced motion and horizontal overflow.
-- `tests/hero/cinematic.test.ts` checks exactly four spray beats, the correct `FÁDÈ` spelling and the approved in-repo bottle asset reference.
+- `tests/hero/cinematic.test.ts` checks exactly four spray beats, the correct `FÁDÉ` spelling and the approved in-repo bottle asset reference.
 
 The deployment baseline at `https://9thluxe-store-two.vercel.app` was captured before implementation in desktop and mobile dark and light themes. The baseline had no horizontal overflow, no console errors and zero measured layout shift. A cold desktop run measured approximately 2.87 seconds LCP, while the mobile run measured approximately 1.0 second LCP. Because the optional sequence adds presentation work and still needs asset approval, it remains disabled by default.
 

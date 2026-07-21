@@ -1,6 +1,6 @@
 import Image from "next/image"
 
-const BRAND_LETTERS = ["F", "Á", "D", "È"] as const
+const BRAND_LETTERS = ["F", "Á", "D", "É"] as const
 
 export function CinematicHeroScene() {
   return (
@@ -14,7 +14,7 @@ export function CinematicHeroScene() {
       <div className="cinematic-impact-ring cinematic-impact-ring-one" />
       <div className="cinematic-impact-ring cinematic-impact-ring-two" />
 
-      <div className="cinematic-brand" data-cinematic-brand="FÁDÈ">
+      <div className="cinematic-brand" data-cinematic-brand="FÁDÉ">
         {BRAND_LETTERS.map((letter, index) => (
           <span key={letter} style={{ "--letter-index": index } as React.CSSProperties}>
             {letter}

@@ -9,7 +9,7 @@ test.describe("feature-flagged cinematic hero", () => {
     await expect(page.locator("[data-spray-burst]")).toHaveCount(4)
     await expect(page.locator("[data-cinematic-brand]")).toHaveAttribute(
       "data-cinematic-brand",
-      "FÁDÈ",
+      "FÁDÉ",
     )
   })
 
@@ -19,7 +19,7 @@ test.describe("feature-flagged cinematic hero", () => {
     test.skip((await page.locator("[data-cinematic-hero]").count()) === 0, "flag is disabled")
 
     await expect(page.locator("[data-cinematic-hero]")).toBeHidden()
-    await expect(page.locator(".cinematic-reduced-brand")).toHaveText("FÁDÈ")
+    await expect(page.locator(".cinematic-reduced-brand")).toHaveText("FÁDÉ")
     await expect(page.locator(".cinematic-reduced-brand")).toBeVisible()
     await expect(page.locator('[data-perfume-zone="aventus"]')).toBeVisible()
     await expect(page.locator('[data-perfume-zone="oud-wood"]')).toBeVisible()

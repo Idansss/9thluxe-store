@@ -1,4 +1,4 @@
-# FÁDÈ fusion hero fragrance research
+# FÁDÉ fusion hero fragrance research
 
 Date: 2026-07-13
 
@@ -6,7 +6,7 @@ Date: 2026-07-13
 
 **Recommended fragrance:** Mancera Intense Cedrat Boise
 
-**Relationship to FÁDÈ:** External editorial reference. It is not currently sold by FÁDÈ and no stock, price or availability claim may be shown.
+**Relationship to FÁDÉ:** External editorial reference. It is not currently sold by FÁDÉ and no stock, price or availability claim may be shown.
 
 **Approval state:** DRAFT and disabled. The recommendation must not appear on the public homepage until the merchant approves the fragrance and supplies or licenses a transparent bottle asset.
 
@@ -46,7 +46,7 @@ The comparison target is a balanced character with:
 
 These are qualitative profile dimensions, not formula percentages.
 
-## FÁDÈ catalogue review
+## FÁDÉ catalogue review
 
 The live catalogue was queried on 2026-07-13.
 
@@ -58,7 +58,7 @@ The live catalogue was queried on 2026-07-13.
 
 Creed Aventus, Tom Ford Oud Wood and Dior Sauvage Elixir exist as DRAFT catalogue records with no public product images. They are not eligible catalogue matches and are not treated as available stock.
 
-**Catalogue conclusion:** no current FÁDÈ product is a credible complete match.
+**Catalogue conclusion:** no current FÁDÉ product is a credible complete match.
 
 ## External candidate comparison
 
@@ -86,7 +86,7 @@ That structure connects Aventus-like blackcurrant and citrus brightness with Oud
 
 - No Mancera Intense Cedrat Boise asset exists in the repository.
 - No merchant-owned or licensed transparent cutout has been supplied.
-- Images on the official product page are research references only and are not cleared for reuse in the FÁDÈ hero.
+- Images on the official product page are research references only and are not cleared for reuse in the FÁDÉ hero.
 - Pinterest and other scraped imagery are prohibited.
 - The final transparent AVIF or WebP must preserve the real bottle proportions, label and cap.
 - Cap movement must be matched to the exact approved bottle asset before activation.

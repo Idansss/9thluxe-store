@@ -1,4 +1,4 @@
-# FÁDÈ fusion hero sequence handoff
+# FÁDÉ fusion hero sequence handoff
 
 Date: 2026-07-13
 
@@ -21,7 +21,7 @@ When an approved configuration exists and the `hero_fusion` feature flag is enab
 5. The approved cap cutout lifts or twists according to configuration.
 6. The atomizer depresses four times.
 7. Four lightweight SVG mist paths reveal `F`, `Á`, `D` and `È` as crisp DOM text.
-8. The bottle exits downward while the complete `FÁDÈ` mark remains.
+8. The bottle exits downward while the complete `FÁDÉ` mark remains.
 9. The final frame holds without replaying the full sequence.
 
 The implementation uses CSS transforms, opacity, SVG strokes and one small client controller. It adds no dependency, canvas renderer, fluid simulation or Three.js scene.
@@ -32,7 +32,7 @@ The implementation uses CSS transforms, opacity, SVG strokes and one small clien
 - The Page Visibility API pauses the timeline when the tab is hidden.
 - The sequence is non-looping and consumes no animation work after its final frame.
 - Mobile removes the second impact ring and secondary mist thread.
-- Reduced motion skips the source withdrawal, landing, cap and spray motion. It shows the approved bottle and complete `FÁDÈ` mark immediately.
+- Reduced motion skips the source withdrawal, landing, cap and spray motion. It shows the approved bottle and complete `FÁDÉ` mark immediately.
 - Existing shop and fragrance-finder actions remain outside the animation layer and stay available throughout.
 
 ## Approval gate

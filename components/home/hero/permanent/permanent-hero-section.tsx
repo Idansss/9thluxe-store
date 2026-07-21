@@ -25,7 +25,7 @@ export function PermanentHeroSection({
       <div className="permanent-hero-stage container relative z-10 mx-auto flex items-center px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid w-full items-center gap-9 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8">
           <div className="order-2 max-w-xl lg:order-1">
-            <p className="eyebrow mb-5 lg:mb-6">FÁDÈ · Lagos · Curated Perfumery</p>
+            <p className="eyebrow mb-5 lg:mb-6">FÁDÉ · Lagos · Curated Perfumery</p>
             <h1 className="text-balance">
               Worn close,
               <br />
@@ -33,7 +33,7 @@ export function PermanentHeroSection({
             </h1>
             <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground md:mt-6 md:text-lg">
               Two icons, revealed through the notes that shape them. Bright fruit
-              meets smoky woods in a permanent scent composition made for the FÁDÈ
+              meets smoky woods in a permanent scent composition made for the FÁDÉ
               world.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center lg:mt-9">
@@ -62,7 +62,7 @@ export function PermanentHeroSection({
               <div className="cinematic-hero-presentation relative mx-auto h-[430px] w-full max-w-[610px] sm:h-[520px]">
                 <CinematicHeroScene />
                 <PermanentDropScene priority={false} />
-                <p className="cinematic-reduced-brand" aria-hidden="true">FÁDÈ</p>
+                <p className="cinematic-reduced-brand" aria-hidden="true">FÁDÉ</p>
               </div>
             ) : (
               <PermanentDropScene />

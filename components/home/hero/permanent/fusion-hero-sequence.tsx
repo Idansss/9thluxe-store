@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react"
 import type { ApprovedFusionHeroFragrance } from "@/lib/hero/fusion-config"
 import { PermanentDropScene } from "./permanent-drop-scene"
 
-const BRAND_LETTERS = ["F", "Á", "D", "È"] as const
+const BRAND_LETTERS = ["F", "Á", "D", "É"] as const
 
 function fragranceName(fragrance: ApprovedFusionHeroFragrance) {
   return fragrance.externalReference
@@ -69,7 +69,7 @@ export function FusionHeroSequence({
       data-fusion-hero
       data-fusion-state={paused ? "paused" : completed ? "complete" : "running"}
       role="img"
-      aria-label={`${name}, closest to the combined scent profile of bright fruit and dark woods, in a cinematic sequence that forms FÁDÈ`}
+      aria-label={`${name}, closest to the combined scent profile of bright fruit and dark woods, in a cinematic sequence that forms FÁDÉ`}
     >
       <PermanentDropScene
         priority={false}
@@ -83,7 +83,7 @@ export function FusionHeroSequence({
         <div className="fusion-impact-ring fusion-impact-ring-one" />
         <div className="fusion-impact-ring fusion-impact-ring-two" />
 
-        <div className="fusion-brand" data-fusion-brand="FÁDÈ">
+        <div className="fusion-brand" data-fusion-brand="FÁDÉ">
           {BRAND_LETTERS.map((letter, index) => (
             <span
               key={letter}

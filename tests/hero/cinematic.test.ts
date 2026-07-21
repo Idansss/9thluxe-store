@@ -9,7 +9,7 @@ describe("CinematicHeroScene", () => {
     const markup = renderToStaticMarkup(createElement(CinematicHeroScene))
 
     expect(markup.match(/data-spray-burst=/g)).toHaveLength(4)
-    expect(markup).toContain('data-cinematic-brand="FÁDÈ"')
+    expect(markup).toContain('data-cinematic-brand="FÁDÉ"')
     expect(markup).toContain("tom-ford-oud-wood-bottle.webp")
   })
 })
