@@ -1,11 +1,11 @@
-# ADMIN CONTROL AUDIT — 9CH / Fàdé
+# ADMIN CONTROL AUDIT — 9CH / Fádé
 
 > Phase 0 repository inspection. Every finding below is grounded in files that exist in
 > this repository as of the audit date. No findings are invented.
 
 **Audit date:** 2026-07-18
 **Auditor:** Aries (admin-control initiative)
-**Canonical naming:** Codebase ships as **Fàdé** (a.k.a. "Fádé Essence"), the storefront brand
+**Canonical naming:** Codebase ships as **Fádé** (a.k.a. "Fádé Essence"), the storefront brand
 for the **9CH** project. Admin surfaces are labelled "Fádé Admin". Naming is **preserved** — no
 global rename performed.
 

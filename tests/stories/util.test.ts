@@ -11,7 +11,7 @@ import {
 
 describe("slugify", () => {
   it("lowercases, strips accents and punctuation, hyphenates", () => {
-    expect(slugify("Fàdé — The 5 Best Oud Fragrances!")).toBe("fade-the-5-best-oud-fragrances")
+    expect(slugify("Fádé — The 5 Best Oud Fragrances!")).toBe("fade-the-5-best-oud-fragrances")
   })
   it("trims leading/trailing hyphens", () => {
     expect(slugify("  --Hello World--  ")).toBe("hello-world")

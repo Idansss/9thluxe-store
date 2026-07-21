@@ -186,7 +186,7 @@ export function PurchasePanel({ data, policyShipping, policyReturns }: PurchaseP
   const handleShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : ""
     try {
-      if (navigator.share) await navigator.share({ title: data.name, text: `${data.name} on Fàdè`, url })
+      if (navigator.share) await navigator.share({ title: data.name, text: `${data.name} on Fádé`, url })
       else {
         await navigator.clipboard.writeText(url)
         toast.success("Link copied")

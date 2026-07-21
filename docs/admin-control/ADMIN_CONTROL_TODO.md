@@ -1,4 +1,4 @@
-# ADMIN CONTROL TODO — 9CH / Fàdé
+# ADMIN CONTROL TODO — 9CH / Fádé
 
 Marked complete only when **implemented AND verified** (not merely coded).
 

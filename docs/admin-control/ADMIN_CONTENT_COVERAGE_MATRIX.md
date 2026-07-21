@@ -1,4 +1,4 @@
-# ADMIN CONTENT COVERAGE MATRIX — 9CH / Fàdé
+# ADMIN CONTENT COVERAGE MATRIX — 9CH / Fádé
 
 Statuses: `Connected` · `Partially connected` · `Hard-coded` · `Missing` · `Broken` ·
 `Duplicate` · `Developer-only` · `Not applicable`.

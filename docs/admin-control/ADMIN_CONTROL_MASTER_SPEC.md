@@ -1,7 +1,7 @@
-# ADMIN CONTROL MASTER SPEC — 9CH / Fàdé
+# ADMIN CONTROL MASTER SPEC — 9CH / Fádé
 
 ## Objective
-Give the Fàdé admin panel near-complete **admin-to-website control coverage**: every
+Give the Fádé admin panel near-complete **admin-to-website control coverage**: every
 business-controlled element on the public storefront has an appropriate management interface,
 without exposing source, secrets, infra, or auth internals. Extend and repair the existing
 system; do not rebuild what works.

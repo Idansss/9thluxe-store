@@ -1,4 +1,4 @@
-# ADMIN CONTROL PROGRESS — 9CH / Fàdé
+# ADMIN CONTROL PROGRESS — 9CH / Fádé
 
 ## Phase 0 — Repository audit & mapping ✅ (2026-07-18)
 

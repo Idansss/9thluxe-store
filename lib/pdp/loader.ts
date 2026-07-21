@@ -421,7 +421,7 @@ export async function loadPdpData(slug: string): Promise<PdpData | null> {
     },
 
     seo: {
-      title: p.seoTitle || `${p.name}${p.brand ? ` · ${p.brand}` : ""} | Fàdè`,
+      title: p.seoTitle || `${p.name}${p.brand ? ` · ${p.brand}` : ""} | Fádé`,
       description: p.seoDescription || p.olfactoryDesc || p.description,
       canonical: null,
     },

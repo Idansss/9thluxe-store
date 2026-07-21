@@ -131,12 +131,12 @@ describe("admin-control database flow", () => {
     })
     const rendered = await resolveEmailTemplate(
       tag,
-      { customerName: "<Fadé>", orderRef: "9CH-1" },
+      { customerName: "<Fádé>", orderRef: "9CH-1" },
       "fallback",
       "fallback"
     )
-    expect(rendered.subject).toBe("Hello <Fadé>")
-    expect(rendered.html).toContain("&lt;Fadé&gt;")
+    expect(rendered.subject).toBe("Hello <Fádé>")
+    expect(rendered.html).toContain("&lt;Fádé&gt;")
     expect(rendered.html).toContain("9CH-1")
 
     expect(await prisma.auditLog.count({ where: { actorId: tag } })).toBeGreaterThanOrEqual(6)

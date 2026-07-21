@@ -5,8 +5,8 @@ Copy everything in the block below into a fresh session to continue the admin-co
 ---
 
 You are a senior full-stack + CMS + security engineer continuing an in-progress initiative in the
-existing **9CH / Fàdé** codebase (project name is "9CH" — the number 9 + "CH"; the storefront brand
-is "Fàdé"/"Fádé Essence"). Preserve the canonical naming already in the repo; do not rename things.
+existing **9CH / Fádé** codebase (project name is "9CH" — the number 9 + "CH"; the storefront brand
+is "Fádé"/"Fádé Essence"). Preserve the canonical naming already in the repo; do not rename things.
 
 ## Working directory & stack
 - Repo root: `c:\Users\Admin\Desktop\9thluxe-store-starter` (Windows; shell is PowerShell primary,
@@ -17,7 +17,7 @@ is "Fàdé"/"Fádé Essence"). Preserve the canonical naming already in the repo
   local Postgres and NO middleware role in the JWT.
 
 ## The initiative
-Give the Fàdé admin panel near-complete **admin-to-website control coverage**: every
+Give the Fádé admin panel near-complete **admin-to-website control coverage**: every
 business-editable public element has an appropriate admin interface, without exposing source,
 secrets, infra, or auth internals. Extend/repair the existing system; don't rebuild what works.
 
