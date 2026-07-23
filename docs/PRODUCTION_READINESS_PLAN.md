@@ -62,6 +62,8 @@ Completed in the first hardening milestone:
 - signup and credential login now apply abuse limits, normalize email case, and share the eight
   character minimum password policy;
 - process-global session-duration state was removed in favor of a deterministic 24-hour session;
+- Next.js, Auth.js, Prisma, Resend, PostCSS, Sharp, and lodash were upgraded or pinned to patched
+  versions; the production dependency audit now reports zero vulnerabilities;
 - payment-matching, checkout-idempotency, publication, origin, and shipping-policy regression tests
   were added;
 - Prisma schema validation, TypeScript, lint, 342 unit/integration tests, and the production build
@@ -70,7 +72,7 @@ Completed in the first hardening milestone:
 Still required before launch:
 
 - payment reconciliation and complete refund/order state handling;
-- dependency remediation, browser/Paystack integration tests, and production staging certification;
+- browser/Paystack integration tests and production staging certification;
 - scheduler configuration for the reservation-expiry and outbox-worker endpoints;
 - owner-supplied provider credentials, business details, brand assets, and approved policies.
 
@@ -92,7 +94,8 @@ This is the original audit list. Items completed on `codex/production-readiness`
 5. **Resolved on branch:** password-reset emails pointed to a reset route that did not exist, and
    there was no endpoint that applied a new password.
 6. Bank transfer displays the placeholder account number `0123456789`.
-7. The production dependency audit reports seven high and four moderate vulnerabilities.
+7. **Resolved on branch:** the production dependency audit previously reported high, moderate, and
+   critical vulnerabilities; it now reports zero production vulnerabilities.
 
 ### High priority
 
