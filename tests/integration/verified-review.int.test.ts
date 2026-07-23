@@ -56,7 +56,6 @@ describe.skipIf(!hasDb)('verified-purchase review path (DB)', () => {
     await prisma.order.deleteMany({ where: { id: orderId } }).catch(() => {})
     await prisma.product.deleteMany({ where: { id: { in: [productId, otherProductId] } } }).catch(() => {})
     await prisma.user.deleteMany({ where: { id: userId } }).catch(() => {})
-    await prisma.$disconnect().catch(() => {})
   })
 
   it('recognizes a purchased product as a verified purchase', async () => {

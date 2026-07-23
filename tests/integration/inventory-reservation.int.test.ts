@@ -54,7 +54,6 @@ describe.skipIf(!hasDb)("inventory reservation lifecycle (DB)", () => {
     await prisma.order.deleteMany({ where: { id: { in: orderIds } } }).catch(() => {})
     await prisma.product.deleteMany({ where: { id: productId } }).catch(() => {})
     await prisma.user.deleteMany({ where: { id: userId } }).catch(() => {})
-    await prisma.$disconnect().catch(() => {})
   })
 
   async function createOrder(quantity: number) {
