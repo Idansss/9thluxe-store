@@ -17,6 +17,7 @@ import { useCheckoutStore } from "@/lib/stores/checkout-store";
 import { formatPrice } from "@/lib/format";
 import Link from "next/link";
 import { ClearCartOnSuccess } from "@/components/checkout/clear-cart-on-success";
+import type { BankTransferConfig } from "@/lib/config/payment-methods";
 
 export interface OrderPayload {
   items: { productId: string; quantity: number; priceNGN: number }[];
@@ -25,6 +26,8 @@ export interface OrderPayload {
   shippingNGN: number;
   totalNGN: number;
   couponId?: string | null;
+  couponCode?: string | null;
+  deliveryMethod: "standard" | "express";
   isGift?: boolean;
   giftMessage?: string;
   giftWrapping?: boolean;
@@ -35,13 +38,8 @@ interface PaymentFormProps {
   onComplete: () => void;
   total: number;
   orderPayload: OrderPayload;
+  bankTransfer?: BankTransferConfig | null;
 }
-
-const BANK_DETAILS = {
-  accountName: "Fádé Essence Limited",
-  bank: "Guaranty Trust Bank (GTBank)",
-  accountNumber: "0123456789",
-};
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = React.useState(false);
@@ -72,8 +70,11 @@ export function PaymentForm({
   onComplete: _onComplete,
   total,
   orderPayload,
+  bankTransfer = null,
 }: PaymentFormProps) {
   const { formData } = useCheckoutStore();
+  const checkoutIdempotencyKey = React.useRef(crypto.randomUUID());
+  const paymentIdempotencyKey = React.useRef(crypto.randomUUID());
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = React.useState<
     "CARD" | "BANK_TRANSFER"
@@ -97,6 +98,8 @@ export function PaymentForm({
       shippingNGN: orderPayload.shippingNGN,
       totalNGN: orderPayload.totalNGN,
       couponId: orderPayload.couponId ?? null,
+      couponCode: orderPayload.couponCode ?? null,
+      deliveryMethod: orderPayload.deliveryMethod,
       isGift: orderPayload.isGift,
       giftMessage: orderPayload.giftMessage,
       giftWrapping: orderPayload.giftWrapping,
@@ -133,7 +136,10 @@ export function PaymentForm({
       // 1) Create order (PENDING)
       const createRes = await fetch("/api/checkout/create-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": checkoutIdempotencyKey.current,
+        },
         body: JSON.stringify({ ...payload, paymentMethod }),
       });
 
@@ -153,25 +159,16 @@ export function PaymentForm({
       // 2) Card: Initialize Paystack
       const payRes = await fetch("/api/paystack/initialize", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          amountNGN: total,
-          metadata: {
-            orderId,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            phone: formData.phone,
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            postalCode: formData.postalCode,
-          },
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": paymentIdempotencyKey.current,
+        },
+        body: JSON.stringify({ orderId }),
       });
 
       const payData = await payRes.json();
       if (!payRes.ok || !payData.authorization_url) {
+        paymentIdempotencyKey.current = crypto.randomUUID();
         throw new Error(payData.error || "Failed to initialize payment");
       }
 
@@ -213,7 +210,7 @@ export function PaymentForm({
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Bank</span>
                   <span className="text-sm font-medium">
-                    {BANK_DETAILS.bank}
+                    {bankTransfer?.bankName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -221,7 +218,7 @@ export function PaymentForm({
                     Account Name
                   </span>
                   <span className="text-sm font-medium">
-                    {BANK_DETAILS.accountName}
+                    {bankTransfer?.accountName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -230,9 +227,9 @@ export function PaymentForm({
                   </span>
                   <div className="flex items-center">
                     <span className="font-mono font-bold text-base">
-                      {BANK_DETAILS.accountNumber}
+                      {bankTransfer?.accountNumber}
                     </span>
-                    <CopyButton text={BANK_DETAILS.accountNumber} />
+                    <CopyButton text={bankTransfer?.accountNumber || ""} />
                   </div>
                 </div>
               </div>
@@ -294,8 +291,8 @@ export function PaymentForm({
             </div>
           </label>
 
-          {/* Bank Transfer */}
-          <label
+          {/* Bank transfer remains hidden until owner-approved details are configured. */}
+          {bankTransfer && <label
             className={`flex items-center gap-4 rounded-xl border p-4 cursor-pointer transition-colors ${
               paymentMethod === "BANK_TRANSFER"
                 ? "border-primary bg-primary/5"
@@ -318,7 +315,7 @@ export function PaymentForm({
                 verification.
               </p>
             </div>
-          </label>
+          </label>}
         </CardContent>
       </Card>
 

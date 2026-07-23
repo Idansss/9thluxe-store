@@ -19,13 +19,18 @@ export default async function DiscoveryPage() {
   try {
     const [sampleKitProducts, byNotes] = await Promise.all([
       prisma.product.findMany({
-        where: { deletedAt: null, isFeatured: true },
+        where: {
+          deletedAt: null,
+          publishStatus: "PUBLISHED",
+          isFeatured: true,
+        },
         orderBy: [{ ratingAvg: "desc" }],
         take: 6,
       }),
       prisma.product.findMany({
         where: {
           deletedAt: null,
+          publishStatus: "PUBLISHED",
           OR: [
             { notesTop: { contains: "bergamot", mode: "insensitive" } },
             { notesHeart: { contains: "rose", mode: "insensitive" } },

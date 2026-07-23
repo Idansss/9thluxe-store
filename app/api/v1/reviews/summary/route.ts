@@ -16,7 +16,10 @@ export const GET = route(async ({ req }) => {
   if (!productId) raise('VALIDATION_ERROR', 'productId is required.')
 
   const [product, reviews] = await Promise.all([
-    prisma.product.findUnique({ where: { id: productId }, select: { name: true } }),
+    prisma.product.findFirst({
+      where: { id: productId, deletedAt: null, publishStatus: 'PUBLISHED' },
+      select: { name: true },
+    }),
     prisma.review.findMany({
       where: { productId, approved: true, comment: { not: null } },
       orderBy: { createdAt: 'desc' },

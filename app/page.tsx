@@ -21,6 +21,7 @@ export default async function HomePage() {
     dbProducts = await prisma.product.findMany({
       where: {
         deletedAt: null, // Exclude soft-deleted products
+        publishStatus: "PUBLISHED",
         OR: [
           { isBestseller: true },
           { isNew: true },
@@ -41,7 +42,7 @@ export default async function HomePage() {
     // homepage edit never renders empty.
     if (dbProducts.length === 0) {
       dbProducts = await prisma.product.findMany({
-        where: { deletedAt: null },
+        where: { deletedAt: null, publishStatus: "PUBLISHED" },
         orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
         take: 8,
       })

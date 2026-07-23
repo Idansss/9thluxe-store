@@ -25,7 +25,11 @@ export default async function DropsPage() {
 
   try {
     const limited = await prisma.product.findMany({
-      where: { isLimited: true, deletedAt: null },
+      where: {
+        isLimited: true,
+        deletedAt: null,
+        publishStatus: "PUBLISHED",
+      },
       orderBy: { dropDate: "asc" },
     })
 

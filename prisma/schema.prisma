@@ -20,6 +20,15 @@ enum OrderStatus {
   DELIVERED
 }
 
+enum PaymentAttemptStatus {
+  INITIALIZED
+  PENDING
+  SUCCEEDED
+  FAILED
+  ABANDONED
+  REFUNDED
+}
+
 model User {
   id               String    @id @default(cuid())
   name             String?
@@ -60,6 +69,7 @@ model User {
   conciergeConversations ConciergeConversation[]
   conciergeUsage         ConciergeUsageEvent[]
   conciergeFeedback      ConciergeFeedback[]
+  checkoutAttempts       CheckoutAttempt[]
 }
 
 model Category {
@@ -296,8 +306,10 @@ model Order {
   // Payment method
   paymentMethod String @default("CARD") // CARD | BANK_TRANSFER
 
-  reference String?     @unique
-  items     OrderItem[]
+  reference       String?          @unique
+  items           OrderItem[]
+  paymentAttempts PaymentAttempt[]
+  checkoutAttempt CheckoutAttempt?
 
   // Shipping/contact snapshot
   addressLine1 String
@@ -313,6 +325,45 @@ model Order {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model CheckoutAttempt {
+  id             String   @id @default(cuid())
+  userId         String
+  orderId        String   @unique
+  idempotencyKey String
+  requestHash    String
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime
+
+  user  User  @relation(fields: [userId], references: [id])
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@unique([userId, idempotencyKey])
+  @@index([expiresAt])
+}
+
+model PaymentAttempt {
+  id                    String               @id @default(cuid())
+  orderId               String
+  provider              String               @default("paystack")
+  providerReference     String               @unique
+  idempotencyKey        String               @unique
+  expectedAmountNGN     Int
+  expectedCurrency      String
+  status                PaymentAttemptStatus @default(INITIALIZED)
+  authorizationUrl      String?
+  providerTransactionId String?
+  failureCode           String?
+  initializedAt         DateTime?
+  verifiedAt            DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId, status])
   @@index([status, createdAt])
 }
 

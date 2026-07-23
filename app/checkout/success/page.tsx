@@ -1,156 +1,100 @@
-import { formatPrice } from "@/lib/format";
-import Link from "next/link";
-import { CheckCircle2, AlertCircle } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
-import { MainLayout } from "@/components/layout/main-layout";
-import { ClearCartOnSuccess } from "@/components/checkout/clear-cart-on-success";
+import Link from "next/link"
+import { CheckCircle2, Clock3, AlertCircle } from "lucide-react"
 
-export const runtime = "nodejs";
+import { MainLayout } from "@/components/layout/main-layout"
+import { ClearCartOnSuccess } from "@/components/checkout/clear-cart-on-success"
+import { auth } from "@/lib/auth"
+import { formatPrice } from "@/lib/format"
+import { prisma } from "@/lib/prisma"
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 type PageProps = {
-  searchParams: Promise<{
-    mock?: string;
-    reference?: string;
-  }>;
-};
-
-async function verifyPaystack(reference: string) {
-  const secret = process.env.PAYSTACK_SECRET_KEY?.trim();
-  if (!secret) {
-    return { ok: false, message: "PAYSTACK_SECRET_KEY missing", data: null };
-  }
-  try {
-    const res = await fetch(
-      `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
-      {
-        headers: { Authorization: `Bearer ${secret}` },
-        cache: "no-store",
-      },
-    );
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.status) {
-      return {
-        ok: false,
-        message: data?.message || "Verification failed",
-        data: null,
-      };
-    }
-    return { ok: true, message: "Verified", data: data.data };
-  } catch (e: any) {
-    return {
-      ok: false,
-      message: e?.message || "Verification error",
-      data: null,
-    };
-  }
+  searchParams: Promise<{ reference?: string }>
 }
 
 export default async function SuccessPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const isMock = !!params.mock;
-  const reference = params.reference?.trim();
+  const { reference: rawReference } = await searchParams
+  const reference = rawReference?.trim()
+  const session = await auth()
+  const email = session?.user?.email
 
-  let statusLine = "";
-  let amountNGN: number | null = null;
-
-  if (isMock) {
-    statusLine = "Mock success (no real charge).";
-    // Cart is managed by Zustand store, no need to clear cookie
-  } else if (reference) {
-    // try to verify with Paystack
-    const res = await verifyPaystack(reference);
-    if (res.ok && res.data?.status === "success") {
-      // amount is in kobo from Paystack; convert to NGN
-      amountNGN = Math.round(Number(res.data.amount || 0) / 100);
-      statusLine = "Payment verified.";
-
-      // Cart is cleared by Zustand store after successful checkout
-      // No need to clear cookie here
-
-      // if you stored orders with a reference, mark it PAID
-      const order = await prisma.order.findFirst({ where: { reference } });
-      if (order && order.status !== OrderStatus.PAID) {
-        const updatedOrder = await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            status: OrderStatus.PAID,
-            totalNGN: order.totalNGN || amountNGN || order.totalNGN,
-          },
-        });
-
-        // Create notification for admin
-        try {
-          await prisma.notification.create({
-            data: {
-              type: "ORDER_PAID",
-              title: "New Order Payment",
-              message: `Order #${updatedOrder.reference || updatedOrder.id.slice(0, 8)} has been paid. Total: ₦${updatedOrder.totalNGN.toLocaleString()}`,
-              orderId: updatedOrder.id,
+  const attempt =
+    reference && email
+      ? await prisma.paymentAttempt.findFirst({
+          where: { providerReference: reference, order: { user: { email } } },
+          select: {
+            providerReference: true,
+            order: {
+              select: { id: true, status: true, totalNGN: true },
             },
-          });
-        } catch {
-          // Don't fail if notification creation fails
-        }
-      }
-    } else {
-      statusLine = `Payment not verified: ${res.message || "unknown error"}`;
-    }
-  } else {
-    statusLine = "No payment reference provided.";
-  }
+          },
+        })
+      : null
+  const order = attempt?.order
 
-  const verified = isMock || statusLine === "Payment verified.";
+  const paid = order?.status === "PAID"
+  const pending = order?.status === "PENDING"
+  const title = paid
+    ? "Order confirmed"
+    : pending
+      ? "Payment is processing"
+      : "Payment status unavailable"
+  const message = paid
+    ? "Your payment is verified. A receipt is on its way to your inbox."
+    : pending
+      ? "We are waiting for confirmation from Paystack. Your order will update automatically; please do not pay twice."
+      : "We could not match this payment to one of your orders. Check your orders or contact support if payment was taken."
 
   return (
     <MainLayout>
       <section className="min-h-[60vh] bg-background py-16 text-foreground lg:py-24">
         <div className="container mx-auto max-w-xl px-4 sm:px-6">
-          {(reference || isMock) && <ClearCartOnSuccess />}
+          {paid && <ClearCartOnSuccess />}
 
           <div className="border border-border bg-card p-8 text-center sm:p-12">
             <span
               className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${
-                verified
+                paid
                   ? "bg-primary/10 text-primary"
-                  : "bg-destructive/10 text-destructive"
+                  : pending
+                    ? "bg-warning/10 text-warning"
+                    : "bg-destructive/10 text-destructive"
               }`}
             >
-              {verified ? (
+              {paid ? (
                 <CheckCircle2 className="h-7 w-7" strokeWidth={1.5} />
+              ) : pending ? (
+                <Clock3 className="h-7 w-7" strokeWidth={1.5} />
               ) : (
                 <AlertCircle className="h-7 w-7" strokeWidth={1.5} />
               )}
             </span>
 
             <h1 className="mt-6 font-serif text-3xl font-light md:text-4xl">
-              {verified ? "Order confirmed" : "Payment status"}
+              {title}
             </h1>
-
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              {isMock
-                ? "This was a mock success (no real charge). Add Paystack keys in .env to enable live payments."
-                : verified
-                  ? "Your payment is verified. A receipt is on its way to your inbox. Your fragrance follows shortly after."
-                  : statusLine}
+              {message}
             </p>
 
-            <div className="mt-8 space-y-1.5">
-              {reference && (
+            {order && (
+              <div className="mt-8 space-y-1.5">
                 <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Reference ·{" "}
-                  <span className="text-foreground">{reference}</span>
+                  <span className="text-foreground">
+                    {attempt.providerReference}
+                  </span>
                 </p>
-              )}
-              {typeof amountNGN === "number" && amountNGN > 0 && (
                 <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Amount ·{" "}
                   <span className="text-foreground">
-                    {formatPrice(amountNGN)}
+                    {formatPrice(order.totalNGN)}
                   </span>
                 </p>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
@@ -167,16 +111,8 @@ export default async function SuccessPage({ searchParams }: PageProps) {
               </Link>
             </div>
           </div>
-
-          {!isMock && !reference && (
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Tip: configure your Paystack <code>callback_url</code> to point
-              here with a <code>?reference=...</code> so we can auto-verify and
-              update your order.
-            </p>
-          )}
         </div>
       </section>
     </MainLayout>
-  );
+  )
 }

@@ -37,6 +37,8 @@ interface ShippingFormProps {
 
   standardDeliveryFee: number;
 
+  expressDeliveryFee: number;
+
   freeShippingThreshold: number;
 }
 
@@ -121,6 +123,7 @@ export function ShippingForm({
   deliveryMethod: propDeliveryMethod,
   onDeliveryMethodChange,
   standardDeliveryFee,
+  expressDeliveryFee,
   freeShippingThreshold,
 }: ShippingFormProps) {
   const { formData, updateFormData } = useCheckoutStore();
@@ -384,7 +387,9 @@ export function ShippingForm({
                     </div>
                   </div>
 
-                  <span className="font-medium">₦35,000</span>
+                  <span className="font-medium">
+                    {formatPrice(expressDeliveryFee)}
+                  </span>
                 </div>
               </Label>
             </div>

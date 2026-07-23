@@ -60,6 +60,14 @@ const schema = z.object({
   COMMERCE_CURRENCY: z.string().default('NGN'),
   COMMERCE_FREE_SHIPPING_THRESHOLD_NGN: z.coerce.number().int().nonnegative().default(500_000),
   COMMERCE_FLAT_SHIPPING_NGN: z.coerce.number().int().nonnegative().default(2_500),
+  COMMERCE_EXPRESS_SHIPPING_NGN: z.coerce.number().int().nonnegative().default(35_000),
+  COMMERCE_GIFT_WRAP_NGN: z.coerce.number().int().nonnegative().default(2_500),
+
+  // Manual bank transfer is fail-closed until owner-approved details are configured.
+  BANK_TRANSFER_ENABLED: z.enum(['true', 'false']).transform((value) => value === 'true').default('false'),
+  BANK_TRANSFER_ACCOUNT_NAME: z.string().optional(),
+  BANK_TRANSFER_BANK_NAME: z.string().optional(),
+  BANK_TRANSFER_ACCOUNT_NUMBER: z.string().optional(),
 
   // Feature flags (comma-separated list of enabled flags)
   FEATURE_FLAGS: z.string().default(''),

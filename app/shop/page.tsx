@@ -114,12 +114,13 @@ export default async function ShopPage({ searchParams }: { searchParams?: Promis
         where: {
           ...where,
           deletedAt: null,
+          publishStatus: 'PUBLISHED',
         },
         orderBy: orderBy,
         take: 24,
       }),
       prisma.product.findMany({
-        where: { deletedAt: null },
+        where: { deletedAt: null, publishStatus: 'PUBLISHED' },
         distinct: ['brand'],
         select: { brand: true },
       }),

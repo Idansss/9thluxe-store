@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { computeCheckoutShipping } from "@/lib/config/commerce"
+import { getBankTransferConfig } from "@/lib/config/payment-methods"
+import {
+  checkoutRequestHash,
+  isValidIdempotencyKey,
+} from "@/lib/checkout/idempotency"
+import { consumeRateLimit } from "@/lib/middleware/limiter"
+import { validateCoupon } from "@/lib/pricing"
+import { hasTrustedOrigin } from "@/lib/security/origin"
 
 const createOrderSchema = z.object({
   addressLine1: z.string().min(1, "Address is required"),
@@ -15,11 +24,14 @@ const createOrderSchema = z.object({
       priceNGN: z.number().int().min(0),
     })
   ).min(1, "Cart is empty"),
-  subtotalNGN: z.number().int().min(0),
-  discountNGN: z.number().int().min(0).default(0),
-  shippingNGN: z.number().int().min(0),
-  totalNGN: z.number().int().min(0),
+  // Accepted temporarily for older clients, but all monetary values are recomputed below.
+  subtotalNGN: z.number().int().min(0).optional(),
+  discountNGN: z.number().int().min(0).optional(),
+  shippingNGN: z.number().int().min(0).optional(),
+  totalNGN: z.number().int().min(0).optional(),
   couponId: z.string().optional().nullable(),
+  couponCode: z.string().trim().max(100).optional().nullable(),
+  deliveryMethod: z.enum(["standard", "express"]).default("standard"),
   isGift: z.boolean().optional().default(false),
   giftMessage: z.string().max(500).optional().nullable(),
   giftWrapping: z.boolean().optional().default(false),
@@ -28,6 +40,9 @@ const createOrderSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!hasTrustedOrigin(req)) {
+      return NextResponse.json({ error: "Request origin could not be verified" }, { status: 403 })
+    }
     const session = await auth()
     const email = session?.user?.email
     if (!email) {
@@ -41,6 +56,17 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 401 })
     }
+    const limit = await consumeRateLimit(
+      `checkout:create-order:${user.id}`,
+      10,
+      10 * 60 * 1000,
+    )
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many checkout attempts. Please wait and try again." },
+        { status: 429 },
+      )
+    }
 
     const body = await req.json()
     const parsed = createOrderSchema.safeParse(body)
@@ -49,12 +75,75 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    const { addressLine1, city, state, phone, items, subtotalNGN: _subtotalNGN, discountNGN, shippingNGN, totalNGN, couponId, isGift, giftMessage, giftWrapping, paymentMethod } = parsed.data
+    const idempotencyKey = req.headers.get("idempotency-key")
+    if (!isValidIdempotencyKey(idempotencyKey)) {
+      return NextResponse.json(
+        { error: "A valid Idempotency-Key header is required" },
+        { status: 400 },
+      )
+    }
+
+    const {
+      addressLine1,
+      city,
+      state,
+      phone,
+      items,
+      couponCode,
+      deliveryMethod,
+      isGift,
+      giftMessage,
+      giftWrapping,
+      paymentMethod,
+    } = parsed.data
+
+    if (paymentMethod === "BANK_TRANSFER" && !getBankTransferConfig()) {
+      return NextResponse.json(
+        { error: "Bank transfer is not currently available" },
+        { status: 400 },
+      )
+    }
+
+    const requestHash = checkoutRequestHash({
+      addressLine1,
+      city,
+      state,
+      phone,
+      items,
+      couponCode,
+      deliveryMethod,
+      isGift,
+      giftMessage,
+      giftWrapping,
+      paymentMethod,
+    })
+    const priorAttempt = await prisma.checkoutAttempt.findUnique({
+      where: {
+        userId_idempotencyKey: {
+          userId: user.id,
+          idempotencyKey,
+        },
+      },
+      select: { orderId: true, requestHash: true },
+    })
+    if (priorAttempt) {
+      if (priorAttempt.requestHash !== requestHash) {
+        return NextResponse.json(
+          { error: "That checkout key was already used for different order details" },
+          { status: 409 },
+        )
+      }
+      return NextResponse.json({ orderId: priorAttempt.orderId, reused: true })
+    }
 
     // Resolve product IDs and validate prices (use DB price for consistency)
     const productIds = [...new Set(items.map((i) => i.productId))]
     const products = await prisma.product.findMany({
-      where: { id: { in: productIds }, deletedAt: null },
+      where: {
+        id: { in: productIds },
+        deletedAt: null,
+        publishStatus: "PUBLISHED",
+      },
       select: { id: true, priceNGN: true, stock: true },
     })
     const productMap = new Map(products.map((p) => [p.id, p]))
@@ -79,40 +168,78 @@ export async function POST(req: NextRequest) {
     }
 
     const computedSubtotal = orderItems.reduce((s, i) => s + i.priceNGN * i.quantity, 0)
-    const orderTotal = computedSubtotal - discountNGN + shippingNGN
-    if (orderTotal !== totalNGN) {
-      return NextResponse.json(
-        { error: "Total mismatch. Please refresh and try again." },
-        { status: 400 }
-      )
+    let computedDiscount = 0
+    let validatedCouponId: string | null = null
+    if (couponCode) {
+      const coupon = await validateCoupon(couponCode, computedSubtotal)
+      if (!coupon.ok) {
+        return NextResponse.json({ error: coupon.message }, { status: 400 })
+      }
+      computedDiscount = coupon.discountNGN
+      validatedCouponId = coupon.couponId
     }
+    const computedShipping = computeCheckoutShipping(
+      computedSubtotal,
+      deliveryMethod,
+      giftWrapping,
+    )
+    const orderTotal = computedSubtotal - computedDiscount + computedShipping
 
-    const order = await prisma.order.create({
-      data: {
-        userId: user.id,
-        status: "PENDING",
-        subtotalNGN: computedSubtotal,
-        discountNGN,
-        shippingNGN,
-        totalNGN: orderTotal,
-        couponId: couponId || null,
-        addressLine1,
-        city,
-        state,
-        phone,
-        isGift: isGift ?? false,
-        giftMessage: giftMessage || null,
-        giftWrapping: giftWrapping ?? false,
-        paymentMethod: paymentMethod ?? "CARD",
-        items: {
-          create: orderItems.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-            priceNGN: i.priceNGN,
-          })),
+    let order: { id: string }
+    try {
+      order = await prisma.$transaction(async (tx) => {
+        const created = await tx.order.create({
+          data: {
+            userId: user.id,
+            status: "PENDING",
+            subtotalNGN: computedSubtotal,
+            discountNGN: computedDiscount,
+            shippingNGN: computedShipping,
+            totalNGN: orderTotal,
+            couponId: validatedCouponId,
+            addressLine1,
+            city,
+            state,
+            phone,
+            isGift,
+            giftMessage: giftMessage || null,
+            giftWrapping,
+            paymentMethod,
+            items: {
+              create: orderItems.map((i) => ({
+                productId: i.productId,
+                quantity: i.quantity,
+                priceNGN: i.priceNGN,
+              })),
+            },
+          },
+          select: { id: true },
+        })
+        await tx.checkoutAttempt.create({
+          data: {
+            userId: user.id,
+            orderId: created.id,
+            idempotencyKey,
+            requestHash,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        })
+        return created
+      })
+    } catch (error) {
+      if ((error as { code?: string })?.code !== "P2002") throw error
+      const concurrent = await prisma.checkoutAttempt.findUnique({
+        where: {
+          userId_idempotencyKey: {
+            userId: user.id,
+            idempotencyKey,
+          },
         },
-      },
-    })
+        select: { orderId: true, requestHash: true },
+      })
+      if (!concurrent || concurrent.requestHash !== requestHash) throw error
+      order = { id: concurrent.orderId }
+    }
 
     return NextResponse.json({ orderId: order.id })
   } catch (e) {

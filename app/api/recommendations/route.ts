@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     if (notes.length === 0) {
       const products = await prisma.product.findMany({
-        where: { deletedAt: null },
+        where: { deletedAt: null, publishStatus: "PUBLISHED" },
         orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
         take: limit,
       })
@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: {
         deletedAt: null,
+        publishStatus: "PUBLISHED",
         OR: orConditions,
       },
       orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],

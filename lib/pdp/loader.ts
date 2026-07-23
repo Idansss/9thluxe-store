@@ -270,7 +270,7 @@ function buildPerformance(summary: PdpReviewSummary | null): PdpPerformanceMetri
 
 export async function loadPdpData(slug: string): Promise<PdpData | null> {
   const p = await prisma.product.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, deletedAt: null, publishStatus: "PUBLISHED" },
     include: { variants: true, media: true },
   })
   if (!p) return null

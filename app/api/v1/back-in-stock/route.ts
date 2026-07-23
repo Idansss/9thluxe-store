@@ -22,7 +22,11 @@ export const POST = route(async ({ req }) => {
   if (!email) raise('VALIDATION_ERROR', 'An email is required to notify you.')
 
   const product = await prisma.product.findFirst({
-    where: { id: body.productId, deletedAt: null },
+    where: {
+      id: body.productId,
+      deletedAt: null,
+      publishStatus: "PUBLISHED",
+    },
     select: { id: true, stock: true },
   })
   if (!product) raise('PRODUCT_NOT_FOUND')

@@ -8,10 +8,13 @@ export const dynamic = "force-dynamic"
 /** PostgreSQL: case-insensitive contains. */
 function searchWhere(keywords: string[]) {
   const terms = keywords.map((t) => t.trim()).filter((t) => t.length > 0)
-  if (terms.length === 0) return { deletedAt: null }
+  if (terms.length === 0) {
+    return { deletedAt: null, publishStatus: "PUBLISHED" as const }
+  }
 
   return {
     deletedAt: null,
+    publishStatus: "PUBLISHED" as const,
     OR: terms.flatMap((term) => [
       { name: { contains: term, mode: "insensitive" as const } },
       { brand: { contains: term, mode: "insensitive" as const } },

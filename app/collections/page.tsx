@@ -21,7 +21,7 @@ export default async function CollectionsPage() {
   let dbProducts: Awaited<ReturnType<typeof prisma.product.findMany>> = []
   try {
     dbProducts = await prisma.product.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, publishStatus: "PUBLISHED" },
       orderBy: [
         { isFeatured: "desc" },
         { isBestseller: "desc" },

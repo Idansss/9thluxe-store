@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     products = await prisma.product.findMany({
       where: {
         deletedAt: null, // Exclude soft-deleted products
+        publishStatus: "PUBLISHED",
       },
       select: {
         slug: true,
@@ -109,4 +110,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticPages, ...productPages]
 }
-

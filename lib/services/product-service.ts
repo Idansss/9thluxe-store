@@ -124,7 +124,7 @@ export async function getAdminProductById(id: string): Promise<AdminProduct | nu
 
 export async function getProductBySlug(slug: string) {
   return prisma.product.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, deletedAt: null, publishStatus: "PUBLISHED" },
   })
 }
 
@@ -140,6 +140,7 @@ export async function getProducts(params: {
 
   const where: Prisma.ProductWhereInput = {
     deletedAt: null, // Exclude soft-deleted products
+    publishStatus: "PUBLISHED",
   }
 
   if (category) where.category = category
@@ -160,6 +161,7 @@ export async function getProductsForSearch(query: string) {
     where: {
       OR: [{ name: { contains: query } }, { brand: { contains: query } }],
       deletedAt: null, // Exclude soft-deleted products
+      publishStatus: "PUBLISHED",
     },
     take: 10,
     orderBy: { createdAt: "desc" },
@@ -173,6 +175,7 @@ export async function getCartProducts(productIds: string[]) {
     where: {
       id: { in: productIds },
       deletedAt: null, // Exclude soft-deleted products
+      publishStatus: "PUBLISHED",
     },
   })
 }

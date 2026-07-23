@@ -15,6 +15,7 @@ export async function GET() {
     where: {
       id: { in: productIds },
       deletedAt: null, // Exclude soft-deleted products from cart
+      publishStatus: "PUBLISHED",
     },
     select: {
       id: true,

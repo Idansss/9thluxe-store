@@ -9,13 +9,10 @@ export async function GET() {
   const env = getEnvDiagnostics()
 
   let database: "up" | "down" = "up"
-  let databaseError: string | null = null
-
   try {
     await prisma.$queryRaw`SELECT 1`
-  } catch (error) {
+  } catch {
     database = "down"
-    databaseError = error instanceof Error ? error.message : "Unknown database error"
   }
 
   const ok = database === "up" && env.missingCritical.length === 0
@@ -30,7 +27,6 @@ export async function GET() {
         env: env.missingCritical.length === 0 ? "up" : "down",
       },
       env,
-      ...(databaseError ? { databaseError } : {}),
     },
     { status }
   )

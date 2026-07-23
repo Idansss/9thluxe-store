@@ -8,6 +8,8 @@ export interface ShippingPolicy {
   currency: string
   freeShippingThreshold: number // in minor-unit-free NGN (whole naira), as used across the app
   flatShippingFee: number
+  expressShippingFee: number
+  giftWrapFee: number
 }
 
 export interface LoyaltyTier {
@@ -34,6 +36,8 @@ export function getCommerceConfig(): CommerceConfig {
       currency: env.COMMERCE_CURRENCY,
       freeShippingThreshold: env.COMMERCE_FREE_SHIPPING_THRESHOLD_NGN,
       flatShippingFee: env.COMMERCE_FLAT_SHIPPING_NGN,
+      expressShippingFee: env.COMMERCE_EXPRESS_SHIPPING_NGN,
+      giftWrapFee: env.COMMERCE_GIFT_WRAP_NGN,
     },
     // Preserves the thresholds already present in the Paystack webhook, now as config.
     loyaltyTiers: [
@@ -52,6 +56,21 @@ export function computeShipping(subtotalNGN: number): number {
   const { shipping } = getCommerceConfig()
   if (subtotalNGN >= shipping.freeShippingThreshold) return 0
   return shipping.flatShippingFee
+}
+
+export function computeCheckoutShipping(
+  subtotalNGN: number,
+  deliveryMethod: 'standard' | 'express',
+  giftWrapping: boolean,
+): number {
+  const { shipping } = getCommerceConfig()
+  const delivery =
+    subtotalNGN >= shipping.freeShippingThreshold
+      ? 0
+      : deliveryMethod === 'express'
+        ? shipping.expressShippingFee
+        : shipping.flatShippingFee
+  return delivery + (giftWrapping ? shipping.giftWrapFee : 0)
 }
 
 /** Resolve loyalty tier for a lifetime spend using configured thresholds. */

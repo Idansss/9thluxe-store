@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {
       deletedAt: null, // Exclude soft-deleted products
+      publishStatus: 'PUBLISHED',
     }
     if (category) {
       where.category = category
@@ -80,6 +81,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ products: [] }, { status: 500 })
   }
 }
-
 
 

@@ -42,7 +42,11 @@ export default async function ArticlePage({
   if (article.relatedProductSlugs?.length) {
     try {
       relatedProducts = await prisma.product.findMany({
-        where: { slug: { in: article.relatedProductSlugs }, deletedAt: null },
+        where: {
+          slug: { in: article.relatedProductSlugs },
+          deletedAt: null,
+          publishStatus: "PUBLISHED",
+        },
       })
     } catch {
       // silently degrade

@@ -58,6 +58,8 @@ interface OrderSummaryProps {
 
   removeCoupon?: () => void
 
+  giftWrapFee?: number
+
 }
 
 
@@ -83,6 +85,8 @@ export function OrderSummary({
   applyCoupon: propApplyCoupon,
 
   removeCoupon: propRemoveCoupon,
+
+  giftWrapFee = 2500,
 
 }: OrderSummaryProps) {
 
@@ -308,7 +312,9 @@ export function OrderSummary({
 
               <span className="text-sm font-medium">Luxury gift wrapping</span>
 
-              <p className="text-xs text-muted-foreground">Premium gold ribbon packaging +₦2,500</p>
+              <p className="text-xs text-muted-foreground">
+                Premium gold ribbon packaging +{formatPrice(giftWrapFee)}
+              </p>
 
             </div>
 
@@ -460,7 +466,13 @@ export function OrderSummary({
 
             <span className="text-muted-foreground">Shipping</span>
 
-            <span>{shipping === 0 ? "Free" : formatPrice(formData.giftWrapping ? shipping - 2500 : shipping)}</span>
+            <span>
+              {shipping === 0
+                ? "Free"
+                : formatPrice(
+                    formData.giftWrapping ? shipping - giftWrapFee : shipping,
+                  )}
+            </span>
 
           </div>
 
@@ -476,7 +488,7 @@ export function OrderSummary({
 
               </span>
 
-              <span>+{formatPrice(2500)}</span>
+              <span>+{formatPrice(giftWrapFee)}</span>
 
             </div>
 

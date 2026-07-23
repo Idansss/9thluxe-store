@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { MainLayout } from "@/components/layout/main-layout"
 import { CheckoutContent } from "@/components/checkout/checkout-content"
 import { getCommerceConfig } from "@/lib/config/commerce"
+import { getBankTransferConfig } from "@/lib/config/payment-methods"
 import { requireUser } from "@/lib/session"
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default async function CheckoutPage() {
   await requireUser("/checkout")
 
   const { shipping } = getCommerceConfig()
+  const bankTransfer = getBankTransferConfig()
 
   return (
     <MainLayout>
@@ -23,6 +25,9 @@ export default async function CheckoutPage() {
         items={[]}
         freeShippingThreshold={shipping.freeShippingThreshold}
         flatShippingFee={shipping.flatShippingFee}
+        expressShippingFee={shipping.expressShippingFee}
+        giftWrapFee={shipping.giftWrapFee}
+        bankTransfer={bankTransfer}
       />
     </MainLayout>
   )
