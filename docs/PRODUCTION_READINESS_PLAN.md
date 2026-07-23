@@ -67,6 +67,9 @@ Completed in the first hardening milestone:
   failure logging;
 - the storefront review endpoint now requires a verified paid purchase, rejects duplicate reviews,
   and relies on a database unique constraint to close concurrent duplicate-submission races;
+- pull requests and main-branch pushes now run locked dependency installation, production
+  dependency auditing, Prisma validation and migrations against temporary PostgreSQL, seed
+  validation, TypeScript, lint, the complete test suite, and a production build;
 - process-global session-duration state was removed in favor of a deterministic 24-hour session;
 - Next.js, Auth.js, Prisma, Resend, PostCSS, Sharp, and lodash were upgraded or pinned to patched
   versions; the production dependency audit now reports zero vulnerabilities;
@@ -118,8 +121,9 @@ This is the original audit list. Items completed on `codex/production-readiness`
 5. **Resolved on branch:** contact-form values are HTML escaped before email rendering.
 6. Required production configuration does not fail fast at startup.
 7. Missing favicon, PWA icons, and Open Graph image cause broken metadata assets.
-8. CI does not gate releases on all unit, integration, browser, dependency, build, and migration
-   checks.
+8. **Partially resolved on branch:** CI now gates unit/integration, dependency, build, seed, and
+   migration checks; the existing browser workflow still needs consolidation with account,
+   accessibility, and payment certification coverage.
 
 ## Target modular-monolith design
 
