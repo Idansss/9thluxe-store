@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { rateLimit } from "@/lib/middleware/rate-limit"
+import { clientIp, consumeRateLimit } from "@/lib/middleware/limiter"
 import { emailSchema, validateAndSanitize } from "@/lib/middleware/validate-input"
+import { hasTrustedOrigin } from "@/lib/security/origin"
 import { z } from "zod"
 
 const subscribeSchema = z.object({ email: emailSchema })
 
-function getClientId(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "anonymous"
-}
-
 export async function POST(req: NextRequest) {
   try {
-    if (!rateLimit(getClientId(req), 5, 60 * 1000)) {
+    if (!hasTrustedOrigin(req)) {
+      return NextResponse.json(
+        { error: "Request origin could not be verified" },
+        { status: 403 },
+      )
+    }
+    const limit = await consumeRateLimit(
+      `newsletter-subscribe:ip:${clientIp(req)}`,
+      5,
+      60 * 60 * 1000,
+    )
+    if (!limit.ok) {
       return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 })
     }
 
@@ -48,4 +56,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to subscribe. Please try again." }, { status: 500 })
   }
 }
-

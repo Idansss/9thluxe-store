@@ -61,6 +61,12 @@ Completed in the first hardening milestone:
   rate limits without exposing whether an account exists;
 - signup and credential login now apply abuse limits, normalize email case, and share the eight
   character minimum password policy;
+- public contact, newsletter, drop-notification, coupon-preview, and review mutations now validate
+  request origin and use the distributed rate-limiter abstraction;
+- contact emails now HTML-escape every customer-controlled field and use structured, redacted
+  failure logging;
+- the storefront review endpoint now requires a verified paid purchase, rejects duplicate reviews,
+  and relies on a database unique constraint to close concurrent duplicate-submission races;
 - process-global session-duration state was removed in favor of a deterministic 24-hour session;
 - Next.js, Auth.js, Prisma, Resend, PostCSS, Sharp, and lodash were upgraded or pinned to patched
   versions; the production dependency audit now reports zero vulnerabilities;
@@ -103,11 +109,13 @@ This is the original audit list. Items completed on `codex/production-readiness`
    decrement.
 2. **Resolved on branch:** public catalogue queries did not consistently require
    `publishStatus = PUBLISHED`.
-3. Custom state-changing endpoints do not consistently validate request origin or CSRF protections.
+3. **Partially resolved on branch:** critical commerce/authentication and exposed public-form
+   mutations validate request origin; the remaining authenticated and admin mutation endpoints
+   still require a complete consistency pass.
 4. **Partially resolved on branch:** signup, password reset, order creation, payment initialization,
    and credential login now use the rate-limiter abstraction; production still requires the
    configured Redis backend for cross-instance durability.
-5. Contact-form values are interpolated into HTML emails without HTML escaping.
+5. **Resolved on branch:** contact-form values are HTML escaped before email rendering.
 6. Required production configuration does not fail fast at startup.
 7. Missing favicon, PWA icons, and Open Graph image cause broken metadata assets.
 8. CI does not gate releases on all unit, integration, browser, dependency, build, and migration

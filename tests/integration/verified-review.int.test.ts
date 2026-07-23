@@ -51,6 +51,7 @@ describe.skipIf(!hasDb)('verified-purchase review path (DB)', () => {
 
   afterAll(async () => {
     // Delete children first to satisfy FKs.
+    await prisma.review.deleteMany({ where: { userId } }).catch(() => {})
     await prisma.orderItem.deleteMany({ where: { orderId } }).catch(() => {})
     await prisma.order.deleteMany({ where: { id: orderId } }).catch(() => {})
     await prisma.product.deleteMany({ where: { id: { in: [productId, otherProductId] } } }).catch(() => {})
@@ -66,5 +67,29 @@ describe.skipIf(!hasDb)('verified-purchase review path (DB)', () => {
   it('does NOT treat a non-purchased product as verified', async () => {
     expect(await isVerifiedPurchase(userId, otherProductId)).toBe(false)
     expect(await findVerifyingOrder(userId, otherProductId)).toBeNull()
+  })
+
+  it('enforces one review per user and product at the database boundary', async () => {
+    await prisma.review.create({
+      data: {
+        userId,
+        productId,
+        orderId,
+        rating: 5,
+        verifiedPurchase: true,
+      },
+    })
+
+    await expect(
+      prisma.review.create({
+        data: {
+          userId,
+          productId,
+          orderId,
+          rating: 4,
+          verifiedPurchase: true,
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'P2002' })
   })
 })
