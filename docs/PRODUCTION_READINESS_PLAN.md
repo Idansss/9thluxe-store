@@ -2,10 +2,11 @@
 
 ## Executive summary
 
-The application should currently be treated as a feature-rich staging build, not a production-ready
-commerce system. The most urgent risk is payment integrity: prices, discounts, shipping costs,
-payment amounts, and Paystack metadata cross the client/server boundary without sufficient
-server-side ownership and reconciliation.
+The application is now a hardened staging candidate, but it is not launch-certified. The original
+payment-integrity risks around browser-supplied prices, discounts, shipping, payment amounts, and
+Paystack metadata have been addressed on this branch. The remaining launch gates are provider
+integration testing, scheduler/deployment configuration, owner-supplied production configuration,
+and staging certification.
 
 The recommended target is a **modular monolith**:
 
@@ -88,8 +89,8 @@ Completed in the first hardening milestone:
   versions; the production dependency audit now reports zero vulnerabilities;
 - payment-matching, checkout-idempotency, publication, origin, and shipping-policy regression tests
   were added;
-- Prisma schema validation, TypeScript, lint, 342 unit/integration tests, and the production build
-  pass on this branch; all staging migrations are applied with zero schema drift.
+- Prisma schema validation, TypeScript, lint, 356 unit/integration tests, and the production build
+  pass on this branch; all 15 staging migrations are applied with zero schema drift.
 
 Still required before launch:
 
