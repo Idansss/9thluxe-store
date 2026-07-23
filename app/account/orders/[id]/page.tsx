@@ -51,6 +51,15 @@ const statusColors: Record<string, string> = {
   PAID: "bg-info/15 text-info",
   SHIPPED: "bg-accent/15 text-accent",
   DELIVERED: "bg-success/15 text-success",
+  CANCELLED: "bg-destructive/15 text-destructive",
+  REFUND_PENDING: "bg-warning/15 text-warning",
+  REFUNDED: "bg-muted text-muted-foreground",
+};
+
+const exceptionalStatusDescriptions: Record<string, string> = {
+  CANCELLED: "This order was cancelled and reserved stock was released.",
+  REFUND_PENDING: "Your refund is being processed by the payment provider.",
+  REFUNDED: "The payment provider has confirmed this order's refund.",
 };
 
 function getProductImage(images: unknown): string {
@@ -178,7 +187,8 @@ export default async function OrderDetailPage({
             </ol>
           </div>
           <p className="text-sm text-muted-foreground text-center mt-6">
-            {STATUS_META[order.status as OrderStatus]?.description}
+            {STATUS_META[order.status as OrderStatus]?.description ||
+              exceptionalStatusDescriptions[order.status]}
           </p>
           <p className="text-xs text-center text-muted-foreground mt-1">
             Placed on{" "}

@@ -18,6 +18,9 @@ enum OrderStatus {
   PAID
   SHIPPED
   DELIVERED
+  CANCELLED
+  REFUND_PENDING
+  REFUNDED
 }
 
 enum PaymentAttemptStatus {
@@ -39,6 +42,7 @@ enum InventoryReservationStatus {
 enum InventoryMovementReason {
   RESERVATION_CREATED
   RESERVATION_EXPIRED
+  RESERVATION_CANCELLED
   SALE_AFTER_EXPIRY
   LEGACY_SALE
   RETURN

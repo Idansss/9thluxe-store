@@ -38,6 +38,9 @@ const statusOptions: { label: string; value: "all" | OrderStatus }[] = [
   { label: "Paid", value: "PAID" },
   { label: "Shipped", value: "SHIPPED" },
   { label: "Delivered", value: "DELIVERED" },
+  { label: "Cancelled", value: "CANCELLED" },
+  { label: "Refund pending", value: "REFUND_PENDING" },
+  { label: "Refunded", value: "REFUNDED" },
 ];
 
 const statusClasses: Record<OrderStatus, string> = {
@@ -45,6 +48,9 @@ const statusClasses: Record<OrderStatus, string> = {
   PAID: "bg-info/15 text-info",
   SHIPPED: "bg-accent/15 text-accent",
   DELIVERED: "bg-success/15 text-success",
+  CANCELLED: "bg-destructive/15 text-destructive",
+  REFUND_PENDING: "bg-warning/15 text-warning",
+  REFUNDED: "bg-muted text-muted-foreground",
 };
 
 export default async function AdminOrdersPage({

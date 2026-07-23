@@ -54,6 +54,9 @@ Completed in the first hardening milestone:
   notifications, and referral qualification;
 - missed Paystack webhooks can now be reconciled through a protected scheduled job that verifies
   pending attempts with the provider and reuses the webhook's idempotent settlement transaction;
+- order fulfilment now follows a conditional state machine instead of arbitrary admin updates;
+  pending cancellation atomically releases inventory and abandons unresolved payments, while every
+  admin transition requires fresh authorization, a reason, and an audit record;
 - the protected outbox worker claims work safely, recovers stale locks, retries with exponential
   backoff, and retains exhausted events in a failed state;
 - receipt delivery uses provider idempotency, admin notifications use a database deduplication key,
@@ -659,7 +662,8 @@ Estimated engineering time: 3 to 6 days
 - centralize order-state transitions;
 - add expiry/release jobs;
 - make coupon, loyalty, and stock effects idempotent;
-- implement cancelled, failed, review, and refund states.
+- enforce cancelled, refund-pending, and refunded state transitions;
+- implement provider-driven refund initiation and completion on top of the new refund states.
 
 ### Phase 5: Durable background work and operations
 

@@ -158,11 +158,48 @@ const statusContent: Record<OrderStatus, (order: OrderLike, orderRef: string) =>
       `),
     }
   },
+
+  CANCELLED: (order, orderRef) => ({
+    subject: `Order Cancelled: #${orderRef}`,
+    html: baseLayout(`
+      <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 600; color: ${BRAND_COLOR};">Order Cancelled</h2>
+      <p style="margin: 0 0 12px; color: #555;">Hello ${order.user.name || "there"},</p>
+      <p style="color: #555;">Your order has been cancelled. No fulfilment will take place for this order.</p>
+      ${orderBox(orderRef, order.totalNGN)}
+      ${ctaButton("View Order", `${siteUrl}/account/orders/${order.id}`)}
+    `),
+  }),
+
+  REFUND_PENDING: (order, orderRef) => ({
+    subject: `Refund Processing: #${orderRef}`,
+    html: baseLayout(`
+      <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 600; color: ${BRAND_COLOR};">Refund Processing</h2>
+      <p style="margin: 0 0 12px; color: #555;">Hello ${order.user.name || "there"},</p>
+      <p style="color: #555;">A refund for this order is being processed. We will update you when the payment provider confirms completion.</p>
+      ${orderBox(orderRef, order.totalNGN)}
+    `),
+  }),
+
+  REFUNDED: (order, orderRef) => ({
+    subject: `Refund Completed: #${orderRef}`,
+    html: baseLayout(`
+      <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 600; color: ${BRAND_COLOR};">Refund Completed</h2>
+      <p style="margin: 0 0 12px; color: #555;">Hello ${order.user.name || "there"},</p>
+      <p style="color: #555;">The payment provider has confirmed your refund. Your bank may take additional time to display the funds.</p>
+      ${orderBox(orderRef, order.totalNGN)}
+    `),
+  }),
 }
 
 export async function sendOrderStatusUpdate(order: OrderLike, newStatus: OrderStatus) {
   const orderRef = order.reference || order.id.slice(0, 8).toUpperCase()
 
+  if (
+    process.env.NODE_ENV === "test" &&
+    process.env.ALLOW_TEST_EMAIL_DELIVERY !== "true"
+  ) {
+    return
+  }
   const resendKey = process.env.RESEND_API_KEY
   if (!resendKey) {
     console.log("[EMAIL] Order status update (no API key):", {
@@ -177,12 +214,15 @@ export async function sendOrderStatusUpdate(order: OrderLike, newStatus: OrderSt
   const { subject, html } = statusContent[newStatus](order, orderRef)
 
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: process.env.NEWSLETTER_FROM_EMAIL || "Fádé Essence <onboarding@resend.dev>",
       to: order.user.email,
       subject,
       html,
     })
+    if (result.error) {
+      throw new Error(`Resend rejected status delivery: ${result.error.name}`)
+    }
     console.log("[EMAIL] Order status update sent:", order.user.email, newStatus)
   } catch (error) {
     console.error("[EMAIL] Failed to send order status update:", error)

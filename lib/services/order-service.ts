@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import { OrderStatus, Prisma } from "@prisma/client"
+import { writeAudit } from "@/lib/audit"
+import { AppError } from "@/lib/http/errors"
+import { canAdminTransitionOrder } from "@/lib/orders/state-machine"
 
 export type AdminOrder = Prisma.OrderGetPayload<{
   include: {
@@ -97,44 +100,129 @@ export async function getAdminOrderById(id: string): Promise<AdminOrder | null> 
   })
 }
 
-export async function updateOrderStatus(id: string, status: OrderStatus) {
-  const order = await prisma.order.update({
-    where: { id },
-    data: { status },
-    include: {
-      user: {
-        select: { email: true, name: true },
+export async function updateOrderStatus(input: {
+  orderId: string
+  status: OrderStatus
+  actorId: string
+  reason: string
+}) {
+  const reason = input.reason.trim()
+  if (reason.length < 3 || reason.length > 500) {
+    throw new AppError("VALIDATION_ERROR", {
+      message: "A reason between 3 and 500 characters is required.",
+    })
+  }
+
+  const existing = await prisma.order.findUnique({
+    where: { id: input.orderId },
+    select: { status: true },
+  })
+  if (!existing) throw new AppError("NOT_FOUND")
+  if (!canAdminTransitionOrder(existing.status, input.status)) {
+    throw new AppError("VALIDATION_ERROR", {
+      message: `Order cannot move from ${existing.status} to ${input.status}.`,
+    })
+  }
+
+  const order = await prisma.$transaction(async (tx) => {
+    const transitioned = await tx.order.updateMany({
+      where: { id: input.orderId, status: existing.status },
+      data: { status: input.status },
+    })
+    if (transitioned.count !== 1) {
+      throw new AppError("VALIDATION_ERROR", {
+        message: "The order changed while this update was being processed.",
+      })
+    }
+
+    if (existing.status === "PENDING" && input.status === "CANCELLED") {
+      const reservations = await tx.inventoryReservation.findMany({
+        where: { orderId: input.orderId, status: "RESERVED" },
+        select: { id: true, productId: true, quantity: true },
+      })
+      for (const reservation of reservations) {
+        const released = await tx.inventoryReservation.updateMany({
+          where: { id: reservation.id, status: "RESERVED" },
+          data: {
+            status: "RELEASED",
+            releasedAt: new Date(),
+          },
+        })
+        if (released.count !== 1) {
+          throw new AppError("VALIDATION_ERROR", {
+            message: "Inventory changed while cancellation was processing.",
+          })
+        }
+        await tx.product.update({
+          where: { id: reservation.productId },
+          data: { stock: { increment: reservation.quantity } },
+        })
+        await tx.inventoryMovement.create({
+          data: {
+            productId: reservation.productId,
+            delta: reservation.quantity,
+            reason: "RESERVATION_CANCELLED",
+            sourceType: "ORDER",
+            sourceId: input.orderId,
+          },
+        })
+      }
+      await tx.paymentAttempt.updateMany({
+        where: {
+          orderId: input.orderId,
+          status: { in: ["INITIALIZED", "PENDING"] },
+        },
+        data: {
+          status: "ABANDONED",
+          failureCode: "ORDER_CANCELLED",
+        },
+      })
+    }
+
+    await tx.notification.create({
+      data: {
+        type: `ORDER_${input.status}`,
+        title: `Order ${input.status.toLowerCase()}`,
+        message: `Order status changed from ${existing.status.toLowerCase()} to ${input.status.toLowerCase()}`,
+        orderId: input.orderId,
+        dedupeKey: `order-status:${input.orderId}:${existing.status}:${input.status}`,
       },
-      items: {
-        include: {
-          product: {
-            select: { name: true, priceNGN: true },
+    })
+
+    return tx.order.findUniqueOrThrow({
+      where: { id: input.orderId },
+      include: {
+        user: { select: { email: true, name: true } },
+        items: {
+          include: {
+            product: {
+              select: { name: true, priceNGN: true, slug: true },
+            },
           },
         },
       },
+    })
+  })
+
+  await writeAudit({
+    actorId: input.actorId,
+    actorRole: "ADMIN",
+    action: "order.status.transition",
+    targetType: "Order",
+    targetId: input.orderId,
+    metadata: {
+      from: existing.status,
+      to: input.status,
+      reason,
     },
   })
 
   // Send email notification (best-effort, don't fail if email fails)
   try {
     const { sendOrderStatusUpdate } = await import("@/emails/sendOrderStatusUpdate")
-    await sendOrderStatusUpdate(order, status)
+    await sendOrderStatusUpdate(order, input.status)
   } catch (error) {
     console.error("Failed to send order status update email:", error)
-  }
-
-  // Create admin notification for status changes
-  try {
-    await prisma.notification.create({
-      data: {
-        type: `ORDER_${status}`,
-        title: `Order ${status.toLowerCase()}`,
-        message: `Order #${order.reference || order.id.slice(0, 8)} is now ${status.toLowerCase()}`,
-        orderId: order.id,
-      },
-    })
-  } catch (error) {
-    console.error("Failed to create notification:", error)
   }
 
   return order

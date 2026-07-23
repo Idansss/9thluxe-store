@@ -4,6 +4,7 @@ import { OrderStatus } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,6 +24,8 @@ import {
   getAdminOrderById,
   updateOrderStatus,
 } from "@/lib/services/order-service";
+import { requireAdmin } from "@/lib/admin";
+import { allowedAdminOrderTransitions } from "@/lib/orders/state-machine";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +38,9 @@ const statusOptions: { label: string; value: OrderStatus }[] = [
   { label: "Paid", value: "PAID" },
   { label: "Shipped", value: "SHIPPED" },
   { label: "Delivered", value: "DELIVERED" },
+  { label: "Cancelled", value: "CANCELLED" },
+  { label: "Refund pending", value: "REFUND_PENDING" },
+  { label: "Refunded", value: "REFUNDED" },
 ];
 
 const statusClasses: Record<OrderStatus, string> = {
@@ -45,6 +51,12 @@ const statusClasses: Record<OrderStatus, string> = {
     "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
   DELIVERED:
     "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  CANCELLED:
+    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  REFUND_PENDING:
+    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  REFUNDED:
+    "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200",
 };
 
 export default async function OrderDetailPage({
@@ -67,12 +79,30 @@ export default async function OrderDetailPage({
   async function updateStatusAction(formData: FormData) {
     "use server";
 
+    const admin = await requireAdmin();
     const { id: orderId } = await params;
-    const status = formData.get("status") as OrderStatus;
-    await updateOrderStatus(orderId, status);
+    const rawStatus = formData.get("status");
+    const reason = String(formData.get("reason") || "");
+    if (
+      typeof rawStatus !== "string" ||
+      !Object.values(OrderStatus).includes(rawStatus as OrderStatus)
+    ) {
+      throw new Error("Invalid order status");
+    }
+    await updateOrderStatus({
+      orderId,
+      status: rawStatus as OrderStatus,
+      actorId: admin.id,
+      reason,
+    });
 
     redirect(`/admin/orders/${orderId}`);
   }
+
+  const allowedTransitions = allowedAdminOrderTransitions(order.status);
+  const transitionOptions = statusOptions.filter((option) =>
+    allowedTransitions.includes(option.value),
+  );
 
   const itemsTotal = order.items.reduce(
     (total, item) => total + item.quantity,
@@ -95,9 +125,10 @@ export default async function OrderDetailPage({
             })}
           </p>
         </div>
+        {transitionOptions.length > 0 && (
         <form action={updateStatusAction} className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Status</span>
-          <Select name="status" defaultValue={order.status}>
+          <Select name="status" defaultValue={transitionOptions[0]?.value}>
             <SelectTrigger
               className="h-9 w-[180px] text-xs"
               aria-label="Order status"
@@ -105,17 +136,26 @@ export default async function OrderDetailPage({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {statusOptions.map((option) => (
+              {transitionOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Input
+            name="reason"
+            required
+            minLength={3}
+            maxLength={500}
+            placeholder="Reason or fulfilment note"
+            className="h-9 w-64"
+          />
           <Button type="submit" size="sm">
             Update
           </Button>
         </form>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -202,22 +242,6 @@ export default async function OrderDetailPage({
                   <span className="font-mono">{order.coupon.code}</span>
                 </div>
               )}
-              {order.paymentMethod === "BANK_TRANSFER" &&
-                order.status === "PENDING" && (
-                  <form
-                    action={updateStatusAction}
-                    className="pt-3 border-t border-border mt-2"
-                  >
-                    <input type="hidden" name="status" value="PAID" />
-                    <Button
-                      type="submit"
-                      size="sm"
-                      className="w-full bg-success text-success-foreground hover:bg-success/90"
-                    >
-                      ✓ Mark as Paid (Bank Transfer Received)
-                    </Button>
-                  </form>
-                )}
             </CardContent>
           </Card>
 
