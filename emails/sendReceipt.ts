@@ -16,6 +16,16 @@ type OrderLike = {
 }
 
 export async function sendReceipt(order: OrderLike, idempotencyKey?: string) {
+  if (
+    process.env.NODE_ENV === "test" &&
+    process.env.ALLOW_TEST_EMAIL_DELIVERY !== "true"
+  ) {
+    logger.warn("receipt_email_skipped", {
+      orderId: order.id,
+      reason: "email delivery disabled in tests",
+    })
+    return
+  }
   const resendKey = process.env.RESEND_API_KEY
   if (!resendKey) {
     logger.warn("receipt_email_skipped", {
@@ -105,12 +115,15 @@ export async function sendReceipt(order: OrderLike, idempotencyKey?: string) {
   `
 
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: process.env.NEWSLETTER_FROM_EMAIL || "Fádé Essence <onboarding@resend.dev>",
       to: order.user.email,
       subject: `Order Confirmation - Order #${orderRef}`,
       html,
     }, idempotencyKey ? { idempotencyKey } : undefined)
+    if (result.error) {
+      throw new Error(`Resend rejected receipt delivery: ${result.error.name}`)
+    }
     logger.info("receipt_email_sent", { orderId: order.id })
   } catch (error) {
     logger.error("receipt_email_failed", {

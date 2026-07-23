@@ -70,7 +70,11 @@ describe.skipIf(!hasDb)("transactional outbox (DB)", () => {
 
   it("processes order effects and deduplicates an event replay", async () => {
     await prisma.$transaction((tx) => enqueueOrderPaidEvents(tx, orderId))
-    const first = await processOutboxBatch({ limit: 10, workerId: `${tag}_worker` })
+    const first = await processOutboxBatch({
+      limit: 10,
+      workerId: `${tag}_worker`,
+      aggregateId: orderId,
+    })
     expect(first.processed).toBe(3)
 
     const events = await prisma.outboxEvent.findMany({
@@ -89,7 +93,11 @@ describe.skipIf(!hasDb)("transactional outbox (DB)", () => {
         processedAt: null,
       },
     })
-    const replay = await processOutboxBatch({ limit: 1, workerId: `${tag}_replay` })
+    const replay = await processOutboxBatch({
+      limit: 1,
+      workerId: `${tag}_replay`,
+      aggregateId: orderId,
+    })
     expect(replay.processed).toBe(1)
     expect(await prisma.notification.count({ where: { orderId } })).toBe(1)
   })
@@ -104,7 +112,11 @@ describe.skipIf(!hasDb)("transactional outbox (DB)", () => {
         maxAttempts: 1,
       },
     })
-    const result = await processOutboxBatch({ limit: 1, workerId: `${tag}_failure` })
+    const result = await processOutboxBatch({
+      limit: 1,
+      workerId: `${tag}_failure`,
+      aggregateId: orderId,
+    })
     expect(result.failed).toBe(1)
     expect((await prisma.outboxEvent.findUniqueOrThrow({
       where: { id: event.id },

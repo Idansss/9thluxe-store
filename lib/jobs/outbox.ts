@@ -115,10 +115,18 @@ async function recoverStaleClaims(now: Date) {
   })
 }
 
-async function claimNextEvent(workerId: string, now: Date) {
+async function claimNextEvent(
+  workerId: string,
+  now: Date,
+  aggregateId?: string,
+) {
   for (let collision = 0; collision < 5; collision += 1) {
     const candidate = await prisma.outboxEvent.findFirst({
-      where: { status: "PENDING", availableAt: { lte: now } },
+      where: {
+        status: "PENDING",
+        availableAt: { lte: now },
+        ...(aggregateId ? { aggregateId } : {}),
+      },
       orderBy: [{ availableAt: "asc" }, { createdAt: "asc" }],
     })
     if (!candidate) return null
@@ -146,7 +154,13 @@ function safeFailureCode(error: unknown): string {
 }
 
 export async function processOutboxBatch(
-  options: { limit?: number; workerId?: string; now?: Date } = {},
+  options: {
+    limit?: number
+    workerId?: string
+    now?: Date
+    /** Test/repair scope. Production workers omit this and scan the global queue. */
+    aggregateId?: string
+  } = {},
 ) {
   const limit = Math.min(Math.max(options.limit ?? 10, 1), 50)
   const workerId = options.workerId ?? `worker_${crypto.randomUUID()}`
@@ -157,7 +171,11 @@ export async function processOutboxBatch(
   let failed = 0
 
   for (let index = 0; index < limit; index += 1) {
-    const event = await claimNextEvent(workerId, new Date())
+    const event = await claimNextEvent(
+      workerId,
+      new Date(),
+      options.aggregateId,
+    )
     if (!event) break
     try {
       await handleOutboxEvent(event)

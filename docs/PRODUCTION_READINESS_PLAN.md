@@ -52,6 +52,8 @@ Completed in the first hardening milestone:
 - concurrent database tests prove only one checkout can claim the final available units;
 - the payment transaction now writes separate durable outbox events for receipts, admin
   notifications, and referral qualification;
+- missed Paystack webhooks can now be reconciled through a protected scheduled job that verifies
+  pending attempts with the provider and reuses the webhook's idempotent settlement transaction;
 - the protected outbox worker claims work safely, recovers stale locks, retries with exponential
   backoff, and retains exhausted events in a failed state;
 - receipt delivery uses provider idempotency, admin notifications use a database deduplication key,
@@ -80,9 +82,9 @@ Completed in the first hardening milestone:
 
 Still required before launch:
 
-- payment reconciliation and complete refund/order state handling;
+- complete refund/order state handling;
 - browser/Paystack integration tests and production staging certification;
-- scheduler configuration for the reservation-expiry and outbox-worker endpoints;
+- scheduler configuration for reservation expiry, outbox delivery, and payment reconciliation;
 - owner-supplied provider credentials, business details, brand assets, and approved policies.
 
 ## Audit findings
@@ -644,7 +646,7 @@ Estimated engineering time: 5 to 8 days
 - validate webhook amount, currency, status, and reference;
 - use constant-time signature comparison;
 - make the success page read-only;
-- add reconciliation and refund flows;
+- add refund flows;
 - add real Paystack test-mode integration tests.
 
 ### Phase 4: Inventory and order reliability
