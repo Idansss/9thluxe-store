@@ -65,7 +65,8 @@ export default async function ShippingPage() {
                     <strong>Duration:</strong> 1-2 business days
                   </p>
                   <p className="text-sm text-muted-foreground mb-2">
-                    <strong>Cost:</strong> ₦35,000
+                    <strong>Cost:</strong>{" "}
+                    {formatPrice(shipping.expressShippingFee)}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     For urgent orders, choose express delivery. Available in

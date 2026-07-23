@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { computeShipping, resolveLoyaltyTier, isSupportedCurrency } from '@/lib/config/commerce'
+import {
+  computeCheckoutShipping,
+  computeShipping,
+  resolveLoyaltyTier,
+  isSupportedCurrency,
+} from '@/lib/config/commerce'
 
 describe('shipping policy (config-driven, no hard-coded threshold)', () => {
   it('is free at or above the configured threshold (default 500,000)', () => {
@@ -9,6 +14,12 @@ describe('shipping policy (config-driven, no hard-coded threshold)', () => {
   it('charges the flat fee below the threshold', () => {
     expect(computeShipping(499_999)).toBe(2_500)
     expect(computeShipping(0)).toBe(2_500)
+  })
+  it('calculates delivery and gift wrapping entirely from server policy', () => {
+    expect(computeCheckoutShipping(100_000, 'standard', false)).toBe(2_500)
+    expect(computeCheckoutShipping(100_000, 'express', false)).toBe(35_000)
+    expect(computeCheckoutShipping(100_000, 'express', true)).toBe(37_500)
+    expect(computeCheckoutShipping(500_000, 'express', true)).toBe(2_500)
   })
 })
 

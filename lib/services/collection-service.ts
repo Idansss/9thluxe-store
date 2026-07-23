@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
 import { z } from "zod"
+import { invalidateCatalogueCache } from "@/lib/cache/catalogue"
 
 export const collectionInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -30,7 +31,7 @@ export async function getCollectionsWithCounts(): Promise<AdminCollection[]> {
 export async function createCollection(input: CollectionInput) {
   const data = collectionInputSchema.parse(input)
 
-  return prisma.collection.create({
+  const collection = await prisma.collection.create({
     data: {
       name: data.name,
       slug: data.slug,
@@ -39,12 +40,14 @@ export async function createCollection(input: CollectionInput) {
       seoDescription: data.seoDescription,
     },
   })
+  invalidateCatalogueCache()
+  return collection
 }
 
 export async function updateCollection(id: string, input: CollectionInput) {
   const data = collectionInputSchema.parse(input)
 
-  return prisma.collection.update({
+  const collection = await prisma.collection.update({
     where: { id },
     data: {
       name: data.name,
@@ -54,6 +57,8 @@ export async function updateCollection(id: string, input: CollectionInput) {
       seoDescription: data.seoDescription,
     },
   })
+  invalidateCatalogueCache()
+  return collection
 }
 
 export class CollectionInUseError extends Error {
@@ -84,4 +89,5 @@ export async function deleteCollection(id: string) {
   await prisma.collection.delete({
     where: { id },
   })
+  invalidateCatalogueCache()
 }

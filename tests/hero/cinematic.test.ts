@@ -13,4 +13,3 @@ describe("CinematicHeroScene", () => {
     expect(markup).toContain("tom-ford-oud-wood-bottle.webp")
   })
 })
-

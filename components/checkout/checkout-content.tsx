@@ -20,6 +20,8 @@ import type { Product } from "@/components/ui/product-card";
 
 import type { OrderPayload } from "./payment-form";
 
+import type { BankTransferConfig } from "@/lib/config/payment-methods";
+
 interface OrderItem {
   product: Product;
 
@@ -32,12 +34,24 @@ interface CheckoutContentProps {
   freeShippingThreshold?: number;
 
   flatShippingFee?: number;
+
+  expressShippingFee?: number;
+
+  giftWrapFee?: number;
+
+  bankTransfer?: BankTransferConfig | null;
+
+  paymentsEnabled?: boolean;
 }
 
 export function CheckoutContent({
   items: propItems = [],
   freeShippingThreshold = 500_000,
   flatShippingFee = 15000,
+  expressShippingFee = 35000,
+  giftWrapFee = 2500,
+  bankTransfer = null,
+  paymentsEnabled = false,
 }: CheckoutContentProps) {
   const router = useRouter();
 
@@ -109,10 +123,10 @@ export function CheckoutContent({
       subtotalNGN >= freeShippingThreshold
         ? 0
         : deliveryMethod === "express"
-          ? 35000
+          ? expressShippingFee
           : flatShippingFee;
 
-    const giftWrappingNGN = formData.giftWrapping ? 2500 : 0;
+    const giftWrappingNGN = formData.giftWrapping ? giftWrapFee : 0;
 
     const shippingNGN = baseShippingNGN + giftWrappingNGN;
 
@@ -137,6 +151,10 @@ export function CheckoutContent({
 
       couponId: couponId || null,
 
+      couponCode: couponCode || null,
+
+      deliveryMethod,
+
       isGift: formData.isGift,
 
       giftMessage: formData.giftMessage || undefined,
@@ -153,6 +171,9 @@ export function CheckoutContent({
     formData.giftWrapping,
     freeShippingThreshold,
     flatShippingFee,
+    expressShippingFee,
+    giftWrapFee,
+    couponCode,
   ]);
 
   // Redirect to cart only once the server cart has hydrated and is truly empty.
@@ -222,6 +243,7 @@ export function CheckoutContent({
               <ShippingForm
                 onNext={() => setCurrentStep(2)}
                 standardDeliveryFee={flatShippingFee}
+                expressDeliveryFee={expressShippingFee}
                 freeShippingThreshold={freeShippingThreshold}
                 deliveryMethod={deliveryMethod}
                 onDeliveryMethodChange={(method) => {
@@ -240,6 +262,8 @@ export function CheckoutContent({
                 onComplete={() => setCurrentStep(3)}
                 total={total}
                 orderPayload={orderPayload}
+                bankTransfer={bankTransfer}
+                paymentsEnabled={paymentsEnabled}
               />
             )}
           </div>
@@ -257,6 +281,7 @@ export function CheckoutContent({
               couponCode={couponCode}
               applyCoupon={applyCoupon}
               removeCoupon={removeCoupon}
+              giftWrapFee={giftWrapFee}
               onPaymentClick={() => {
                 const form = document.querySelector(
                   "form[data-payment-form]",

@@ -1,41 +1,81 @@
+import crypto from "node:crypto"
+
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
-import { rateLimit } from "@/lib/middleware/rate-limit"
-import { emailSchema, nameSchema, validateAndSanitize } from "@/lib/middleware/validate-input"
 import { z } from "zod"
 import { createContactSubmission } from "@/lib/forms/submissions"
+
+import { clientIp, consumeRateLimit } from "@/lib/middleware/limiter"
+import {
+  emailSchema,
+  nameSchema,
+  validateAndSanitize,
+} from "@/lib/middleware/validate-input"
+import {
+  renderContactOwnerEmail,
+  renderContactReplyEmail,
+} from "@/lib/notifications/contact-email"
+import { logger } from "@/lib/observability/logger"
+import { hasTrustedOrigin } from "@/lib/security/origin"
 
 const contactSchema = z.object({
   name: nameSchema,
   email: emailSchema,
   subject: z.string().min(1, "Subject is required").max(200),
   message: z.string().min(10, "Message too short").max(5000),
-})
-
-function getClientId(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "anonymous"
-}
+}).strict()
 
 const STORE_EMAIL = "fadeessencee@gmail.com"
-const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || "Fádé Essence <onboarding@resend.dev>"
-
-function escapeHtml(value: string): string {
-  const entities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }
-  return value.replace(/[&<>"']/g, (char) => entities[char])
-}
+const FROM_EMAIL =
+  process.env.NEWSLETTER_FROM_EMAIL ||
+  "Fade Essence <onboarding@resend.dev>"
 
 export async function POST(req: NextRequest) {
   try {
-    if (!rateLimit(getClientId(req), 5, 60 * 1000)) {
-      return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 })
+    if (!hasTrustedOrigin(req)) {
+      return NextResponse.json(
+        { error: "Request origin could not be verified" },
+        { status: 403 },
+      )
     }
 
-    const body = await req.json()
-    const validated = validateAndSanitize(contactSchema, body)
-    if (!validated.success) {
-      return NextResponse.json({ error: validated.error }, { status: 400 })
+    const ipLimit = await consumeRateLimit(
+      `contact:ip:${clientIp(req)}`,
+      5,
+      60 * 60 * 1000,
+    )
+    if (!ipLimit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again later." },
+        { status: 429 },
+      )
     }
+
+    const validated = validateAndSanitize(contactSchema, await req.json())
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: validated.error },
+        { status: 400 },
+      )
+    }
+
     const { name, email, subject, message } = validated.data
+    const normalizedEmail = email.toLowerCase().trim()
+    const emailHash = crypto
+      .createHash("sha256")
+      .update(normalizedEmail)
+      .digest("hex")
+    const emailLimit = await consumeRateLimit(
+      `contact:email:${emailHash}`,
+      3,
+      60 * 60 * 1000,
+    )
+    if (!emailLimit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again later." },
+        { status: 429 },
+      )
+    }
 
     // Keep the existing email flow operational during the staged migration rollout. Once the
     // FormSubmission migration is applied, every valid contact request is durably captured here.
@@ -50,64 +90,53 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const safeName = escapeHtml(name)
-    const safeEmail = escapeHtml(email)
-    const safeSubject = escapeHtml(subject)
-    const safeMessage = escapeHtml(message)
-
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
+      await resend.emails
+        .send({
+          from: FROM_EMAIL,
+          to: STORE_EMAIL,
+          replyTo: normalizedEmail,
+          subject: `Contact Form: ${subject}`,
+          html: renderContactOwnerEmail({
+            name,
+            email: normalizedEmail,
+            subject,
+            message,
+          }),
+        })
+        .catch((error) =>
+          logger.error("contact_owner_email_failed", {
+            internal: String(error),
+          }),
+        )
 
-      // Notify store owner
-      await resend.emails.send({
-        from: FROM_EMAIL,
-        to: STORE_EMAIL,
-        replyTo: email,
-        subject: `Contact Form: ${subject}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #2f3e33;">New Contact Form Submission</h2>
-            <p><strong>From:</strong> ${safeName} &lt;${safeEmail}&gt;</p>
-            <p><strong>Subject:</strong> ${safeSubject}</p>
-            <hr style="border: 1px solid #eee; margin: 20px 0;">
-            <p style="white-space: pre-wrap;">${safeMessage}</p>
-          </div>
-        `,
-      }).catch((err) => console.error("[CONTACT] Failed to send store notification:", err))
-
-      // Auto-reply to sender
-      await resend.emails.send({
-        from: FROM_EMAIL,
-        to: email,
-        subject: `We received your message · Fádé Essence`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: #2f3e33; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; font-family: serif;">Fádé Essence</h1>
-            </div>
-            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-              <h2 style="color: #2f3e33; margin-top: 0;">Thank you for reaching out, ${safeName}!</h2>
-              <p>We've received your message and will get back to you within 24–48 hours.</p>
-              <p><strong>Your message:</strong></p>
-              <blockquote style="border-left: 3px solid #2f3e33; margin: 0; padding: 10px 20px; background: white; border-radius: 0 4px 4px 0;">
-                <p style="white-space: pre-wrap; color: #555;">${safeMessage}</p>
-              </blockquote>
-              <p style="margin-top: 20px; color: #666; font-size: 14px;">
-                If you need urgent assistance, you can also reach us at ${STORE_EMAIL} or +234 8160591348.
-              </p>
-            </div>
-          </div>
-        `,
-      }).catch((err) => console.error("[CONTACT] Failed to send auto-reply:", err))
+      await resend.emails
+        .send({
+          from: FROM_EMAIL,
+          to: normalizedEmail,
+          subject: "We received your message - Fade Essence",
+          html: renderContactReplyEmail({ name, message }, STORE_EMAIL),
+        })
+        .catch((error) =>
+          logger.error("contact_reply_email_failed", {
+            internal: String(error),
+          }),
+        )
     } else {
-      console.log("[CONTACT] No RESEND_API_KEY, skipping email:", { name, email, subject })
+      logger.warn("contact_email_skipped", {
+        reason: "RESEND_API_KEY missing",
+      })
     }
 
+    return NextResponse.json({
+      message: "Thank you for contacting us! We'll get back to you soon.",
+    })
+  } catch (error) {
+    logger.error("contact_request_failed", { internal: String(error) })
     return NextResponse.json(
-      { message: "Thank you for contacting us! We'll get back to you soon." },
-      { status: 200 },
+      { error: "Failed to send message. Please try again." },
+      { status: 500 },
     )
-  } catch {
-    return NextResponse.json({ error: "Failed to send message. Please try again." }, { status: 500 })
   }
 }

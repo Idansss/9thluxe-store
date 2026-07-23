@@ -15,7 +15,7 @@ interface BrandPageProps {
 
 async function getDbBrands(): Promise<string[]> {
   const rows = await prisma.product.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, publishStatus: "PUBLISHED" },
     distinct: ["brand"],
     select: { brand: true },
   })
@@ -51,7 +51,11 @@ export default async function BrandCollectionPage({ params }: BrandPageProps) {
     brandName = resolveBrandFromSlug(brand, await getDbBrands())
     if (brandName) {
       const dbProducts = await prisma.product.findMany({
-        where: { brand: brandName, deletedAt: null },
+        where: {
+          brand: brandName,
+          deletedAt: null,
+          publishStatus: "PUBLISHED",
+        },
         orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
       })
       brandProducts = dbProducts.map(mapPrismaProductToCard)

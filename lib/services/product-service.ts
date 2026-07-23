@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { invalidateCatalogueCache } from "@/lib/cache/catalogue"
 import { Prisma, ProductCategory } from "@prisma/client"
 import { z } from "zod"
 
@@ -136,7 +137,7 @@ export async function getAdminProductById(id: string): Promise<AdminProduct | nu
 
 export async function getProductBySlug(slug: string) {
   return prisma.product.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, deletedAt: null, publishStatus: "PUBLISHED" },
   })
 }
 
@@ -152,6 +153,7 @@ export async function getProducts(params: {
 
   const where: Prisma.ProductWhereInput = {
     deletedAt: null, // Exclude soft-deleted products
+    publishStatus: "PUBLISHED",
   }
 
   if (category) where.category = category
@@ -172,6 +174,7 @@ export async function getProductsForSearch(query: string) {
     where: {
       OR: [{ name: { contains: query } }, { brand: { contains: query } }],
       deletedAt: null, // Exclude soft-deleted products
+      publishStatus: "PUBLISHED",
     },
     take: 10,
     orderBy: { createdAt: "desc" },
@@ -185,12 +188,13 @@ export async function getCartProducts(productIds: string[]) {
     where: {
       id: { in: productIds },
       deletedAt: null, // Exclude soft-deleted products
+      publishStatus: "PUBLISHED",
     },
   })
 }
 
 export async function createProduct(input: ProductInput) {
-  return prisma.product.create({
+  const product = await prisma.product.create({
     data: {
       name: input.name,
       slug: input.slug,
@@ -213,10 +217,12 @@ export async function createProduct(input: ProductInput) {
       sku: input.sku, barcode: input.barcode, launchYear: input.launchYear, perfumer: input.perfumer, countryOfOrigin: input.countryOfOrigin, concentration: input.concentration, longevity: input.longevity, sillage: input.sillage, intensity: input.intensity, sprayGuidance: input.sprayGuidance, climate: input.climate, season: input.season, timeOfDay: input.timeOfDay, occasion: input.occasion, weightGrams: input.weightGrams, shippingClass: input.shippingClass, reorderPoint: input.reorderPoint, dropDate: input.dropDate ? new Date(input.dropDate) : null, seoTitle: input.seoTitle, seoDescription: input.seoDescription, publishStatus: input.publishStatus, beginnerFriendly: input.beginnerFriendly, returnEligible: input.returnEligible, isPreorder: input.isPreorder, isWaitlist: input.isWaitlist,
     },
   })
+  invalidateCatalogueCache()
+  return product
 }
 
 export async function updateProduct(id: string, input: ProductInput) {
-  return prisma.product.update({
+  const product = await prisma.product.update({
     where: { id },
     data: {
       name: input.name,
@@ -240,6 +246,8 @@ export async function updateProduct(id: string, input: ProductInput) {
       sku: input.sku, barcode: input.barcode, launchYear: input.launchYear, perfumer: input.perfumer, countryOfOrigin: input.countryOfOrigin, concentration: input.concentration, longevity: input.longevity, sillage: input.sillage, intensity: input.intensity, sprayGuidance: input.sprayGuidance, climate: input.climate, season: input.season, timeOfDay: input.timeOfDay, occasion: input.occasion, weightGrams: input.weightGrams, shippingClass: input.shippingClass, reorderPoint: input.reorderPoint, dropDate: input.dropDate ? new Date(input.dropDate) : null, seoTitle: input.seoTitle, seoDescription: input.seoDescription, publishStatus: input.publishStatus, beginnerFriendly: input.beginnerFriendly, returnEligible: input.returnEligible, isPreorder: input.isPreorder, isWaitlist: input.isWaitlist,
     },
   })
+  invalidateCatalogueCache()
+  return product
 }
 
 export class ProductInUseError extends Error {
@@ -286,6 +294,7 @@ export async function deleteProduct(id: string): Promise<void> {
       where: { id },
       data: { deletedAt: new Date() },
     })
+    invalidateCatalogueCache()
     throw new ProductInUseError(
       `Cannot delete "${product.name}": it is referenced by ${orderItemsCount} order item(s). The product has been soft-deleted (hidden from listings).`
     )
@@ -295,6 +304,7 @@ export async function deleteProduct(id: string): Promise<void> {
   await prisma.product.delete({
     where: { id },
   })
+  invalidateCatalogueCache()
 }
 
 export async function getProductStats() {

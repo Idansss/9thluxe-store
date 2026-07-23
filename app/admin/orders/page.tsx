@@ -20,7 +20,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAdminOrders } from "@/lib/services/order-service";
+import {
+  countAdminOrders,
+  getAdminOrders,
+} from "@/lib/services/order-service";
 import type { OrderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +32,7 @@ interface AdminOrdersPageProps {
   searchParams?: Promise<{
     q?: string;
     status?: string;
+    page?: string;
   }>;
 }
 
@@ -38,6 +42,9 @@ const statusOptions: { label: string; value: "all" | OrderStatus }[] = [
   { label: "Paid", value: "PAID" },
   { label: "Shipped", value: "SHIPPED" },
   { label: "Delivered", value: "DELIVERED" },
+  { label: "Cancelled", value: "CANCELLED" },
+  { label: "Refund pending", value: "REFUND_PENDING" },
+  { label: "Refunded", value: "REFUNDED" },
 ];
 
 const statusClasses: Record<OrderStatus, string> = {
@@ -45,6 +52,9 @@ const statusClasses: Record<OrderStatus, string> = {
   PAID: "bg-info/15 text-info",
   SHIPPED: "bg-accent/15 text-accent",
   DELIVERED: "bg-success/15 text-success",
+  CANCELLED: "bg-destructive/15 text-destructive",
+  REFUND_PENDING: "bg-warning/15 text-warning",
+  REFUNDED: "bg-muted text-muted-foreground",
 };
 
 export default async function AdminOrdersPage({
@@ -53,15 +63,29 @@ export default async function AdminOrdersPage({
   const params = await searchParams;
   const q = params?.q?.toString() ?? "";
   const statusParam = params?.status?.toString() ?? "all";
+  const requestedPage = Number.parseInt(params?.page ?? "1", 10);
+  const page = Number.isFinite(requestedPage) && requestedPage > 0
+    ? requestedPage
+    : 1;
+  const pageSize = 25;
 
   const selectedStatus =
     statusOptions.find((option) => option.value === statusParam)?.value ??
     "all";
 
-  const orders = await getAdminOrders({
-    search: q || undefined,
-    status: selectedStatus,
-  });
+  const query = { search: q || undefined, status: selectedStatus };
+  const [orders, total] = await Promise.all([
+    getAdminOrders({ ...query, page, pageSize }),
+    countAdminOrders(query),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageHref = (nextPage: number) => {
+    const search = new URLSearchParams();
+    if (q) search.set("q", q);
+    if (selectedStatus !== "all") search.set("status", selectedStatus);
+    search.set("page", String(nextPage));
+    return `/admin/orders?${search.toString()}`;
+  };
 
   const formatPrice = (amount: number) =>
     new Intl.NumberFormat("en-NG", {
@@ -204,6 +228,25 @@ export default async function AdminOrdersPage({
               </TableBody>
             </Table>
           </div>
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Page {Math.min(page, totalPages)} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                {page > 1 && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={pageHref(page - 1)}>Previous</Link>
+                  </Button>
+                )}
+                {page < totalPages && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={pageHref(page + 1)}>Next</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

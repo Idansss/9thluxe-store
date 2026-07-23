@@ -20,6 +20,7 @@ export default async function FeaturedCollectionsPage() {
     dbProducts = await prisma.product.findMany({
       where: {
         deletedAt: null,
+        publishStatus: "PUBLISHED",
         OR: [
           { isBestseller: true },
           { isNew: true },

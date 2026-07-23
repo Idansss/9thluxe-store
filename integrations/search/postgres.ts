@@ -16,7 +16,10 @@ export const postgresSearch: SearchProvider = {
     const f = query.filters ?? {}
     const q = query.q?.trim()
 
-    const and: any[] = [{ deletedAt: null }]
+    const and: any[] = [
+      { deletedAt: null },
+      { publishStatus: 'PUBLISHED' },
+    ]
     if (f.brand) and.push({ brand: { equals: f.brand, mode: 'insensitive' } })
     if (f.family) and.push({ fragranceFamily: { equals: f.family, mode: 'insensitive' } })
     if (f.occasion) and.push({ occasion: { contains: f.occasion, mode: 'insensitive' } })

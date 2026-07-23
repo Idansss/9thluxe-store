@@ -73,7 +73,11 @@ async function reprice(cartId: string): Promise<CommerceCart> {
   const productIds = [...new Set(lines.map((l) => l.productId))]
   const products = productIds.length
     ? await prisma.product.findMany({
-        where: { id: { in: productIds }, deletedAt: null },
+        where: {
+          id: { in: productIds },
+          deletedAt: null,
+          publishStatus: 'PUBLISHED',
+        },
         select: { id: true, name: true, priceNGN: true, stock: true },
       })
     : []
@@ -112,7 +116,10 @@ export const localCommerce: CommerceProvider = {
   catalog: {
     async listProducts(query: CatalogQuery): Promise<Page<CommerceProduct>> {
       const limit = Math.min(Math.max(query.limit ?? 24, 1), 60)
-      const and: any[] = [{ deletedAt: null }]
+      const and: any[] = [
+        { deletedAt: null },
+        { publishStatus: 'PUBLISHED' },
+      ]
       if (query.brand) and.push({ brand: { equals: query.brand, mode: 'insensitive' } })
       if (query.family) and.push({ fragranceFamily: { equals: query.family, mode: 'insensitive' } })
       if (query.occasion) and.push({ occasion: { contains: query.occasion, mode: 'insensitive' } })
@@ -149,11 +156,15 @@ export const localCommerce: CommerceProvider = {
       return { items, nextCursor: hasMore ? rows[limit - 1].id : null }
     },
     async getProductBySlug(slug: string): Promise<CommerceProduct | null> {
-      const p = await prisma.product.findFirst({ where: { slug, deletedAt: null } })
+      const p = await prisma.product.findFirst({
+        where: { slug, deletedAt: null, publishStatus: 'PUBLISHED' },
+      })
       return p ? toProduct(p) : null
     },
     async getProductById(id: string): Promise<CommerceProduct | null> {
-      const p = await prisma.product.findFirst({ where: { id, deletedAt: null } })
+      const p = await prisma.product.findFirst({
+        where: { id, deletedAt: null, publishStatus: 'PUBLISHED' },
+      })
       return p ? toProduct(p) : null
     },
     async listCollections() {
@@ -260,7 +271,11 @@ export const localCommerce: CommerceProvider = {
     async revalidate(lines: CartLineInput[]) {
       const ids = [...new Set(lines.map((l) => l.productId))]
       const products = await prisma.product.findMany({
-        where: { id: { in: ids }, deletedAt: null },
+        where: {
+          id: { in: ids },
+          deletedAt: null,
+          publishStatus: 'PUBLISHED',
+        },
         select: { id: true, stock: true },
       })
       const map = new Map(products.map((p) => [p.id, p.stock]))

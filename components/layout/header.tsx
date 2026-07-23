@@ -72,6 +72,7 @@ export function Header({
 } = {}) {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [hasMounted, setHasMounted] = React.useState(false);
   const cartItemCount = useCartStore((state) => state.getUniqueItemsCount());
   const chrome = useSiteChrome();
 
@@ -85,6 +86,7 @@ export function Header({
   );
 
   React.useEffect(() => {
+    setHasMounted(true);
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -262,7 +264,7 @@ export function Header({
                     className="h-[18px] w-[18px] shrink-0"
                     strokeWidth={1.75}
                   />
-                  {cartItemCount > 0 && (
+                  {hasMounted && cartItemCount > 0 && (
                     <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[10px] text-accent-foreground">
                       {cartItemCount > 99 ? "99+" : cartItemCount}
                     </span>

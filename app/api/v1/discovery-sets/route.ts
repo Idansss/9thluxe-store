@@ -50,7 +50,11 @@ export const POST = route(async ({ req }) => {
   // Price + stock come from the DB (never trust client prices).
   const productIds = [...new Set(body.items.map((i) => i.productId))]
   const products = await prisma.product.findMany({
-    where: { id: { in: productIds }, deletedAt: null },
+    where: {
+      id: { in: productIds },
+      deletedAt: null,
+      publishStatus: "PUBLISHED",
+    },
     select: { id: true, priceNGN: true, stock: true, variants: { select: { id: true, priceNGN: true, stock: true } } },
   })
   const pMap = new Map(products.map((p) => [p.id, p]))

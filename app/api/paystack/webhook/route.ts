@@ -1,133 +1,185 @@
-// app/api/paystack/webhook/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
-import { prisma } from '@/lib/prisma'
-import { sendReceipt } from '@/emails/sendReceipt'
-import { recordWebhookOnce } from '@/lib/webhooks/idempotency'
-import { resolveLoyaltyTier } from '@/lib/config/commerce'
-import { pointsForOrder } from '@/lib/loyalty/points'
-import { reversePointsForOrder } from '@/lib/loyalty/service'
-import { qualifyReferral } from '@/lib/referrals/service'
+import { NextRequest, NextResponse } from "next/server"
 
-function verify(reqBody: string, signature?: string) {
-  const secret = process.env.PAYSTACK_SECRET_KEY || ''
-  if (!secret || !signature) return false
-  const hash = crypto.createHmac('sha512', secret).update(reqBody).digest('hex')
-  return hash === signature
-}
+import { getPayments } from "@/integrations/registry"
+import type { ProviderRefundStatus } from "@/integrations/payments/types"
+import { logger } from "@/lib/observability/logger"
+import { settleSuccessfulPayment } from "@/lib/payments/settlement"
+import { settleRefundStatus } from "@/lib/refunds/settlement"
+
+export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {
   const raw = await req.text()
-  const signature = req.headers.get('x-paystack-signature') || undefined
-  if (!verify(raw, signature)) return NextResponse.json({ error: 'invalid_signature' }, { status: 401 })
+  const signature = req.headers.get("x-paystack-signature")
+  const provider = getPayments()
 
-  const evt = JSON.parse(raw)
-  if (evt?.event === 'charge.success') {
-    const ref = evt?.data?.reference as string | undefined
-    const orderId = evt?.data?.metadata?.orderId as string | undefined
+  if (provider.name !== "paystack") {
+    return NextResponse.json(
+      { error: "payment_provider_unavailable" },
+      { status: 503 },
+    )
+  }
 
-    // Durable replay protection: process each event id at most once.
-    const eventId = String(evt?.id ?? evt?.data?.id ?? ref ?? orderId ?? '')
-    if (eventId) {
-      const first = await recordWebhookOnce('paystack', eventId, evt.event)
-      if (!first) return NextResponse.json({ ok: true })
+  const verified = provider.verifyWebhook(raw, signature)
+  if (!verified.valid) {
+    return NextResponse.json({ error: "invalid_signature" }, { status: 401 })
+  }
+
+  let rawEvent: Record<string, any>
+  try {
+    rawEvent = JSON.parse(raw)
+  } catch {
+    return NextResponse.json({ error: "invalid_payload" }, { status: 400 })
+  }
+
+  const eventId = String(
+    rawEvent?.id ??
+      rawEvent?.data?.id ??
+      verified.reference ??
+      verified.orderId ??
+      "",
+  )
+
+  if (verified.event === "charge.success") {
+    const { orderId, reference, amountNGN, currency, status } = verified
+    if (
+      !orderId ||
+      !reference ||
+      amountNGN == null ||
+      !currency ||
+      !status
+    ) {
+      logger.warn("paystack_webhook_incomplete", { eventId })
+      return NextResponse.json({ ok: true, ignored: "incomplete" })
     }
 
-    if (orderId) {
-      // Fetch order items first so we can decrement stock
-      const existingOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        select: { status: true, couponId: true, items: { select: { productId: true, quantity: true } } },
+    try {
+      const result = await settleSuccessfulPayment({
+        orderId,
+        reference,
+        amountNGN,
+        currency,
+        providerStatus: status,
+        providerTransactionId:
+          rawEvent?.data?.id == null ? null : String(rawEvent.data.id),
+        receipt: eventId
+          ? { provider: "paystack", eventId, topic: verified.event }
+          : undefined,
       })
 
-      // Guard: skip if already paid (duplicate webhook)
-      if (!existingOrder || existingOrder.status === 'PAID') {
-        return NextResponse.json({ ok: true })
+      if (result.outcome === "unknown") {
+        logger.warn("paystack_webhook_unknown_attempt", {
+          eventId,
+          reference,
+          orderId,
+        })
+        return NextResponse.json({ ok: true, ignored: "unknown_attempt" })
       }
-
-      // Atomically: mark PAID, decrement stock, increment coupon usage, update loyalty
-      const order = await prisma.$transaction(async (tx) => {
-        const updated = await tx.order.update({
-          where: { id: orderId },
-          data: { status: 'PAID', reference: ref ?? null },
-          include: { user: true, items: { include: { product: true } }, coupon: true },
+      if (result.outcome === "mismatch") {
+        logger.error("paystack_webhook_payment_mismatch", {
+          eventId,
+          reference,
+          orderId: result.orderId,
+          attemptStatus: result.attemptStatus,
+          expectedAmountNGN: result.expectedAmountNGN,
+          orderAmountNGN: result.orderAmountNGN,
+          receivedAmountNGN: amountNGN,
+          expectedCurrency: result.expectedCurrency,
+          receivedCurrency: currency,
         })
-
-        // Decrement stock for each ordered product
-        await Promise.all(
-          existingOrder.items.map((item) =>
-            tx.product.update({
-              where: { id: item.productId },
-              data: { stock: { decrement: item.quantity } },
-            })
-          )
-        )
-
-        // Increment coupon usage if one was applied
-        if (existingOrder.couponId) {
-          await tx.coupon.update({
-            where: { id: existingOrder.couponId },
-            data: { usedCount: { increment: 1 } },
+        return NextResponse.json({ ok: true, ignored: "payment_mismatch" })
+      }
+      if (result.outcome === "duplicate") {
+        if (
+          result.paidReference &&
+          result.paidReference !== reference
+        ) {
+          logger.error("duplicate_successful_payment", {
+            orderId: result.orderId,
+            reference,
           })
         }
-
-        // Update user loyalty tier and lifetime spend (thresholds from commerce config)
-        const updatedUser = await tx.user.update({
-          where: { id: updated.userId },
-          data: { totalLifetimeSpend: { increment: updated.totalNGN } },
-          select: { totalLifetimeSpend: true },
-        })
-        await tx.user.update({
-          where: { id: updated.userId },
-          data: { loyaltyTier: resolveLoyaltyTier(updatedUser.totalLifetimeSpend) },
-        })
-
-        // Accrue loyalty points (earning is always recorded; redemption stays flag-gated).
-        // Idempotent: the already-PAID + WebhookReceipt guards prevent double-earn.
-        const points = pointsForOrder(updated.totalNGN)
-        if (points > 0) {
-          const prior = await tx.loyaltyLedger.aggregate({
-            where: { userId: updated.userId },
-            _sum: { delta: true },
-          })
-          const balanceAfter = (prior._sum.delta ?? 0) + points
-          await tx.loyaltyLedger.create({
-            data: { userId: updated.userId, delta: points, reason: 'order_earn', balanceAfter, orderId: updated.id },
-          })
-        }
-
-        return updated
+        return NextResponse.json({ ok: true, duplicate: true })
+      }
+    } catch (error) {
+      logger.error("paystack_webhook_processing_failed", {
+        eventId,
+        orderId,
+        internal: String(error),
       })
-
-      // send receipt (best-effort)
-      await sendReceipt(order).catch(() => {})
-
-      // Qualify any pending referral for this customer's first paid order (best-effort, idempotent).
-      await qualifyReferral(order.userId, order.id).catch(() => {})
-
-      // Create notification for admin
-      await prisma.notification.create({
-        data: {
-          type: 'ORDER_PAID',
-          title: 'New Order Payment',
-          message: `Order #${order.reference || order.id.slice(0, 8)} has been paid. Total: ₦${order.totalNGN.toLocaleString()}`,
-          orderId: order.id,
-        }
-      }).catch(() => {}) // Don't fail if notification creation fails
+      return NextResponse.json(
+        { error: "processing_failed" },
+        { status: 500 },
+      )
     }
-  } else if (evt?.event === 'refund.processed' || evt?.event === 'charge.refunded') {
-    // Reverse loyalty points earned for the refunded order. Idempotent + replay-guarded.
-    const ref = (evt?.data?.transaction?.reference ?? evt?.data?.reference) as string | undefined
-    const eventId = String(evt?.id ?? evt?.data?.id ?? ref ?? '')
-    if (eventId) {
-      const first = await recordWebhookOnce('paystack', eventId, evt.event)
-      if (!first) return NextResponse.json({ ok: true })
+  } else if (
+    verified.event?.startsWith("refund.") ||
+    verified.event === "charge.refunded"
+  ) {
+    const refundStatus: ProviderRefundStatus =
+      verified.event === "charge.refunded"
+        ? "processed"
+        : verified.event === "refund.processed"
+          ? "processed"
+          : verified.event === "refund.failed"
+            ? "failed"
+            : verified.event === "refund.needs-attention"
+              ? "needs_attention"
+              : verified.event === "refund.processing"
+                ? "processing"
+                : "pending"
+    const data = rawEvent?.data ?? {}
+    const paymentReference =
+      data?.transaction?.reference ?? data?.reference ?? null
+    const amountNGN =
+      typeof data?.amount === "number"
+        ? Math.round(data.amount / 100)
+        : null
+    const currency = data?.currency
+    if (!eventId || !paymentReference || amountNGN == null || !currency) {
+      logger.warn("paystack_refund_webhook_incomplete", {
+        eventId,
+        topic: verified.event,
+      })
+      return NextResponse.json({ ok: true, ignored: "incomplete" })
     }
-    if (ref) {
-      const order = await prisma.order.findUnique({ where: { reference: ref }, select: { id: true, userId: true } })
-      if (order) {
-        await reversePointsForOrder(order.userId, order.id).catch(() => {})
+
+    try {
+      const result = await settleRefundStatus({
+        providerRefundId:
+          data?.id == null ? null : String(data.id),
+        paymentReference,
+        status: refundStatus,
+        amountNGN,
+        currency,
+        receipt: {
+          provider: "paystack",
+          eventId: `${eventId}:${verified.event}`,
+          topic: verified.event,
+        },
+      })
+      if (result.outcome === "mismatch" || result.outcome === "unknown") {
+        logger.error("paystack_refund_webhook_unmatched", {
+          eventId,
+          paymentReference,
+          outcome: result.outcome,
+        })
       }
+      return NextResponse.json({
+        ok: true,
+        duplicate: result.outcome === "duplicate",
+        outcome: result.outcome,
+      })
+    } catch (error) {
+      logger.error("paystack_refund_webhook_processing_failed", {
+        eventId,
+        paymentReference,
+        internal: String(error),
+      })
+      return NextResponse.json(
+        { error: "processing_failed" },
+        { status: 500 },
+      )
     }
   }
 

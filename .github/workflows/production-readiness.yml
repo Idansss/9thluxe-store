@@ -1,0 +1,92 @@
+name: Production readiness
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Validate application and database
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ninthluxe_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ninthluxe_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      CI: true
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ninthluxe_ci
+      APP_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      NEXTAUTH_URL: http://127.0.0.1:3000
+      AUTH_SECRET: ci-only-auth-secret-at-least-32-characters
+      PAYSTACK_SECRET_KEY: sk_test_ci_placeholder
+      PAYSTACK_PUBLIC_KEY: pk_test_ci_placeholder
+      RESEND_API_KEY: re_ci_placeholder
+      NEWSLETTER_FROM_EMAIL: CI <ci@example.test>
+      CRON_SECRET: ci-only-cron-secret-at-least-32-characters
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Apply migrations to temporary PostgreSQL
+        run: npx prisma migrate deploy
+
+      - name: Verify migration status
+        run: npx prisma migrate status
+
+      - name: Validate seed
+        run: npm run seed
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit and database integration tests
+        run: npm test
+
+      - name: Build production application
+        env:
+          UPSTASH_REDIS_REST_URL: https://redis.invalid
+          UPSTASH_REDIS_REST_TOKEN: ci-placeholder
+        run: npm run build

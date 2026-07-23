@@ -18,27 +18,63 @@ enum OrderStatus {
   PAID
   SHIPPED
   DELIVERED
+  CANCELLED
+  REFUND_PENDING
+  REFUNDED
+}
+
+enum PaymentAttemptStatus {
+  INITIALIZED
+  PENDING
+  SUCCEEDED
+  FAILED
+  ABANDONED
+  REFUNDED
+}
+
+enum RefundStatus {
+  REQUESTED
+  PENDING
+  PROCESSING
+  NEEDS_ATTENTION
+  PROCESSED
+  FAILED
+}
+
+enum InventoryReservationStatus {
+  RESERVED
+  SOLD
+  RELEASED
+  EXPIRED
+}
+
+enum InventoryMovementReason {
+  RESERVATION_CREATED
+  RESERVATION_EXPIRED
+  RESERVATION_CANCELLED
+  SALE_AFTER_EXPIRY
+  LEGACY_SALE
+  RETURN
+  ADJUSTMENT
 }
 
 model User {
-  id               String    @id @default(cuid())
+  id               String     @id @default(cuid())
   name             String?
-  email            String    @unique
+  email            String     @unique
   passwordHash     String
-  role             Role      @default(USER)
+  role             Role       @default(USER)
   adminRole        AdminRole? // scopes admin capabilities; NULL + role=ADMIN ⇒ SUPER_ADMIN
-  marketingEmails  Boolean   @default(true)
-  smsNotifications Boolean   @default(false)
-  orderUpdates     Boolean   @default(true)
-  wishlistAlerts   Boolean   @default(false)
+  marketingEmails  Boolean    @default(true)
+  smsNotifications Boolean    @default(false)
+  orderUpdates     Boolean    @default(true)
+  wishlistAlerts   Boolean    @default(false)
   customerTags     String?
   customerNotes    String?
   customerSegment  String?
-  customerStatus   String    @default("ACTIVE")
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  customerStatus   String     @default("ACTIVE")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   // Loyalty & referral
   loyaltyTier        String  @default("STANDARD") // STANDARD | OBSIDIAN | GOLD | PLATINUM
@@ -64,7 +100,9 @@ model User {
   backInStockSubs        BackInStockSubscription[]
   conciergeConversations ConciergeConversation[]
   conciergeUsage         ConciergeUsageEvent[]
+  passwordResetTokens    PasswordResetToken[]
   conciergeFeedback      ConciergeFeedback[]
+  checkoutAttempts       CheckoutAttempt[]
 }
 
 model Category {
@@ -78,24 +116,24 @@ model Category {
 }
 
 model Product {
-  id          String          @id @default(cuid())
-  name        String
-  slug        String          @unique
-  description String
-  seoTitle    String?
+  id             String          @id @default(cuid())
+  name           String
+  slug           String          @unique
+  description    String
+  seoTitle       String?
   seoDescription String?
-  images      Json // store image array as JSON
-  priceNGN    Int
-  oldPriceNGN Int?
-  currency    String          @default("NGN")
-  category    ProductCategory
-  brand       String?
-  productType String? // perfume
-  notesTop    String?
-  notesHeart  String?
-  notesBase   String?
-  longevity   String?
-  occasion    String?
+  images         Json // store image array as JSON
+  priceNGN       Int
+  oldPriceNGN    Int?
+  currency       String          @default("NGN")
+  category       ProductCategory
+  brand          String?
+  productType    String? // perfume
+  notesTop       String?
+  notesHeart     String?
+  notesBase      String?
+  longevity      String?
+  occasion       String?
 
   // --- Perfume identity ---
   shopifyId       String?       @unique
@@ -157,18 +195,20 @@ model Product {
   ratingCount Int   @default(0)
 
   // relations
-  collectionId    String?
-  collection      Collection?               @relation(fields: [collectionId], references: [id])
-  orderItems      OrderItem[]
-  wishlists       Wishlist[]
-  reviews         Review[]
-  variants        ProductVariant[]
-  media           ProductMedia[]
-  backInStockSubs BackInStockSubscription[]
-  storyLinks      StoryProduct[]
-  campaignLinks   CampaignProduct[]
-  relatedFrom     ProductRelation[] @relation("RelatedFrom")
-  relatedTo       ProductRelation[] @relation("RelatedTo")
+  collectionId          String?
+  collection            Collection?               @relation(fields: [collectionId], references: [id])
+  orderItems            OrderItem[]
+  wishlists             Wishlist[]
+  reviews               Review[]
+  variants              ProductVariant[]
+  media                 ProductMedia[]
+  backInStockSubs       BackInStockSubscription[]
+  inventoryReservations InventoryReservation[]
+  inventoryMovements    InventoryMovement[]
+  storyLinks            StoryProduct[]
+  campaignLinks         CampaignProduct[]
+  relatedFrom           ProductRelation[]         @relation("RelatedFrom")
+  relatedTo             ProductRelation[]         @relation("RelatedTo")
 
   @@index([name])
   @@index([category])
@@ -209,6 +249,7 @@ model Review {
   user    User    @relation(fields: [userId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 
+  @@unique([userId, productId])
   @@index([productId, createdAt])
   @@index([userId])
   @@index([moderationStatus])
@@ -228,7 +269,7 @@ model Coupon {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  orders Order[]
+  orders    Order[]
   campaigns Campaign[]
 }
 
@@ -263,6 +304,7 @@ model Notification {
   title     String
   message   String
   orderId   String?
+  dedupeKey String?   @unique
   read      Boolean   @default(false)
   createdAt DateTime  @default(now())
   readAt    DateTime?
@@ -308,8 +350,12 @@ model Order {
   // Payment method
   paymentMethod String @default("CARD") // CARD | BANK_TRANSFER
 
-  reference String?     @unique
-  items     OrderItem[]
+  reference             String?                @unique
+  items                 OrderItem[]
+  paymentAttempts       PaymentAttempt[]
+  checkoutAttempt       CheckoutAttempt?
+  inventoryReservations InventoryReservation[]
+  refund                Refund?
 
   // Shipping/contact snapshot
   addressLine1 String
@@ -328,6 +374,109 @@ model Order {
   @@index([status, createdAt])
 }
 
+model CheckoutAttempt {
+  id             String   @id @default(cuid())
+  userId         String
+  orderId        String   @unique
+  idempotencyKey String
+  requestHash    String
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime
+
+  user  User  @relation(fields: [userId], references: [id])
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@unique([userId, idempotencyKey])
+  @@index([expiresAt])
+}
+
+model PaymentAttempt {
+  id                    String               @id @default(cuid())
+  orderId               String
+  provider              String               @default("paystack")
+  providerReference     String               @unique
+  idempotencyKey        String               @unique
+  expectedAmountNGN     Int
+  expectedCurrency      String
+  status                PaymentAttemptStatus @default(INITIALIZED)
+  authorizationUrl      String?
+  providerTransactionId String?
+  failureCode           String?
+  initializedAt         DateTime?
+  verifiedAt            DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  order  Order   @relation(fields: [orderId], references: [id])
+  refund Refund?
+
+  @@index([orderId, status])
+  @@index([status, createdAt])
+}
+
+model Refund {
+  id                  String       @id @default(cuid())
+  orderId             String       @unique
+  paymentAttemptId    String       @unique
+  provider            String       @default("paystack")
+  providerRefundId    String?      @unique
+  idempotencyKey      String       @unique
+  amountNGN           Int
+  currency            String
+  reason              String
+  previousOrderStatus OrderStatus
+  restock             Boolean      @default(false)
+  status              RefundStatus @default(REQUESTED)
+  initiatedBy         String?
+  failureCode         String?
+  requestedAt         DateTime     @default(now())
+  processedAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  order          Order          @relation(fields: [orderId], references: [id])
+  paymentAttempt PaymentAttempt @relation(fields: [paymentAttemptId], references: [id])
+
+  @@index([status, createdAt])
+}
+
+model InventoryReservation {
+  id          String                     @id @default(cuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  status      InventoryReservationStatus @default(RESERVED)
+  expiresAt   DateTime
+  reservedAt  DateTime                   @default(now())
+  finalizedAt DateTime?
+  releasedAt  DateTime?
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([orderId, productId])
+  @@index([status, expiresAt])
+  @@index([productId, status])
+}
+
+model InventoryMovement {
+  id         String                  @id @default(cuid())
+  productId  String
+  delta      Int
+  reason     InventoryMovementReason
+  sourceType String
+  sourceId   String
+  createdAt  DateTime                @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([productId, reason, sourceType, sourceId])
+  @@index([productId, createdAt])
+  @@index([sourceType, sourceId])
+}
+
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
@@ -342,14 +491,14 @@ model OrderItem {
 }
 
 model Collection {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  seoTitle    String?
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  description    String?
+  seoTitle       String?
   seoDescription String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   products Product[]
 }
@@ -400,6 +549,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt, usedAt])
 }
 
 enum Role {
@@ -763,6 +925,29 @@ model JobRun {
   @@index([status, createdAt])
 }
 
+model OutboxEvent {
+  id             String    @id @default(cuid())
+  type           String
+  aggregateType  String
+  aggregateId    String
+  payload        Json?
+  idempotencyKey String    @unique
+  status         JobStatus @default(PENDING)
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(8)
+  availableAt    DateTime  @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  processedAt    DateTime?
+  lastError      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status, availableAt])
+  @@index([aggregateType, aggregateId])
+  @@index([lockedAt])
+}
+
 model FeatureFlag {
   id          String   @id @default(cuid())
   key         String   @unique
@@ -881,15 +1066,15 @@ model PerfumeKnowledgeEntry {
 // ------------------------------------------------------------------
 
 model Story {
-  id             String        @id @default(cuid())
-  slug           String        @unique
-  title          String
-  subtitle       String?
-  excerpt        String?
-  category       String? // e.g. "Fragrance Guide", "How To", "Seasonal"
-  readTime       String? // e.g. "5 min read"
-  author         String?
-  tags           String? // comma-separated
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  title    String
+  subtitle String?
+  excerpt  String?
+  category String? // e.g. "Fragrance Guide", "How To", "Seasonal"
+  readTime String? // e.g. "5 min read"
+  author   String?
+  tags     String? // comma-separated
 
   coverImageUrl  String?
   mobileCoverUrl String?
@@ -898,9 +1083,9 @@ model Story {
   seoTitle       String?
   seoDescription String?
 
-  status       PublishStatus @default(DRAFT)
-  featured     Boolean       @default(false)
-  position     Int           @default(0) // manual ordering (lower = earlier)
+  status   PublishStatus @default(DRAFT)
+  featured Boolean       @default(false)
+  position Int           @default(0) // manual ordering (lower = earlier)
 
   publishedAt  DateTime?
   scheduledFor DateTime? // scheduled publish time
@@ -979,18 +1164,18 @@ model PageBlock {
 // Durable inbox for public forms. The initial source is the contact form; source stays explicit
 // so product enquiries and other forms can join without another table.
 model FormSubmission {
-  id          String               @id @default(cuid())
-  source      String               @default("contact")
-  name        String?
-  email       String
-  subject     String?
-  message     String
-  status      FormSubmissionStatus @default(NEW)
-  notes       String?
-  metadata    Json?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  resolvedAt  DateTime?
+  id         String               @id @default(cuid())
+  source     String               @default("contact")
+  name       String?
+  email      String
+  subject    String?
+  message    String
+  status     FormSubmissionStatus @default(NEW)
+  notes      String?
+  metadata   Json?
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  resolvedAt DateTime?
 
   @@index([status, createdAt])
   @@index([source, createdAt])
@@ -1072,23 +1257,23 @@ model MediaAsset {
 }
 
 model Campaign {
-  id             String        @id @default(cuid())
-  slug           String        @unique
-  title          String
-  description    String?
-  desktopImage   String?
-  mobileImage    String?
-  ctaLabel       String?
-  ctaHref        String?
-  status         PublishStatus @default(DRAFT)
-  startsAt       DateTime?
-  endsAt         DateTime?
-  couponId       String?
-  coupon         Coupon?       @relation(fields: [couponId], references: [id])
-  createdBy      String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  products       CampaignProduct[]
+  id           String            @id @default(cuid())
+  slug         String            @unique
+  title        String
+  description  String?
+  desktopImage String?
+  mobileImage  String?
+  ctaLabel     String?
+  ctaHref      String?
+  status       PublishStatus     @default(DRAFT)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  couponId     String?
+  coupon       Coupon?           @relation(fields: [couponId], references: [id])
+  createdBy    String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  products     CampaignProduct[]
 
   @@index([status, startsAt, endsAt])
 }
@@ -1140,13 +1325,13 @@ model ProductRelation {
 }
 
 model EmailTemplate {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  name        String
-  subject     String
-  bodyText    String
-  enabled     Boolean  @default(false)
-  updatedBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  subject   String
+  bodyText  String
+  enabled   Boolean  @default(false)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -42,6 +42,32 @@ export const mockPaymentProvider: PaymentProvider = {
     }
   },
 
+  async refund(input) {
+    if (!isSupportedCurrency(input.currency)) {
+      throw new AppError('CURRENCY_INVALID')
+    }
+    if (!Number.isInteger(input.amountNGN) || input.amountNGN <= 0) {
+      throw new AppError('VALIDATION_ERROR', {
+        message: 'Invalid refund amount.',
+      })
+    }
+    return {
+      providerRefundId: `mock_refund_${input.reference}`,
+      status: 'processing',
+      amountNGN: input.amountNGN,
+      currency: input.currency,
+    }
+  },
+
+  async verifyRefund(providerRefundId, expected) {
+    return {
+      providerRefundId,
+      status: 'processing',
+      amountNGN: expected.amountNGN,
+      currency: expected.currency,
+    }
+  },
+
   verifyWebhook(rawBody: string, signature: string | null): WebhookVerification {
     if (!signature) return { valid: false }
     const computed = crypto.createHmac('sha512', MOCK_SECRET).update(rawBody).digest('hex')

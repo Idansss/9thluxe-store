@@ -53,7 +53,11 @@ export async function getProductsByCategory(categorySlug: string) {
   if (!category) return []
 
   const products = await prisma.product.findMany({
-    where: { category },
+    where: {
+      category,
+      deletedAt: null,
+      publishStatus: "PUBLISHED",
+    },
     orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
   })
 
@@ -61,8 +65,8 @@ export async function getProductsByCategory(categorySlug: string) {
 }
 
 export async function getProductBySlug(slug: string) {
-  const product = await prisma.product.findUnique({
-    where: { slug },
+  const product = await prisma.product.findFirst({
+    where: { slug, deletedAt: null, publishStatus: "PUBLISHED" },
     include: {
       reviews: {
         where: { approved: true },
@@ -94,6 +98,8 @@ export async function getRelatedProducts(
     where: {
       id: { not: productId },
       category,
+      deletedAt: null,
+      publishStatus: "PUBLISHED",
       ...(brand ? { brand } : {}),
     },
     orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
@@ -105,6 +111,8 @@ export async function getRelatedProducts(
       where: {
         id: { notIn: [productId, ...products.map((p) => p.id)] },
         category,
+        deletedAt: null,
+        publishStatus: "PUBLISHED",
       },
       orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
       take: limit - products.length,
@@ -118,10 +126,10 @@ export async function getRelatedProducts(
 
 export async function getFeaturedProducts(limit = 8) {
   const products = await prisma.product.findMany({
+    where: { deletedAt: null, publishStatus: "PUBLISHED" },
     orderBy: [{ ratingAvg: "desc" }, { createdAt: "desc" }],
     take: limit,
   })
 
   return products.map(mapPrismaProductToCard)
 }
-

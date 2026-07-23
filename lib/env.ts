@@ -21,6 +21,7 @@ const schema = z.object({
   NEXTAUTH_URL: z.string().url().optional(),
 
   // Payments (Paystack): sandbox/test only in this project
+  PAYMENTS_ENABLED: z.enum(['true', 'false']).transform((value) => value === 'true').default('false'),
   PAYSTACK_SECRET_KEY: z.string().optional(),
   PAYSTACK_PUBLIC_KEY: z.string().optional(),
 
@@ -60,6 +61,14 @@ const schema = z.object({
   COMMERCE_CURRENCY: z.string().default('NGN'),
   COMMERCE_FREE_SHIPPING_THRESHOLD_NGN: z.coerce.number().int().nonnegative().default(500_000),
   COMMERCE_FLAT_SHIPPING_NGN: z.coerce.number().int().nonnegative().default(2_500),
+  COMMERCE_EXPRESS_SHIPPING_NGN: z.coerce.number().int().nonnegative().default(35_000),
+  COMMERCE_GIFT_WRAP_NGN: z.coerce.number().int().nonnegative().default(2_500),
+
+  // Manual bank transfer is fail-closed until owner-approved details are configured.
+  BANK_TRANSFER_ENABLED: z.enum(['true', 'false']).transform((value) => value === 'true').default('false'),
+  BANK_TRANSFER_ACCOUNT_NAME: z.string().optional(),
+  BANK_TRANSFER_BANK_NAME: z.string().optional(),
+  BANK_TRANSFER_ACCOUNT_NUMBER: z.string().optional(),
 
   // Feature flags (comma-separated list of enabled flags)
   FEATURE_FLAGS: z.string().default(''),
@@ -68,6 +77,7 @@ const schema = z.object({
   // When absent, rate limiting degrades to an in-memory per-instance limiter (documented limitation).
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  CRON_SECRET: z.string().min(32).optional(),
   CONCIERGE_GUEST_QUESTIONS: z.coerce.number().int().min(0).max(10).default(1),
   CONCIERGE_AUTH_PER_MINUTE: z.coerce.number().int().positive().default(12),
   CONCIERGE_AUTH_DAILY: z.coerce.number().int().positive().default(100),
@@ -121,6 +131,7 @@ export function integrationStatus() {
   return {
     database: Boolean(e.DATABASE_URL),
     auth: Boolean(e.AUTH_SECRET || e.NEXTAUTH_SECRET),
+    paymentsEnabled: e.PAYMENTS_ENABLED,
     paystack: Boolean(e.PAYSTACK_SECRET_KEY),
     resend: Boolean(e.RESEND_API_KEY),
     shopify: Boolean(e.SHOPIFY_STORE_DOMAIN && e.SHOPIFY_STOREFRONT_API_TOKEN),

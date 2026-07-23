@@ -25,4 +25,3 @@ test.describe("feature-flagged cinematic hero", () => {
     await expect(page.locator('[data-perfume-zone="oud-wood"]')).toBeVisible()
   })
 })
-

@@ -4,7 +4,6 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { GitCompareArrows, X, ArrowRight } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { useCompareStore, MAX_COMPARE } from "@/lib/stores/compare-store"
 import { trackPdp } from "@/lib/analytics/pdp-events"
 

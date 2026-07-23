@@ -38,6 +38,30 @@ export interface VerifyPaymentResult {
   amountMatches: boolean
 }
 
+export type ProviderRefundStatus =
+  | 'pending'
+  | 'processing'
+  | 'needs_attention'
+  | 'processed'
+  | 'failed'
+
+export interface RefundPaymentInput {
+  reference: string
+  amountNGN: number
+  currency: string
+  customerNote: string
+  merchantNote: string
+}
+
+export interface RefundPaymentResult {
+  providerRefundId: string
+  status: ProviderRefundStatus
+  amountNGN: number
+  currency: string
+}
+
+export type VerifyRefundResult = RefundPaymentResult
+
 export interface WebhookVerification {
   valid: boolean
   event?: string
@@ -54,6 +78,13 @@ export interface PaymentProvider {
   initialize(input: InitPaymentInput): Promise<InitPaymentResult>
   /** Server-side verification. The ONLY authoritative source of 'paid'. */
   verify(reference: string, expected: { amountNGN: number; currency: string }): Promise<VerifyPaymentResult>
+  /** Initiate a full or partial provider refund. Amount is whole naira at this boundary. */
+  refund(input: RefundPaymentInput): Promise<RefundPaymentResult>
+  /** Fetch the provider's authoritative refund status. */
+  verifyRefund(
+    providerRefundId: string,
+    expected: { amountNGN: number; currency: string },
+  ): Promise<VerifyRefundResult>
   /** Verify a raw webhook body + signature and normalize it. Constant-time comparison. */
   verifyWebhook(rawBody: string, signature: string | null): WebhookVerification
 }

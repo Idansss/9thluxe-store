@@ -9,6 +9,10 @@ import { shopifyCommerce } from './commerce/shopify'
 import type { PaymentProvider } from './payments/types'
 import { paystackProvider } from './payments/paystack'
 import { mockPaymentProvider } from './payments/mock'
+import {
+  isPaymentCollectionEnabled,
+  selectPaymentProviderMode,
+} from './payments/policy'
 import type { SearchProvider } from './search/types'
 import { postgresSearch } from './search/postgres'
 import { aiServices } from './ai'
@@ -22,8 +26,8 @@ export function getCommerce(): CommerceProvider {
 }
 
 export function getPayments(): PaymentProvider {
-  // Live Paystack only when a secret key is present; otherwise the deterministic mock (dev/test).
-  return env.PAYSTACK_SECRET_KEY ? paystackProvider : mockPaymentProvider
+  const mode = selectPaymentProviderMode(env.PAYSTACK_SECRET_KEY, env.NODE_ENV)
+  return mode === 'paystack' ? paystackProvider : mockPaymentProvider
 }
 
 export function getSearch(): SearchProvider {
@@ -38,7 +42,12 @@ export function getAi(): AiServices {
 export function providerStatus() {
   return {
     commerce: getCommerce().name,
-    payments: getPayments().name,
+    payments: isPaymentCollectionEnabled(
+      env.PAYMENTS_ENABLED,
+      env.PAYSTACK_SECRET_KEY,
+    )
+      ? getPayments().name
+      : 'disabled',
     search: getSearch().name,
     ai: env.AI_PROVIDER,
     conciergeAi: conciergeProviderStatus(),
