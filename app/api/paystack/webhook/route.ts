@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { getPayments } from "@/integrations/registry"
-import { reversePointsForOrder } from "@/lib/loyalty/service"
+import type { ProviderRefundStatus } from "@/integrations/payments/types"
 import { logger } from "@/lib/observability/logger"
 import { settleSuccessfulPayment } from "@/lib/payments/settlement"
-import { prisma } from "@/lib/prisma"
-import { recordWebhookOnce } from "@/lib/webhooks/idempotency"
+import { settleRefundStatus } from "@/lib/refunds/settlement"
 
 export const runtime = "nodejs"
 
@@ -114,43 +113,73 @@ export async function POST(req: NextRequest) {
       )
     }
   } else if (
-    verified.event === "refund.processed" ||
+    verified.event?.startsWith("refund.") ||
     verified.event === "charge.refunded"
   ) {
-    const reference = verified.reference
-    if (eventId) {
-      const first = await recordWebhookOnce(
-        "paystack",
+    const refundStatus: ProviderRefundStatus =
+      verified.event === "charge.refunded"
+        ? "processed"
+        : verified.event === "refund.processed"
+          ? "processed"
+          : verified.event === "refund.failed"
+            ? "failed"
+            : verified.event === "refund.needs-attention"
+              ? "needs_attention"
+              : verified.event === "refund.processing"
+                ? "processing"
+                : "pending"
+    const data = rawEvent?.data ?? {}
+    const paymentReference =
+      data?.transaction?.reference ?? data?.reference ?? null
+    const amountNGN =
+      typeof data?.amount === "number"
+        ? Math.round(data.amount / 100)
+        : null
+    const currency = data?.currency
+    if (!eventId || !paymentReference || amountNGN == null || !currency) {
+      logger.warn("paystack_refund_webhook_incomplete", {
         eventId,
-        verified.event,
-      )
-      if (!first) {
-        return NextResponse.json({ ok: true, duplicate: true })
-      }
+        topic: verified.event,
+      })
+      return NextResponse.json({ ok: true, ignored: "incomplete" })
     }
-    if (reference) {
-      const attempt = await prisma.paymentAttempt.findUnique({
-        where: { providerReference: reference },
-        select: {
-          id: true,
-          order: { select: { id: true, userId: true } },
+
+    try {
+      const result = await settleRefundStatus({
+        providerRefundId:
+          data?.id == null ? null : String(data.id),
+        paymentReference,
+        status: refundStatus,
+        amountNGN,
+        currency,
+        receipt: {
+          provider: "paystack",
+          eventId: `${eventId}:${verified.event}`,
+          topic: verified.event,
         },
       })
-      if (attempt) {
-        await prisma.paymentAttempt.update({
-          where: { id: attempt.id },
-          data: { status: "REFUNDED" },
-        })
-        await reversePointsForOrder(
-          attempt.order.userId,
-          attempt.order.id,
-        ).catch((error) => {
-          logger.error("refund_loyalty_reversal_failed", {
-            orderId: attempt.order.id,
-            internal: String(error),
-          })
+      if (result.outcome === "mismatch" || result.outcome === "unknown") {
+        logger.error("paystack_refund_webhook_unmatched", {
+          eventId,
+          paymentReference,
+          outcome: result.outcome,
         })
       }
+      return NextResponse.json({
+        ok: true,
+        duplicate: result.outcome === "duplicate",
+        outcome: result.outcome,
+      })
+    } catch (error) {
+      logger.error("paystack_refund_webhook_processing_failed", {
+        eventId,
+        paymentReference,
+        internal: String(error),
+      })
+      return NextResponse.json(
+        { error: "processing_failed" },
+        { status: 500 },
+      )
     }
   }
 

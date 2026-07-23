@@ -3,7 +3,10 @@ import { NextResponse } from "next/server"
 import { getPayments } from "@/integrations/registry"
 import { env } from "@/lib/env"
 import { logger } from "@/lib/observability/logger"
-import { reconcilePendingPayments } from "@/lib/payments/reconciliation"
+import {
+  reconcilePendingPayments,
+  reconcilePendingRefunds,
+} from "@/lib/payments/reconciliation"
 import { hasValidBearerSecret } from "@/lib/security/bearer"
 
 export const runtime = "nodejs"
@@ -34,9 +37,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const result = await reconcilePendingPayments({ provider, limit: 20 })
-    logger.info("payment_reconciliation_batch_processed", result)
-    return NextResponse.json({ ok: true, ...result })
+    const [payments, refunds] = await Promise.all([
+      reconcilePendingPayments({ provider, limit: 20 }),
+      reconcilePendingRefunds({ provider, limit: 20 }),
+    ])
+    logger.info("payment_reconciliation_batch_processed", {
+      payments,
+      refunds,
+    })
+    return NextResponse.json({ ok: true, payments, refunds })
   } catch (error) {
     logger.error("payment_reconciliation_batch_failed", {
       internal: String(error),

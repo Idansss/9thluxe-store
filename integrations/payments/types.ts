@@ -60,6 +60,8 @@ export interface RefundPaymentResult {
   currency: string
 }
 
+export type VerifyRefundResult = RefundPaymentResult
+
 export interface WebhookVerification {
   valid: boolean
   event?: string
@@ -78,6 +80,11 @@ export interface PaymentProvider {
   verify(reference: string, expected: { amountNGN: number; currency: string }): Promise<VerifyPaymentResult>
   /** Initiate a full or partial provider refund. Amount is whole naira at this boundary. */
   refund(input: RefundPaymentInput): Promise<RefundPaymentResult>
+  /** Fetch the provider's authoritative refund status. */
+  verifyRefund(
+    providerRefundId: string,
+    expected: { amountNGN: number; currency: string },
+  ): Promise<VerifyRefundResult>
   /** Verify a raw webhook body + signature and normalize it. Constant-time comparison. */
   verifyWebhook(rawBody: string, signature: string | null): WebhookVerification
 }

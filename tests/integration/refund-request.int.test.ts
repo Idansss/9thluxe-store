@@ -1,7 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import type { PaymentProvider } from "@/integrations/payments/types"
+import type {
+  PaymentProvider,
+  ProviderRefundStatus,
+} from "@/integrations/payments/types"
+import { reconcileRefund } from "@/lib/payments/reconciliation"
 import { requestFullRefund } from "@/lib/refunds/service"
+import { settleRefundStatus } from "@/lib/refunds/settlement"
 import { prisma } from "@/lib/prisma"
 
 const hasDb = Boolean(process.env.DATABASE_URL)
@@ -16,6 +21,7 @@ describe.skipIf(!hasDb)("durable refund request (DB)", () => {
   let orderId = ""
   let attemptId = ""
   let providerCalls = 0
+  let verifiedRefundStatus: ProviderRefundStatus = "processing"
   const paymentReference = `paid_${tag}`
 
   const provider: PaymentProvider = {
@@ -45,6 +51,14 @@ describe.skipIf(!hasDb)("durable refund request (DB)", () => {
         currency: input.currency,
       }
     },
+    async verifyRefund(providerRefundId, expected) {
+      return {
+        providerRefundId,
+        status: verifiedRefundStatus,
+        amountNGN: expected.amountNGN,
+        currency: expected.currency,
+      }
+    },
     verifyWebhook() {
       return { valid: false }
     },
@@ -64,6 +78,8 @@ describe.skipIf(!hasDb)("durable refund request (DB)", () => {
         data: {
           email: `${tag}_customer@example.test`,
           passwordHash: "x",
+          totalLifetimeSpend: 225_000,
+          loyaltyTier: "OBSIDIAN",
         },
         select: { id: true },
       }),
@@ -120,12 +136,25 @@ describe.skipIf(!hasDb)("durable refund request (DB)", () => {
       select: { id: true },
     })
     attemptId = attempt.id
+    await prisma.loyaltyLedger.create({
+      data: {
+        userId: customerId,
+        orderId,
+        delta: 100,
+        balanceAfter: 100,
+        reason: "order_earn",
+      },
+    })
   })
 
   afterAll(async () => {
+    await prisma.webhookReceipt.deleteMany({
+      where: { eventId: `refund-event-${tag}` },
+    }).catch(() => {})
     await prisma.auditLog.deleteMany({
       where: { targetType: "Refund", actorId: adminId },
     }).catch(() => {})
+    await prisma.loyaltyLedger.deleteMany({ where: { orderId } }).catch(() => {})
     await prisma.refund.deleteMany({ where: { orderId } }).catch(() => {})
     await prisma.paymentAttempt.deleteMany({ where: { id: attemptId } }).catch(() => {})
     await prisma.orderItem.deleteMany({ where: { orderId } }).catch(() => {})
@@ -168,6 +197,57 @@ describe.skipIf(!hasDb)("durable refund request (DB)", () => {
           targetId: first.id,
           action: "refund.request",
         },
+      }),
+    ).toBe(1)
+
+    verifiedRefundStatus = "processed"
+    const reconciliation = await reconcileRefund(first.id, provider)
+    expect(reconciliation.outcome).toBe("updated")
+
+    const receipt = {
+      provider: "paystack",
+      eventId: `refund-event-${tag}`,
+      topic: "refund.processed",
+    }
+    const webhookReplay = await settleRefundStatus({
+      providerRefundId: `provider_refund_${tag}`,
+      paymentReference,
+      status: "processed",
+      amountNGN: 75_000,
+      currency: "NGN",
+      receipt,
+    })
+    const duplicate = await settleRefundStatus({
+      providerRefundId: `provider_refund_${tag}`,
+      paymentReference,
+      status: "processed",
+      amountNGN: 75_000,
+      currency: "NGN",
+      receipt,
+    })
+
+    expect(webhookReplay.outcome).toBe("duplicate")
+    expect(duplicate.outcome).toBe("duplicate")
+    expect(
+      await prisma.refund.findUniqueOrThrow({ where: { id: first.id } }),
+    ).toMatchObject({ status: "PROCESSED" })
+    expect(
+      await prisma.order.findUniqueOrThrow({ where: { id: orderId } }),
+    ).toMatchObject({ status: "REFUNDED" })
+    expect(
+      await prisma.paymentAttempt.findUniqueOrThrow({
+        where: { id: attemptId },
+      }),
+    ).toMatchObject({ status: "REFUNDED" })
+    expect(
+      await prisma.user.findUniqueOrThrow({ where: { id: customerId } }),
+    ).toMatchObject({
+      totalLifetimeSpend: 150_000,
+      loyaltyTier: "STANDARD",
+    })
+    expect(
+      await prisma.loyaltyLedger.count({
+        where: { orderId, reason: "order_reversal" },
       }),
     ).toBe(1)
   })

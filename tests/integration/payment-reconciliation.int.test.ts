@@ -46,6 +46,14 @@ describe.skipIf(!hasDb)("payment reconciliation settlement (DB)", () => {
         currency: input.currency,
       }
     },
+    async verifyRefund(providerRefundId, expected) {
+      return {
+        providerRefundId,
+        status: "processing",
+        amountNGN: expected.amountNGN,
+        currency: expected.currency,
+      }
+    },
     verifyWebhook() {
       return { valid: false }
     },

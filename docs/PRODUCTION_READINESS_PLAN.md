@@ -62,6 +62,9 @@ Completed in the first hardening milestone:
   idempotency key, and moves the order to refund-pending only after provider acceptance;
 - refund initiation fails to manual review when Paystack accepted the request but the local commit
   is uncertain, preventing an automatic retry from issuing a second refund;
+- signed refund lifecycle events now update the durable refund, order, payment, lifetime-spend, tier,
+  and loyalty ledgers atomically; duplicate deliveries are harmless and the payment reconciliation
+  job also polls non-terminal refunds when webhooks are missed;
 - the protected outbox worker claims work safely, recovers stale locks, retries with exponential
   backoff, and retains exhausted events in a failed state;
 - receipt delivery uses provider idempotency, admin notifications use a database deduplication key,
@@ -90,7 +93,6 @@ Completed in the first hardening milestone:
 
 Still required before launch:
 
-- complete refund webhook processing and provider-status reconciliation;
 - browser/Paystack integration tests and production staging certification;
 - scheduler configuration for reservation expiry, outbox delivery, and payment reconciliation;
 - owner-supplied provider credentials, business details, brand assets, and approved policies.

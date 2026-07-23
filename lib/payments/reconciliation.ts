@@ -2,6 +2,7 @@ import type { PaymentProvider } from "@/integrations/payments/types"
 import { logger } from "@/lib/observability/logger"
 import { settleSuccessfulPayment } from "@/lib/payments/settlement"
 import { prisma } from "@/lib/prisma"
+import { settleRefundStatus } from "@/lib/refunds/settlement"
 
 export type ReconciliationOutcome =
   | "settled"
@@ -130,4 +131,81 @@ export async function reconcilePendingPayments(options: {
   }
 
   return { examined: candidates.length, ...counts }
+}
+
+export async function reconcilePendingRefunds(options: {
+  provider: PaymentProvider
+  now?: Date
+  minimumAgeMs?: number
+  limit?: number
+}) {
+  const now = options.now ?? new Date()
+  const minimumAgeMs = Math.max(options.minimumAgeMs ?? 5 * 60 * 1000, 0)
+  const limit = Math.min(Math.max(options.limit ?? 20, 1), 100)
+  const candidates = await prisma.refund.findMany({
+    where: {
+      provider: options.provider.name,
+      providerRefundId: { not: null },
+      status: { in: ["PENDING", "PROCESSING", "NEEDS_ATTENTION"] },
+      updatedAt: { lte: new Date(now.getTime() - minimumAgeMs) },
+    },
+    orderBy: { updatedAt: "asc" },
+    take: limit,
+    select: { id: true },
+  })
+
+  const counts = {
+    updated: 0,
+    duplicate: 0,
+    unknown: 0,
+    mismatch: 0,
+    errors: 0,
+  }
+  for (const refund of candidates) {
+    try {
+      const result = await reconcileRefund(refund.id, options.provider)
+      counts[result.outcome] += 1
+    } catch (error) {
+      counts.errors += 1
+      logger.error("refund_reconciliation_attempt_failed", {
+        refundId: refund.id,
+        internal: String(error),
+      })
+    }
+  }
+  return { examined: candidates.length, ...counts }
+}
+
+export async function reconcileRefund(
+  refundId: string,
+  provider: PaymentProvider,
+) {
+  const refund = await prisma.refund.findFirst({
+    where: {
+      id: refundId,
+      provider: provider.name,
+      providerRefundId: { not: null },
+      status: { in: ["PENDING", "PROCESSING", "NEEDS_ATTENTION"] },
+    },
+    select: {
+      providerRefundId: true,
+      amountNGN: true,
+      currency: true,
+      paymentAttempt: { select: { providerReference: true } },
+    },
+  })
+  if (!refund?.providerRefundId) {
+    return { outcome: "duplicate" as const }
+  }
+  const verified = await provider.verifyRefund(refund.providerRefundId, {
+    amountNGN: refund.amountNGN,
+    currency: refund.currency,
+  })
+  return settleRefundStatus({
+    providerRefundId: verified.providerRefundId,
+    paymentReference: refund.paymentAttempt.providerReference,
+    status: verified.status,
+    amountNGN: verified.amountNGN,
+    currency: verified.currency,
+  })
 }

@@ -167,6 +167,25 @@ export const paystackProvider: PaymentProvider = {
     }
   },
 
+  async verifyRefund(providerRefundId) {
+    const body = await paystackFetch(
+      `/refund/${encodeURIComponent(providerRefundId)}`,
+      { method: 'GET' },
+    )
+    const data = body?.data
+    if (data?.id == null || typeof data.amount !== 'number' || !data.currency) {
+      throw new AppError('PROVIDER_ERROR', {
+        internal: 'Paystack refund verification response incomplete',
+      })
+    }
+    return {
+      providerRefundId: String(data.id),
+      status: refundStatusFromPaystack(data.status),
+      amountNGN: Math.round(data.amount / 100),
+      currency: data.currency,
+    }
+  },
+
   verifyWebhook(rawBody: string, signature: string | null): WebhookVerification {
     if (!signature) return { valid: false }
     let computed: string

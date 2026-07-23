@@ -59,6 +59,15 @@ export const mockPaymentProvider: PaymentProvider = {
     }
   },
 
+  async verifyRefund(providerRefundId, expected) {
+    return {
+      providerRefundId,
+      status: 'processing',
+      amountNGN: expected.amountNGN,
+      currency: expected.currency,
+    }
+  },
+
   verifyWebhook(rawBody: string, signature: string | null): WebhookVerification {
     if (!signature) return { valid: false }
     const computed = crypto.createHmac('sha512', MOCK_SECRET).update(rawBody).digest('hex')
