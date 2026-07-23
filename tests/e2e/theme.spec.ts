@@ -194,6 +194,14 @@ test.describe("theme behavior", () => {
   });
 
   test("theme switching preserves the active cart", async ({ page }) => {
+    const runtimeErrors: string[] = [];
+    page.on("pageerror", (error) => runtimeErrors.push(error.message));
+    page.on("console", (message) => {
+      if (/hydration|did not match/i.test(message.text())) {
+        runtimeErrors.push(message.text());
+      }
+    });
+
     await page.goto("/product/nocturne-eau-de-parfum", {
       waitUntil: "domcontentloaded",
     });
@@ -215,9 +223,11 @@ test.describe("theme behavior", () => {
       const response = await fetch("/api/cart/summary");
       return response.json();
     });
+    await page.goto("/shop", { waitUntil: "networkidle" });
 
     expect(before.items.length).toBeGreaterThan(0);
     expect(after.items).toEqual(before.items);
+    expect(runtimeErrors).toEqual([]);
   });
 
   test("semantic section hierarchy reverses and product media is never inverted", async ({
