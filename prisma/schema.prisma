@@ -29,6 +29,22 @@ enum PaymentAttemptStatus {
   REFUNDED
 }
 
+enum InventoryReservationStatus {
+  RESERVED
+  SOLD
+  RELEASED
+  EXPIRED
+}
+
+enum InventoryMovementReason {
+  RESERVATION_CREATED
+  RESERVATION_EXPIRED
+  SALE_AFTER_EXPIRY
+  LEGACY_SALE
+  RETURN
+  ADJUSTMENT
+}
+
 model User {
   id               String    @id @default(cuid())
   name             String?
@@ -160,14 +176,16 @@ model Product {
   ratingCount Int   @default(0)
 
   // relations
-  collectionId    String?
-  collection      Collection?               @relation(fields: [collectionId], references: [id])
-  orderItems      OrderItem[]
-  wishlists       Wishlist[]
-  reviews         Review[]
-  variants        ProductVariant[]
-  media           ProductMedia[]
-  backInStockSubs BackInStockSubscription[]
+  collectionId          String?
+  collection            Collection?               @relation(fields: [collectionId], references: [id])
+  orderItems            OrderItem[]
+  wishlists             Wishlist[]
+  reviews               Review[]
+  variants              ProductVariant[]
+  media                 ProductMedia[]
+  backInStockSubs       BackInStockSubscription[]
+  inventoryReservations InventoryReservation[]
+  inventoryMovements    InventoryMovement[]
 
   @@index([name])
   @@index([category])
@@ -306,10 +324,11 @@ model Order {
   // Payment method
   paymentMethod String @default("CARD") // CARD | BANK_TRANSFER
 
-  reference       String?          @unique
-  items           OrderItem[]
-  paymentAttempts PaymentAttempt[]
-  checkoutAttempt CheckoutAttempt?
+  reference             String?                @unique
+  items                 OrderItem[]
+  paymentAttempts       PaymentAttempt[]
+  checkoutAttempt       CheckoutAttempt?
+  inventoryReservations InventoryReservation[]
 
   // Shipping/contact snapshot
   addressLine1 String
@@ -365,6 +384,43 @@ model PaymentAttempt {
 
   @@index([orderId, status])
   @@index([status, createdAt])
+}
+
+model InventoryReservation {
+  id          String                     @id @default(cuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  status      InventoryReservationStatus @default(RESERVED)
+  expiresAt   DateTime
+  reservedAt  DateTime                   @default(now())
+  finalizedAt DateTime?
+  releasedAt  DateTime?
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([orderId, productId])
+  @@index([status, expiresAt])
+  @@index([productId, status])
+}
+
+model InventoryMovement {
+  id         String                  @id @default(cuid())
+  productId  String
+  delta      Int
+  reason     InventoryMovementReason
+  sourceType String
+  sourceId   String
+  createdAt  DateTime                @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([productId, reason, sourceType, sourceId])
+  @@index([productId, createdAt])
+  @@index([sourceType, sourceId])
 }
 
 model OrderItem {

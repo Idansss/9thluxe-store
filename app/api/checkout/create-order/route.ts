@@ -11,6 +11,12 @@ import {
 import { consumeRateLimit } from "@/lib/middleware/limiter"
 import { validateCoupon } from "@/lib/pricing"
 import { hasTrustedOrigin } from "@/lib/security/origin"
+import { AppError } from "@/lib/http/errors"
+import {
+  aggregateInventoryLines,
+  reservationExpiry,
+  reserveInventory,
+} from "@/lib/inventory/reservations"
 
 const createOrderSchema = z.object({
   addressLine1: z.string().min(1, "Address is required"),
@@ -137,7 +143,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Resolve product IDs and validate prices (use DB price for consistency)
-    const productIds = [...new Set(items.map((i) => i.productId))]
+    const inventoryLines = aggregateInventoryLines(items)
+    const productIds = inventoryLines.map((item) => item.productId)
     const products = await prisma.product.findMany({
       where: {
         id: { in: productIds },
@@ -149,7 +156,7 @@ export async function POST(req: NextRequest) {
     const productMap = new Map(products.map((p) => [p.id, p]))
 
     const orderItems: { productId: string; quantity: number; priceNGN: number }[] = []
-    for (const item of items) {
+    for (const item of inventoryLines) {
       const product = productMap.get(item.productId)
       if (!product) {
         return NextResponse.json({ error: `Product not found: ${item.productId}` }, { status: 400 })
@@ -224,6 +231,12 @@ export async function POST(req: NextRequest) {
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
           },
         })
+        await reserveInventory(
+          tx,
+          created.id,
+          orderItems,
+          reservationExpiry(paymentMethod),
+        )
         return created
       })
     } catch (error) {
@@ -242,8 +255,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ orderId: order.id })
-  } catch (e) {
-    console.error("Create order error:", e)
+  } catch (error) {
+    console.error("Create order error:", error)
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.safeMessage }, { status: error.status })
+    }
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 })
   }
 }

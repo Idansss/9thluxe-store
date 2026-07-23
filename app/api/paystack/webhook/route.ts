@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { sendReceipt } from "@/emails/sendReceipt"
 import { getPayments } from "@/integrations/registry"
 import { resolveLoyaltyTier } from "@/lib/config/commerce"
-import { AppError } from "@/lib/http/errors"
 import { pointsForOrder } from "@/lib/loyalty/points"
 import { reversePointsForOrder } from "@/lib/loyalty/service"
 import { logger } from "@/lib/observability/logger"
@@ -11,6 +10,7 @@ import { matchesExpectedPayment } from "@/lib/payments/match"
 import { prisma } from "@/lib/prisma"
 import { qualifyReferral } from "@/lib/referrals/service"
 import { recordWebhookOnce } from "@/lib/webhooks/idempotency"
+import { finalizeInventoryForOrder } from "@/lib/inventory/reservations"
 
 export const runtime = "nodejs"
 
@@ -151,20 +151,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        for (const item of attempt.order.items) {
-          const updated = await tx.product.updateMany({
-            where: {
-              id: item.productId,
-              stock: { gte: item.quantity },
-            },
-            data: { stock: { decrement: item.quantity } },
-          })
-          if (updated.count !== 1) {
-            throw new AppError("INSUFFICIENT_STOCK", {
-              internal: { orderId, productId: item.productId },
-            })
-          }
-        }
+        await finalizeInventoryForOrder(tx, orderId, attempt.order.items)
 
         if (attempt.order.couponId) {
           await tx.coupon.update({

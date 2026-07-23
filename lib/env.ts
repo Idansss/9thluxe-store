@@ -76,6 +76,7 @@ const schema = z.object({
   // When absent, rate limiting degrades to an in-memory per-instance limiter (documented limitation).
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  CRON_SECRET: z.string().min(32).optional(),
   CONCIERGE_GUEST_QUESTIONS: z.coerce.number().int().min(0).max(10).default(1),
   CONCIERGE_AUTH_PER_MINUTE: z.coerce.number().int().positive().default(12),
   CONCIERGE_AUTH_DAILY: z.coerce.number().int().positive().default(100),

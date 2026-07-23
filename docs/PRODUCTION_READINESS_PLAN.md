@@ -44,18 +44,24 @@ Completed in the first hardening milestone:
   metadata as the source of truth;
 - each successful attempt is recorded before the order transition, including duplicate successful
   payments that require operational review;
+- checkout now atomically reserves available stock and records an inventory movement;
+- card reservations expire after 30 minutes and bank-transfer reservations after 24 hours;
+- a protected, idempotent expiration job releases stock exactly once;
+- successful payment finalizes the reservation without decrementing stock twice, while legacy
+  pending orders retain a safe conditional-decrement path;
+- concurrent database tests prove only one checkout can claim the final available units;
 - payment-matching, checkout-idempotency, publication, origin, and shipping-policy regression tests
   were added;
-- Prisma schema validation, TypeScript, lint, 321 unit tests, and the production build pass on this
-  branch (the database-backed integration suite remains skipped until a test database is supplied).
+- Prisma schema validation, TypeScript, lint, 331 unit/integration tests, and the production build
+  pass on this branch; all staging migrations are applied with zero schema drift.
 
 Still required before launch:
 
-- inventory reservations and reservation-expiry jobs;
 - a transactional outbox and background worker;
 - payment reconciliation and complete refund/order state handling;
 - complete password-reset flow and broader authentication abuse protection;
 - dependency remediation, full database integration tests, and production staging certification;
+- scheduler configuration for the reservation-expiry endpoint;
 - owner-supplied provider credentials, business details, brand assets, and approved policies.
 
 ## Audit findings
@@ -80,7 +86,8 @@ This is the original audit list. Items completed on `codex/production-readiness`
 
 ### High priority
 
-1. There is no reliable stock reservation or atomic non-negative stock decrement.
+1. **Resolved on branch:** there was no reliable stock reservation or atomic non-negative stock
+   decrement.
 2. **Resolved on branch:** public catalogue queries did not consistently require
    `publishStatus = PUBLISHED`.
 3. Custom state-changing endpoints do not consistently validate request origin or CSRF protections.

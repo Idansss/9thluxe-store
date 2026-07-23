@@ -115,12 +115,27 @@ export async function POST(req: Request) {
         id: true,
         totalNGN: true,
         user: { select: { email: true } },
+        inventoryReservations: {
+          select: { status: true, expiresAt: true },
+        },
       },
     })
     if (!order) {
       return NextResponse.json(
         { error: "That order is unavailable or already processed" },
         { status: 404 },
+      )
+    }
+    if (
+      order.inventoryReservations.length > 0 &&
+      order.inventoryReservations.some(
+        (reservation) =>
+          reservation.status !== "RESERVED" || reservation.expiresAt <= new Date(),
+      )
+    ) {
+      return NextResponse.json(
+        { error: "This checkout reservation expired. Please return to your cart and try again." },
+        { status: 409 },
       )
     }
 
